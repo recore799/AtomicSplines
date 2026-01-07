@@ -1,0 +1,16 @@
+# Julia specific
+*.ji
+*.cov
+*.mem
+*.log
+*.tmp
+*.bak
+
+# Project artifacts
+/docs/build/
+/docs/site/
+
+# Plots and Output
+*.png
+*.pdf
+/plots/

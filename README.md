@@ -10,7 +10,8 @@ Una libreria en Julia para implementar el metodo de B-spline R-Matrix para calcu
 ```julia
    julia> ] activate .
    (AtomicSplines) pkg> instantiate
-   
-### Corre los scripts de exploración en el folder de ’examples/'
+```
 
-* ’examples/02_toy_poisson.jl': Validación del FEM para una onda sinoidal en 1D.
+### Corre los scripts de exploración en el folder de `examples/`
+
+* `examples/02_toy_poisson.jl`: Validación del FEM para una onda sinoidal en 1D.

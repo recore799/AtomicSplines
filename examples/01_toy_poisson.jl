@@ -7,7 +7,7 @@ using AtomicSplines
 using LinearAlgebra
 using FastGaussQuadrature
 using Plots
-using Printf # Para formatear números bonitos
+using Printf
 
 println("\n================================================================")
 println("   EXPERIMENTO: SOLVER DE POISSON 1D (FEM B-SPLINES)")
@@ -131,7 +131,7 @@ for (k, x) in enumerate(x_plot)
     u_fem[k] = val_sum
 end
 
-# Cálculo de Error L2 (Raíz del error cuadrático medio)
+# Cálculo de Error L2
 error_l2 = norm(u_fem - u_exact) / norm(u_exact)
 @printf("   > Error Relativo L2: %.2e  <-- (Debería ser muy bajo)\n", error_l2)
 

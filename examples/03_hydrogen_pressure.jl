@@ -7,113 +7,84 @@ using Plots
 using Printf
 
 println("\n================================================================")
-println("   EXPERIMENTO: ÁTOMO CONFINADO Y PRESIÓN CUÁNTICA")
+println("   EXPERIMENTO: ÁTOMO CONFINADO Y PRESIÓN (API V2)")
 println("================================================================\n")
 
-# --- FÍSICA DEL PROBLEMA ---
-# Presión Termodinámica: P = - dE / dV
-# Volumen Esférico:      V = 4/3 * π * R³
-# Regla de la Cadena:    P = - (1 / 4πR²) * (dE / dR)
-
-# Función auxiliar para resolver el H para un radio R dado
-function get_energy_and_psi(R_box)
-    # 1. Base: Ajustamos los elementos para mantener densidad constante
-    # Si R es pequeño, necesitamos menos elementos; si es grande, más.
-    # Densidad aprox: 2 elementos por u.a.
-    n_elems = max(20, Int(round(2.0 * R_box)))
-    order = 5
+# --- LÓGICA DE FÍSICA ---
+function get_confinement_data(R_box)
+    # 1. Definimos el átomo (Hidrógeno 1s)
+    h_atom = Atom(1.0, [Orbital(1, 0, 1.0)])
     
-    basis = generate_basis(R_box, n_elems, order, γ=1.5) # Gamma bajo para cajas pequeñas
+    # 2. Base dinámica según el radio
+    n_elems = max(25, Int(round(2.5 * R_box)))
+    basis = generate_basis(R_box, n_elems, 5, γ=1.2)
     
-    # 2. Ensamblaje (Z=1 Hidrógeno)
-    T, V, S = assemble_core(basis, 1.0)
+    # 3. Uso de la nueva API
+    # solve_orbital! se encarga de: assemble_hamiltonian -> solve_eigen -> update orbital
+    solve_orbital!(h_atom.orbitals[1], h_atom, basis)
     
-    # 3. Solver
-    H = T + V
-    
-    # Condiciones de frontera (Caja dura en R_box)
-    inner = 2:(basis.num_splines - 1)
-    
-    vals, vecs = eigen(Matrix(H[inner, inner]), Matrix(S[inner, inner]))
-    
-    # Retornamos Energía base y coeficientes de la función de onda
-    return vals[1], vcat(0.0, vecs[:, 1], 0.0), basis
+    return h_atom.orbitals[1], basis
 end
 
 # ==============================================================================
-# 1. EXPERIMENTO VISUAL: Función de Onda vs Confinamiento
+# 1. VISUALIZACIÓN DE DENSIDADES
 # ==============================================================================
-println("1. Calculando funciones de onda para diferentes radios...")
+println("1. Generando densidades radiales para diferentes confinamientos...")
 
-radii_visual = [1.1, 1.835, 2.5, 10.0] # Radios de confinamiento (u.a.)
-densities = []
-
-p1 = plot(title="Densidad Radial de Probabilidad |P(r)|²",
+radii_visual = [1.1, 1.835, 2.5, 5.0]
+p1 = plot(title="Densidad Radial |P(r)|² bajo Confinamiento",
           xlabel="Distancia r (u.a.)", ylabel="Densidad",
           xlims=(0, 6), legend=:topright)
 
 for R in radii_visual
-    E, coeffs, basis = get_energy_and_psi(R)
+    orb, basis = get_confinement_data(R)
     
-    # Graficamos en una rejilla común para comparar
-    r_grid = range(0, R, length=300)
-    psi_vals = [eval_expansion(coeffs, basis, r) for r in r_grid]
+    r_grid = range(0, R, length=400)
+    # eval_expansion usa orb.coeffs directamente
+    rho = [eval_expansion(orb.coeffs, basis, r)^2 for r in r_grid]
     
-    # Normalización Numérica simple (suma de Riemann) para que el área sea ~1
+    # Normalización para asegurar unidad en la integral
     dr = r_grid[2] - r_grid[1]
-    norm_factor = sum(psi_vals.^2) * dr
-    prob_density = (psi_vals.^2) ./ norm_factor
+    rho ./= (sum(rho) * dr)
     
-    @printf("   > Radio de Caja: %4.1f u.a. | Energía: %7.4f Ha\n", R, E)
-    
-    plot!(p1, r_grid, prob_density, lw=2, 
-          label="R_caja = $(R) (E=$(@sprintf("%.3f", E)))", fill=(0, 0.2))
+    plot!(p1, r_grid, rho, lw=2, fill=(0, 0.1),
+          label="R=$R (E=$(@sprintf("%.3f", orb.energy)))")
 end
 
-# Dibujar una pared vertical simulada para R=2 para visualizar el choque
-vline!(p1, [2.0], color=:black, ls=:dash, label="Pared R=2")
-
-
 # ==============================================================================
-# 2. CÁLCULO DE PRESIÓN (Curva P vs R)
+# 2. CÁLCULO DE PRESIÓN TERMODINÁMICA
 # ==============================================================================
-println("\n2. Calculando curva de Presión Cuántica...")
+println("\n2. Calculando curva de Presión Cuántica P = -dE/dV...")
 
-R_scan = range(1.5, 8.0, length=30) # Barrido de radios
+R_scan = range(1.2, 7.0, length=35)
 Energies = zeros(length(R_scan))
 Pressures = zeros(length(R_scan))
-
-# Diferencia finita para la derivada dE/dR
-dR = 1e-4 
+dR = 1e-4
 
 for (i, R) in enumerate(R_scan)
-    E_current, _, _ = get_energy_and_psi(R)
-    E_plus, _, _    = get_energy_and_psi(R + dR)
+    orb_now, _ = get_confinement_data(R)
+    orb_plus, _ = get_confinement_data(R + dR)
     
-    # Derivada Numérica
-    dEdR = (E_plus - E_current) / dR
+    # dE/dR numérico
+    dEdR = (orb_plus.energy - orb_now.energy) / dR
     
-    # Fórmula de Presión
-    # P = - (1 / Area) * (dE / dR)
-    area = 4 * π * R^2
-    P = - dEdR / area
+    # P = -(1/4πR²) * (dE/dR)
+    P = -dEdR / (4 * π * R^2)
     
-    Energies[i] = E_current
+    Energies[i] = orb_now.energy
     Pressures[i] = P
 end
 
-# Gráfica de Energía
+# --- GRÁFICAS ---
 p2 = plot(R_scan, Energies, lw=2, color=:blue, legend=false,
-          xlabel="Radio de Confinamiento (u.a.)", ylabel="Energía (Ha)", title="Energía vs Radio")
-hline!(p2, [-0.5], color=:red, ls=:dash, label="Límite Libre (-0.5)")
+          xlabel="Radio R (u.a.)", ylabel="Energía (Ha)", title="Energía vs Confinamiento")
+hline!(p2, [-0.5], color=:black, ls=:dash)
 
-# Gráfica de Presión
 p3 = plot(R_scan, Pressures, lw=2, color=:red, legend=false,
-          xlabel="Radio de Confinamiento (u.a.)", ylabel="Presión (u.a.)",
-          title="Presión Cuántica")
+          xlabel="Radio R (u.a.)", ylabel="Presión (u.a.)", title="Presión sobre la Pared")
 
-# Combinar todo
 l = @layout [a; [b c]]
-final_plot = plot(p1, p2, p3, layout=l, size=(800, 800))
+final_plot = plot(p1, p2, p3, layout=l, size=(900, 850))
 display(final_plot)
 
+println("\n>> ¡Éxito! El rediseño procesó $(length(R_scan)*2 + length(radii_visual)) diagonalizaciones correctamente.")

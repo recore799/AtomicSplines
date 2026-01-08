@@ -2,7 +2,7 @@
 
 julia_version = "1.12.3"
 manifest_format = "2.0"
-project_hash = "4ef70342d25dc2ed4aa6c57e84f30ef7b3bc0363"
+project_hash = "4fe0b6eb4ab0c0984f40e985e323ef751f08a49e"
 
 [[deps.AliasTables]]
 deps = ["PtrArrays", "Random"]
@@ -14,12 +14,24 @@ version = "1.1.3"
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
 version = "1.1.2"
 
+[[deps.Arpack]]
+deps = ["Arpack_jll", "Libdl", "LinearAlgebra", "Logging"]
+git-tree-sha1 = "9b9b347613394885fd1c8c7729bfc60528faa436"
+uuid = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
+version = "0.5.4"
+
+[[deps.Arpack_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "libblastrampoline_jll"]
+git-tree-sha1 = "7f54761502ff149a9d492e4acefe9805898e29b3"
+uuid = "68821587-b530-5797-8361-c406ea357684"
+version = "3.5.2+0"
+
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 version = "1.11.0"
 
 [[deps.AtomicSplines]]
-deps = ["FastGaussQuadrature", "LinearAlgebra", "Plots", "SparseArrays"]
+deps = ["FastGaussQuadrature", "LinearAlgebra", "Plots", "SparseArrays", "Test"]
 path = "."
 uuid = "2d5145e3-f199-4b73-8c97-396f7f2326c9"
 version = "0.1.0"

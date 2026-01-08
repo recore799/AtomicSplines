@@ -11,16 +11,22 @@ println("   EXPERIMENTO: ÁTOMO DE HIDRÓGENO (Espectro y Orbitales)")
 println("================================================================\n")
 
 # ==============================================================================
-# A. DEFINICIÓN DEL PROBLEMA
-#    Resolver la Ec. de Schrödinger Radial para l=0 (simetría esférica)
-#    H = -1/2 d²/dr² - Z/r
+# A. DEFINICIÓN DEL ÁTOMO
 # ==============================================================================
 
-Z_ATOM = 1.0  # Hidrógeno
-exact_energy(n) = -0.5 * (Z_ATOM^2) / (n^2)
+my_orbitals = [
+    Orbital(1,0,1.0)
+    Orbital(2,0,0.0)
+    Orbital(3,0,0.0)
+    Orbital(4,0,0.0)
+]
+
+hydrogen = Atom(1.0, my_orbitals)
+
+exact_energy(n) = -0.5 * (hydrogen.Z^2) / (n^2)
 
 println("A. Física del Problema:")
-println("   Sistema:   Átomo Hidrogenoide (Z = $Z_ATOM)")
+println("   Sistema:   Átomo Hidrogenoide (Z = $(hydrogen.Z))")
 println("   Ecuación:  H ψ = E S ψ  (Problema de valores propios generalizado)")
 println("   Teoría:    E_n = -0.5 / n^2 Ha")
 
@@ -43,58 +49,29 @@ println("   > Distribución: Exponencial (γ=$GAMMA)")
 println("   > Total Splines: $(basis.num_splines)")
 
 # ==============================================================================
-# C. ENSAMBLAJE DE HAMILTONIANO
+# D. SOLUCIÓN
 # ==============================================================================
-println("\nC. Construyendo Operadores (T, V, S)...")
+println("\nD. Resolviendo cada orbital definido en el Átomo...")
 
-# AtomicSplines hace el trabajo pesado: integrales cinéticas, nucleares y solapa
-T, V, S = assemble_core(basis, Z_ATOM)
-H = T + V  # Hamiltoniano total
-
-println("   > Matrices ensambladas. Tamaño: $(size(H))")
-
-# ==============================================================================
-# D. SOLUCIÓN (Diagonalización)
-# ==============================================================================
-println("\nD. Resolviendo Ecuación de Schrödinger...")
-
-# Condiciones de Frontera: ψ(0)=0, ψ(R_max)=0
-# Eliminamos el primer y último spline de la base.
-inner = 2:(basis.num_splines - 1)
-
-# Convertimos a denso para usar el solver robusto de LAPACK (eigen)
-# (Para sistemas grandes usaríamos Arnoldi/Krylov)
-H_cut = Matrix(H[inner, inner])
-S_cut = Matrix(S[inner, inner])
-
-evals, evecs = eigen(H_cut, S_cut)
-
-println("   > Diagonalización completada.")
-
-# ==============================================================================
-# E. ANÁLISIS DE RESULTADOS
-# ==============================================================================
-println("\nE. Espectroscopía Calculada:")
-println("   -------------------------------------------------------------")
-println("   Nivel (nl)   Energía Calc. (Ha)    Energía Exacta      Error")
-println("   -------------------------------------------------------------")
-
-# Analizamos los primeros 4 estados (1s, 2s, 3s, 4s)
 states_to_plot = []
 
-for n in 1:4
-    E_calc = evals[n]
-    E_exact = exact_energy(n)
-    error = abs(E_calc - E_exact)
-    
-    # Guardamos los vectores para graficar (re-insertando los ceros de frontera)
-    psi_vector = vcat(0.0, evecs[:, n], 0.0)
-    push!(states_to_plot, (n, E_calc, psi_vector))
-    
-    @printf("   %ds          % .8f          %.8f          %.1e\n", 
-            n, E_calc, E_exact, error)
+for orb in hydrogen.orbitals
+    # Esta funcion hace TODO: ensambla H (con su l), resuelve y guarda E y coeffs
+    solve_orbital!(orb, hydrogen, basis)
+
+    # Calculamos error para el print
+    E_ex = exact_energy(orb.n)
+    err = abs(orb.energy - E_ex)
+
+    @printf("    Orbital %d%s: E_calc = %.8f | E_exact = %.8f | Err = %.1e\n",
+            orb.n, orb.l == 0 ? "s" : "p", orb.energy, E_ex, err)
+
+    # Guardamos para la gráfica
+    push!(states_to_plot, (orb.n, orb.energy, orb.coeffs))
 end
-println("   -------------------------------------------------------------")
+
+
+println("   > Diagonalización completada.")
 
 # ==============================================================================
 # F. VISUALIZACIÓN DE ORBITALES

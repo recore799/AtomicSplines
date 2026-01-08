@@ -8,133 +8,109 @@ using Printf
 
 function solve_helium_exploratory()
     println("\n================================================================")
-    println("   EXPERIMENTO: HELIO Y EL EFECTO DE APANTALLAMIENTO")
+    println("   EXPERIMENTO: HELIO Y EL EFECTO DE APANTALLAMIENTO (V2)")
     println("================================================================\n")
+    
+    # 1. Definir el sistema usando Structs
+    helium = Atom(2.0, [Orbital(1, 0, 2.0)]) 
+    orb1s = helium.orbitals[1]
 
-    # PARÁMETROS
-    Z_ATOM = 2.0
+    # 2. Configuración de la Base
     R_MAX = 10.0      
     N_ELEMS = 80      
     ORDER = 5
     GAMMA = 2.0
-
-    # GENERACIÓN DE BASE
     basis = generate_basis(R_MAX, N_ELEMS, ORDER, γ=GAMMA)
-    println("A. > Base: $N_ELEMS splines (Orden $ORDER) en caja de $R_MAX u.a.")
+    
+    println("A. > Base generada con $(basis.num_splines) splines.")
 
-    # OPERADORES NUCLEARES
-    T, V, S = assemble_core(basis, Z_ATOM)
-    H_core = T + V 
-    free_dofs = 2:(basis.num_splines - 1)
+    # 3. Operadores Base
+    T, V_nuc, S = assemble_core(basis, helium.Z)
 
     # --------------------------------------------------------------------------
-    # GUESS INICIAL (Átomo Hidrogenoide He+)
-    # Ignoramos la repulsión e-e. Es como si los electrones se ignoracen.
+    # B. GUESS INICIAL (He+ sin interacción)
     # --------------------------------------------------------------------------
     println("\nB. Calculando Estado Inicial (Sin interacción)...")
+
+    # Usamos la versión simple de solve_orbital!
+    solve_orbital!(orb1s, helium, basis)
+
+    # Guardamos copia para la gráfica final (Estado hidrogenoide)
+    coeffs_initial = copy(orb1s.coeffs)
+    E_initial_total = orb1s.energy * 2.0
     
-    vals, vecs = eigen(Matrix(H_core[free_dofs, free_dofs]), Matrix(S[free_dofs, free_dofs]))
-    
-    c_initial = zeros(basis.num_splines)
-    c_initial[free_dofs] = vecs[:, 1]
-    
-    # Normalizar
-    norm = sqrt(dot(c_initial, S * c_initial))
-    c_initial ./= norm
-    
-    # Guardamos esta energía para comparar
-    E_hydrogenic = 2.0 * vals[1] # 2 electrones x Energía del 1s de He+
-    println("   > Energía He+ (x2): $E_hydrogenic Ha (Muy baja, ignora repulsión)")
+    println("   > Energía Inicial (He+ x 2): $(E_initial_total) Ha")   
 
     # --------------------------------------------------------------------------
-    # CICLO SCF (Self-Consistent Field)
-    # Encendemos la repulsión y dejamos que el sistema se relaje.
+    # C. CICLO SCF (Self-Consistent Field)
     # --------------------------------------------------------------------------
-    println("\nC. Iniciando SCF (Encendiendo repulsión)...")
+    println("\nC. Iniciando SCF (Encendiendo repulsión e-e)...")
     
-    c_current = copy(c_initial)
     MAX_ITER = 30
-    MIXING = 0.6
-    
-    history_E = Float64[] # Para guardar el historial y graficar
-    E_old = E_hydrogenic
-    
+    MIXING = 0.6 # Factor de mezcla
+    history_E = Float64[] 
+    E_old = E_initial_total
+
     for iter in 1:MAX_ITER
-        # Poisson: Cada electrón ve la nube de carga del otro
-        y_coeffs = solve_poisson_potential(basis, c_current, T)
+        # 1. Potencial de Hartree (J)
+        y_coeffs = solve_poisson_potential(basis, orb1s.coeffs, T)
         J_mat = assemble_J_matrix(basis, y_coeffs)
-        
-        # Fock: H_eff = H_nuc + J
-        F_mat = H_core + J_mat
-        
-        # Diagonalizar
-        evals, evecs = eigen(Matrix(F_mat[free_dofs, free_dofs]), Matrix(S[free_dofs, free_dofs]))
-        
-        # Actualizar Coeficientes
-        c_new_inner = evecs[:, 1]
-        c_new = zeros(basis.num_splines)
-        c_new[free_dofs] = c_new_inner
-        c_new ./= sqrt(dot(c_new, S * c_new)) # Normalizar
-        
-        # Calcular Energía Total
-        epsilon = evals[1]
-        E_J = dot(c_new, J_mat * c_new) # Energía de repulsión
-        E_total = 2 * epsilon - E_J
-        
+
+        # 2. Guardar coeficientes previos para el mixing
+        old_coeffs = copy(orb1s.coeffs)
+
+        # 3. Resolver usando la versión SCF de solve_orbital! (pasando J_mat)
+        solve_orbital!(orb1s, helium, basis, J_mat)
+
+        # 4. Energía Total Correcta: E = 2*eps - <J>
+        E_J = dot(orb1s.coeffs, J_mat * orb1s.coeffs)
+        E_total = 2 * orb1s.energy - E_J
+
+        # 5. Mixing Lineal para estabilidad
+        # Mezclamos los coeficientes del orbital directamente
+        orb1s.coeffs = MIXING * orb1s.coeffs + (1.0 - MIXING) * old_coeffs
+
+        # 6. Re-normalizar debido al mixing
+        n = sqrt(dot(orb1s.coeffs, S * orb1s.coeffs))
+        orb1s.coeffs ./= n
+
         push!(history_E, E_total)
         
         diff = abs(E_total - E_old)
-        @printf("   Iter %2d: E = %.6f Ha (Δ = %.1e)\n", iter, E_total, diff)
+        @printf("   Iter %2d: E = %.8f Ha (Δ = %.1e)\n", iter, E_total, diff)
         
         if diff < 1e-8
             println("   >> Convergencia alcanzada.")
             break
         end
         
-        # Mezcla para estabilidad
-        c_current = MIXING * c_new + (1 - MIXING) * c_current
-        c_current ./= sqrt(dot(c_current, S * c_current))
         E_old = E_total
     end
 
     # --------------------------------------------------------------------------
-    # ANÁLISIS VISUAL
+    # D. ANÁLISIS VISUAL
     # --------------------------------------------------------------------------
-    println("\nD. Generando Gráficas de Análisis...")
+    println("\nD. Generando Gráficas...")
     
-    r_plot = range(0, 5.0, length=200) # Zoom en la zona cercana al núcleo
+    r_plot = range(0, 5.0, length=200)
     
-    # Reconstruir densidades radiales |P(r)|²
-    rho_initial = [eval_expansion(c_initial, basis, r)^2 for r in r_plot]
-    rho_final   = [eval_expansion(c_current, basis, r)^2 for r in r_plot]
+    # Usamos eval_expansion con los coeffs guardados
+    rho_initial = [eval_expansion(coeffs_initial, basis, r)^2 for r in r_plot]
+    rho_final   = [eval_expansion(orb1s.coeffs, basis, r)^2 for r in r_plot]
 
-    # GRÁFICA 1: Convergencia de Energía
-    p1 = plot(1:length(history_E), history_E, 
-              marker=:circle, label="Energía SCF",
-              xlabel="Iteración", ylabel="Energía (Ha)",
-              title="Convergencia del Método SCF")
-    # Línea de referencia Hartree-Fock
+    # Gráfica 1: Energía
+    p1 = plot(history_E, marker=:circle, label="Energía SCF",
+              xlabel="Iteración", ylabel="E (Ha)", title="Convergencia SCF")
     hline!(p1, [-2.86168], label="Límite HF", linestyle=:dash, color=:red)
 
-    # GRÁFICA 2: Efecto de Apantallamiento (La física interesante)
-    p2 = plot(r_plot, rho_initial, 
-              label="He+ (Sin Interacción)", 
-              color=:blue, linestyle=:dash, lw=2,
-              fill=(0, 0.1, :blue))
-              
-    plot!(p2, r_plot, rho_final, 
-          label="Helio (SCF Convergido)", 
-          color=:red, lw=2,
-          fill=(0, 0.1, :red))
-          
-    plot!(p2, title="Efecto de Apantallamiento",
-          xlabel="Distancia r (u.a.)", ylabel="Densidad Radial |P(r)|²")
-
-    # Layout final
-    l = @layout [a; b]
-    final_plot = plot(p1, p2, layout=l, size=(700, 800))
-    display(final_plot)
+    # Gráfica 2: Apantallamiento
+    p2 = plot(r_plot, rho_initial, label="He+ (Hidrogenoide)", color=:blue, ls=:dash)
+    plot!(p2, r_plot, rho_final, label="He (SCF)", color=:red, lw=2, fill=(0, 0.1, :red))
     
+    plot!(p2, title="Apantallamiento Electrónico", xlabel="r (u.a.)", ylabel="|P(r)|²")
+
+    l = @layout [a; b]
+    display(plot(p1, p2, layout=l, size=(700, 800)))
 end
 
 solve_helium_exploratory()

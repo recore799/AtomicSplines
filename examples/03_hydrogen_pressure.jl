@@ -10,7 +10,6 @@ println("\n================================================================")
 println("   EXPERIMENTO: ÁTOMO CONFINADO Y PRESIÓN (API V2)")
 println("================================================================\n")
 
-# --- LÓGICA DE FÍSICA ---
 function get_confinement_data(R_box)
     # 1. Definimos el átomo (Hidrógeno 1s)
     h_atom = Atom(1.0, [Orbital(1, 0, 1.0)])
@@ -19,8 +18,7 @@ function get_confinement_data(R_box)
     n_elems = max(25, Int(round(2.5 * R_box)))
     basis = generate_basis(R_box, n_elems, 5, γ=1.2)
     
-    # 3. Uso de la nueva API
-    # solve_orbital! se encarga de: assemble_hamiltonian -> solve_eigen -> update orbital
+    # 3. Se encarga de: assemble_hamiltonian -> solve_eigen -> update orbital
     solve_orbital!(h_atom.orbitals[1], h_atom, basis)
     
     return h_atom.orbitals[1], basis
@@ -40,10 +38,9 @@ for R in radii_visual
     orb, basis = get_confinement_data(R)
     
     r_grid = range(0, R, length=400)
-    # eval_expansion usa orb.coeffs directamente
     rho = [eval_expansion(orb.coeffs, basis, r)^2 for r in r_grid]
     
-    # Normalización para asegurar unidad en la integral
+    # Normalización
     dr = r_grid[2] - r_grid[1]
     rho ./= (sum(rho) * dr)
     
@@ -52,7 +49,7 @@ for R in radii_visual
 end
 
 # ==============================================================================
-# 2. CÁLCULO DE PRESIÓN TERMODINÁMICA
+# 2. CÁLCULO DE PRESIÓN
 # ==============================================================================
 println("\n2. Calculando curva de Presión Cuántica P = -dE/dV...")
 
@@ -87,4 +84,4 @@ l = @layout [a; [b c]]
 final_plot = plot(p1, p2, p3, layout=l, size=(900, 850))
 display(final_plot)
 
-println("\n>> ¡Éxito! El rediseño procesó $(length(R_scan)*2 + length(radii_visual)) diagonalizaciones correctamente.")
+savefig(final_plot, "hidrogeno_confinado.png")

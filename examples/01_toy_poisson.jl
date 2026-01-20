@@ -31,7 +31,7 @@ println("B. Generando base B-Spline...")
 
 R_MAX = 1.0
 N_ELEMS = 20
-ORDER = 4 # Cúbicos
+ORDER = 4 # B-splines cúbicos
 
 basis = generate_basis(R_MAX, N_ELEMS, ORDER, γ=1.0)
 

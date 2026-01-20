@@ -6,12 +6,12 @@ using LinearAlgebra
 using Plots
 using Printf
 
-function solve_helium_exploratory()
+function solve_helium()
     println("\n================================================================")
     println("   EXPERIMENTO: HELIO Y EL EFECTO DE APANTALLAMIENTO (V2)")
     println("================================================================\n")
-    
-    # 1. Definir el sistema usando Structs
+
+    # 1. Definir el sistema
     helium = Atom(2.0, [Orbital(1, 0, 2.0)]) 
     orb1s = helium.orbitals[1]
 
@@ -66,8 +66,7 @@ function solve_helium_exploratory()
         E_J = dot(orb1s.coeffs, J_mat * orb1s.coeffs)
         E_total = 2 * orb1s.energy - E_J
 
-        # 5. Mixing Lineal para estabilidad
-        # Mezclamos los coeficientes del orbital directamente
+        # 5. Mixing para mejorar convergencia
         orb1s.coeffs = MIXING * orb1s.coeffs + (1.0 - MIXING) * old_coeffs
 
         # 6. Re-normalizar debido al mixing
@@ -110,7 +109,9 @@ function solve_helium_exploratory()
     plot!(p2, title="Apantallamiento Electrónico", xlabel="r (u.a.)", ylabel="|P(r)|²")
 
     l = @layout [a; b]
-    display(plot(p1, p2, layout=l, size=(700, 800)))
+    p_final = plot(p1, p2, layout=l, size=(700, 800))
+    display(p_final)
+    savefig(p_final, "helio_apantallamiento.png")
 end
 
-solve_helium_exploratory()
+solve_helium()

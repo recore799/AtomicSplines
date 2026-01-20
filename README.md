@@ -14,12 +14,12 @@ La siguiente figura muestra:
 * El aumento de la energía del estado base al reducir el radio de confinamiento.
 * La presión ejercida por el átomo sobre la "pared" esférica en función del radio.
 
-![Hidrógeno Confinado](hidrogeno_confinado.png)
+![Hidrógeno Confinado](docs/images/hidrogeno_confinado.png)
 
 ### 2. Helio: Ciclo SCF y Apantallamiento
 Resolución del átomo de Helio mediante el método de Hartree-Fock. Se ilustra la convergencia del ciclo SCF y se visualiza claramente el **efecto de apantallamiento** electrónico, donde la densidad electrónica efectiva modifica el potencial percibido.
 
-![Efecto de Apantallamiento en Helio](helio_apantallamiento.png)
+![Efecto de Apantallamiento en Helio](docs/images/helio_apantallamiento.png)
 
 ## Cómo usar
 

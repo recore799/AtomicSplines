@@ -34,7 +34,6 @@ function solve_eigen(H::AbstractMatrix, S::AbstractMatrix; nev=1, method=:auto)
     # 2. SOLVE
     if use_dense
         # --- DENSE SOLVER (LAPACK) ---
-        # Robust, finds ALL eigenvalues. Good for small systems.
         vals, vecs = eigen(Matrix(H_in), Matrix(S_in))
         
         # Select only the ones we asked for
@@ -43,13 +42,11 @@ function solve_eigen(H::AbstractMatrix, S::AbstractMatrix; nev=1, method=:auto)
         
     else
         # --- SPARSE SOLVER (ARPACK) ---
-        # Fast, finds FEW eigenvalues. Good for large systems.
-        # which=:SR means "Smallest Real" part (lowest energy)
+        # which=:SR means Smallest Real
         try
             sel_vals, sel_vecs = eigs(H_in, S_in; nev=nev, which=:SR)
             
             # Arpack sometimes returns Complex numbers with 0.0im imaginary part.
-            # We strip that for physics.
             sel_vals = real.(sel_vals)
             sel_vecs = real.(sel_vecs)
         catch e
@@ -59,7 +56,6 @@ function solve_eigen(H::AbstractMatrix, S::AbstractMatrix; nev=1, method=:auto)
     end
 
     # 3. RECONSTRUCT (Add Zeros to boundaries)
-    # The solver gave us size (N-2), we need size N
     full_vecs = zeros(N, nev)
     full_vecs[inner, :] = sel_vecs
     

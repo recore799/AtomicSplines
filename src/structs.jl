@@ -5,7 +5,7 @@ export solve_eigen
 mutable struct Orbital
     n::Int          # Principal quantum number
     l::Int          # Angular momentum
-    occ::Float64    # Occupation (e.g., 2.0 for 1s, 0.0 for excited)
+    occ::Float64    # Occupation
     energy::Float64 # Eigenenergy
     coeffs::Vector{Float64} # B-spline coefficients
 end

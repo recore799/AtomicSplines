@@ -12,5 +12,16 @@
 
 # Plots and Output
 *.png
+!docs/images/
 *.pdf
 /plots/
+
+# macos
+.DS_Store
+
+# Ignore Emacs auto-save files
+\#*\#
+# Ignore Emacs backup files
+*~
+# Ignore Emacs lock files
+.#*

@@ -16,7 +16,7 @@ function solve_helium()
     orb1s = helium.orbitals[1]
 
     # 2. Configuración de la Base
-    R_MAX = 10.0      
+    R_MAX = 1.10644808 # Critical radius
     N_ELEMS = 80      
     ORDER = 5
     GAMMA = 2.0

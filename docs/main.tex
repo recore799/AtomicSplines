@@ -1,0 +1,32 @@
+\documentclass[12pt, a4paper, oneside, spanish]{book}
+
+% Import Configuration
+\input{config/preamble}
+
+% Metadata
+\title{\textbf{B-splines Hartree-Fock}}
+\author{Rafael Obed Egurrola Corella}
+\date{\today}
+
+\begin{document}
+
+\frontmatter % Roman numerals for pages (i, ii, iii)
+\maketitle
+\tableofcontents
+% \listoffigures
+
+\mainmatter % Arabic numerals (1, 2, 3)
+% Import Chapters
+% \include{chapters/01_introduccion}
+% \include{chapters/02_teoria_bsplines}
+% \include{chapters/03_metodo_hartree_fock}
+% \include{chapters/04_resultados}
+\include{chapters/validation}
+
+\appendix
+% \include{appendices/atomic_units}
+
+\backmatter
+\printbibliography[heading=bibintoc]
+
+\end{document}

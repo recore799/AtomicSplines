@@ -25,3 +25,19 @@
 *~
 # Ignore Emacs lock files
 .#*
+
+
+# LaTeX Build Artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.xdv
+

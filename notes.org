@@ -1,9 +1,341 @@
 * compile-time order k (look at BSplineKit)
 
++ Parametric types BSplineBasis{k}
+
 
 
 * Test the new basis
 
 * Overlap matrix
 
+
+function build_overlap_matrix(basis)
+    n = basis.num_splines
+    k = basis.order
+    
+    # S is symmetric and banded with bandwidth = k
+    # We'll use a dense matrix for simplicity, but SparseMatrixCSC is better for n > 500
+    S = zeros(Float64, n, n)
+    
+    # Quadrature setup (order + 1 points is usually sufficient for overlap)
+    gl_p, gl_w = gausslegendre(k + 1)
+    
+    # We iterate over KNOT INTERVALS (elements) rather than basis functions.
+    # This is much faster because we evaluate all active B-splines at once.
+    num_intervals = length(basis.knots) - 1
+    
+    for interval in 1:num_intervals
+        t_a = basis.knots[interval]
+        t_b = basis.knots[interval+1]
+        
+        if t_a == t_b; continue; end # Skip empty intervals
+        
+        # Scaling for quadrature
+        mid = (t_a + t_b) / 2
+        scale = (t_b - t_a) / 2
+        
+        # Identify which B-splines are non-zero in this interval
+        # B_i is non-zero in [t_i, t_{i+k})
+        # So active indices are roughly (interval - k + 1) to (interval)
+        # We clamp them to be within 1:n
+        first_b = max(1, interval - k + 1)
+        last_b  = min(n, interval)
+        active_indices = first_b:last_b
+        
+        # Quadrature loop
+        for q in 1:length(gl_p)
+            r = scale * gl_p[q] + mid
+            w = scale * gl_w[q]
+            
+            # Evaluate ALL active B-splines at this point r
+            # You likely have a function that does this efficiently
+            # b_vals = [bspline(idx, k, r, basis.knots) for idx in active_indices]
+
+           
+            # Optimization: Most B-spline libs have "eval_all_active(basis, r)" 
+            # to get the k non-zero values at once. Let's assume manual for now:
+            b_vals = Vector{Float64}(undef, length(active_indices))
+            for (local_idx, global_idx) in enumerate(active_indices)
+                # recursive call
+                b_vals[local_idx] = bspline(global_idx, k, r, basis.knots)
+            end
+
+            # Accumulate into S matrix (Tensor product)
+            for (i_loc, i_glob) in enumerate(active_indices)
+                for (j_loc, j_glob) in enumerate(active_indices)
+                    # We only need to fill the upper triangle due to symmetry
+                    if j_glob >= i_glob
+                        S[i_glob, j_glob] += w * b_vals[i_loc] * b_vals[j_loc]
+                    end
+                end
+            end
+        end
+    end
+    
+    return Symmetric(S) # Tells Julia to treat it as symmetric
+end
+
+using BandedMatrices
+
+# Pre-compute this ONCE
+function build_poisson_solver(basis)
+    N = basis.num_splines
+    k = basis.order
+    # Bandwidth is k-1 (e.g. cubic splines k=4 have bandwidth 3)
+    # BandedMatrix(undef, (rows, cols), (lower_bandwidth, upper_bandwidth))
+    T = BandedMatrix(Zeros(N, N), (k-1, k-1)) 
+    S = BandedMatrix(Zeros(N, N), (k-1, k-1)) 
+
+    # ... (Your "Snippet 2" loop goes here) ...
+    # Inside the loop, you access banded matrix like a normal array:
+    # T[i_glob, j_glob] += val 
+    # BandedMatrices.jl handles the storage mapping automatically.
+
+    # THE MAGIC STEP: Pre-factorize the Laplacian
+    # For Poisson, T is usually symmetric positive definite (or close to it)
+    # bunchkaufman or lu works best for general banded
+    solver_factorization = factorize(T) 
+
+    return solver_factorization, S
+end
+
+# Inside your SCF Loop
+function solve_poisson(solver_fact, S, source_vector)
+    # 1. Compute RHS = S * source (Matrix-vector mult, O(N) for banded)
+    b = S * source_vector 
+    
+    # 2. Solve Ax = b using cached factorization (O(N) for banded)
+    # Julia automatically dispatches this to optimized LAPACK banded solvers
+    coeffs = solver_fact \ b
+    
+    return coeffs
+end
+
+
+using BandedMatrices, LinearAlgebra, FastGaussQuadrature
+
+# Structure to hold your solver state
+struct PoissonSolver
+    factorization # The cached LU or Cholesky factorization of the Laplacian
+    S::BandedMatrix{Float64} # The mass/overlap matrix
+end
+
+function init_poisson(basis)
+    N = basis.num_splines
+    k = basis.order
+    # Bandwidth is k-1. (k-1 sub-diagonals, k-1 super-diagonals)
+    # bandwidths = (lower, upper)
+    L = BandedMatrix(Zeros(N, N), (k-1, k-1)) 
+    S = BandedMatrix(Zeros(N, N), (k-1, k-1))
+    
+    # --- Assembly Loop (Your Snippet 2 logic) ---
+    gl_p, gl_w = gausslegendre(k + 1)
+    
+    for i in 1:(length(basis.knots)-1) # Loop over intervals
+        ta, tb = basis.knots[i], basis.knots[i+1]
+        if ta == tb; continue; end
+        
+        # 1. Pre-calculate B-splines and Derivatives at quad points
+        # (This is the hot loop - optimize this!)
+        # ... obtain vals[q, local_idx] and derivs[q, local_idx] ...
+
+        # 2. Fill Local Blocks
+        active_indices = (i - k + 1):i 
+        active_indices = clamp.(active_indices, 1, N) # Handle boundaries
+        
+        for (loc_r, glob_r) in enumerate(active_indices)
+            for (loc_c, glob_c) in enumerate(active_indices)
+                # Integrate -d^2/dr^2 (Kinetic) and Overlap
+                # Note: For Poisson, usually L_ij = <dBi/dr | dBj/dr> 
+                
+                # BandedMatrix handles the index mapping for you!
+                # Just use global indices:
+                L[glob_r, glob_c] += val_kinetic
+                S[glob_r, glob_c] += val_overlap
+            end
+        end
+    end
+
+    # --- Boundary Conditions (Crucial for Poisson) ---
+    # For radial Poisson: y(0)=0, y(R)=0.
+    # In B-splines, just drop the first and last basis functions
+    # OR enforce 1.0 on diagonal and 0.0 elsewhere for boundary rows.
+    # (Simplest is usually to solve the (2:N-1) submatrix).
+    
+    # --- The "One-Time" Factorization ---
+    # Since L is symmetric positive definite (usually), Cholesky is fastest.
+    # But BandedMatrices often prefers LU for stability.
+    fact = factorize(L) 
+
+    return PoissonSolver(fact, S)
+end
+
+function solve_potential(solver::PoissonSolver, density_coeffs)
+    # 1. Transform density coefficients to RHS vector
+    # rhs = S * density_coeffs (Matrix-vector mult is O(N))
+    rhs = solver.S * density_coeffs
+    
+    # 2. Back-substitute to get potential coefficients
+    # This uses the pre-computed factorization (O(N))
+    potential_coeffs = solver.factorization \ rhs
+    
+    return potential_coeffs
+end
+
+
+
 * bunchkaufman for factoring the laplacian in my poisson solver
+
+
+* New functions
+
+"""
+Evaluates all k non-zero B-splines at point t.
+Assumes t is inside the i-th knot interval: knots[i] <= t < knots[i+1].
+Returns a vector of length k containing values of B_{i-k+1}, ..., B_i.
+"""
+function eval_active_bsplines(i::Int, k::Int, t::Float64, knots::Vector{Float64})
+    # We need to store temporary values for the triangle computation
+    # allocations can be avoided with StaticArrays later, but this is fine for now.
+    results = Vector{Float64}(undef, k)
+    
+    # Initialize order k=1 (step 0)
+    results[1] = 1.0
+    
+    # Loop up to order k
+    for j in 1:(k-1)
+        # We need to update the vector in place. 
+        # This computes the next level of the triangle.
+        
+        saved = 0.0
+        for r in 1:j
+            # Left and Right knot terms for the triangular update
+            # The indices require careful alignment with your knot vector definition
+            left = knots[i - j + r]
+            right = knots[i + r]
+            
+            term = results[r] / (right - left)
+            results[r] = saved + (right - t) * term
+            saved = (t - left) * term
+        end
+        results[j+1] = saved
+    end
+    
+    return results
+end
+
+"""
+Computes the derivatives of all k non-zero B-splines at point t.
+Assumes t is inside the i-th knot interval: knots[i] <= t < knots[i+1].
+Returns a vector of length k containing derivatives of B_{i-k+1}, ..., B_i.
+"""
+function eval_active_bsplines_deriv(i::Int, k::Int, t::Float64, knots::Vector{Float64})
+    # 1. Compute values for order k-1
+    # We essentially run the previous algorithm, but stop one step early.
+    
+    # results will store values of order k-1
+    # We need k-1 values, but let's allocate k to make indexing easy 
+    # (and to match the output size)
+    # results = Vector{Float64}(undef, k)
+    
+    # Initialize order 1
+    results[1] = 1.0
+    
+    # Run loop up to k-2 (to get order k-1)
+    for j in 1:(k-2)
+        saved = 0.0
+        for r in 1:j
+            left = knots[i - j + r]
+            right = knots[i + r]
+            term = results[r] / (right - left)
+            results[r] = saved + (right - t) * term
+            saved = (t - left) * term
+        end
+        results[j+1] = saved
+    end
+
+    # At this point, results[1:k-1] holds the values of B-splines of order k-1.
+    # Specifically: results[r] corresponds to B_{i-(k-1)+r, k-1}
+    
+    # 2. Compute Derivatives for order k using the formula
+    # We need a new vector for the output derivatives
+    derivs = Vector{Float64}(undef, k)
+    
+    # We need to treat the 'results' vector as having explicit zeros at the ends
+    # to handle the boundary differences cleanly.
+    
+    # active splines of order k-1:  [v1, v2, ..., v_{k-1}]
+    # we treat this as:           [0, v1, v2, ..., v_{k-1}, 0]
+    
+    # Loop over the k output derivatives
+    for r in 1:k
+        # We need terms from order k-1: index (r-1) and index (r)
+        
+        # Term 1: Positive part (from neighbor r-1)
+        if r == 1
+            val_im1 = 0.0 # Virtual zero at the start
+        else
+            val_im1 = results[r-1]
+        end
+        
+        # Term 2: Negative part (from neighbor r)
+        if r == k
+            val_i = 0.0 # Virtual zero at the end
+        else
+            val_i = results[r]
+        end
+        
+        # Denominators (from the definition of derivative)
+        # Careful with indices:
+        # Denom 1 corresponds to support of B_{i-k+r, k-1}
+        # Denom 2 corresponds to support of B_{i-k+r+1, k-1}
+        
+        # Simplification:
+        # The stride for the denominator is always (k-1) knots apart.
+        
+        denom1 = knots[i + r - 1] - knots[i - k + r]
+        denom2 = knots[i + r]     - knots[i - k + r + 1]
+        
+        term1 = (denom1 == 0.0) ? 0.0 : val_im1 / denom1
+        term2 = (denom2 == 0.0) ? 0.0 : val_i   / denom2
+        
+        derivs[r] = (k - 1) * (term1 - term2)
+    end
+    
+    return derivs
+end
+
+function eval_expansion_optimized(coeffs, basis, x)
+    k = basis.order
+    knots = basis.knots
+    
+    # 1. binary search to find the interval index 'i'
+    # such that knots[i] <= x < knots[i+1]
+    i = searchsortedlast(knots, x)
+    
+    # Handle boundaries:
+    # If x is exactly at the end, it technically falls in the last interval
+    if x == knots[end]
+        i = length(knots) - k # Adjust to last valid interval
+    elseif i < k || i > length(knots) - 1
+        return 0.0 # x is outside the valid range
+    end
+
+    # 2. Compute the k non-zero basis functions at x
+    # (Using the iterative Cox-de Boor function we discussed)
+    b_vals = eval_active_bsplines(i, k, x, knots)
+    
+    # 3. Dot product with the specific coefficients
+    val = 0.0
+    for j in 1:k
+        # The basis function B_{i-k+j} corresponds to index (i-k+j)
+        # b_vals[j] holds the value of that basis function
+        coeff_idx = i - k + j
+        val += coeffs[coeff_idx] * b_vals[j]
+    end
+    
+    return val
+end
+
+
+

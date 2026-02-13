@@ -38,7 +38,7 @@ println("   > Base: $N_ELEMS elementos, Orden $ORDER")
 println("   > Total Splines: $(basis.num_splines)")
 
 # ==============================================================================
-# C. ENSAMBLAJE DE MATRICES (HACKEANDO LA LIBRERÍA)
+# C. ENSAMBLAJE DE MATRICES
 # ==============================================================================
 println("C. Ensamblando Sistema Matricial...")
 

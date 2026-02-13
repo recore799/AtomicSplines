@@ -1,0 +1,9 @@
+* compile-time order k (look at BSplineKit)
+
+
+
+* Test the new basis
+
+* Overlap matrix
+
+* bunchkaufman for factoring the laplacian in my poisson solver

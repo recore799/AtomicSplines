@@ -18,3 +18,5 @@ function _solve_and_update!(orb, H, S)
     orb.energy = evals[state_idx]
     orb.coeffs = evecs[:, state_idx]
 end
+
+

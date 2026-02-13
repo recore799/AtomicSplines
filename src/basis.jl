@@ -2,34 +2,90 @@ struct BSplineBasis
     order::Int
     num_splines::Int
     knots::Vector{Float64}
+    num_elements::Int
 end
 
-function bspline(i, k, t, knots)
-    if k == 1
-        return (knots[i] <= t < knots[i+1]) ? 1.0 : 0.0
+struct BSplineScratch
+    vals::Vector{Float64}
+    derivs::Vector{Float64}
+end
+
+"""
+Unified B-spline evaluation kernel.
+Computes Values (if CompVal) and Derivatives (if CompDeriv) in one pass.
+Writes directly to pre-allocated scratch buffers to avoid GC.
+"""
+function eval_bspline_kernel!(
+    out_vals::AbstractVector{Float64}, 
+    out_derivs::AbstractVector{Float64},
+    ::Val{CompVal}, 
+    ::Val{CompDeriv}, 
+    i::Int, k::Int, t::Float64, knots::Vector{Float64}
+) where {CompVal, CompDeriv}
+
+    # 1. Initialize Order 1
+    out_vals[1] = 1.0
+
+    # 2. Cox-de Boor recursion up to Order k-1
+    for j in 1:(k-2)
+        saved = 0.0
+        for r in 1:j
+            left  = knots[i - j + r]
+            right = knots[i + r]
+            if right == left
+                term = 0.0
+            else
+                term = out_vals[r] / (right - left)
+            end
+            out_vals[r] = saved + (right - t) * term
+            saved = (t - left) * term
+        end
+        out_vals[j+1] = saved
     end
-    d1 = knots[i+k-1] - knots[i]
-    d2 = knots[i+k] - knots[i+1]
-    v1 = (d1 == 0.0) ? 0.0 : (t - knots[i]) / d1 * bspline(i, k-1, t, knots)
-    v2 = (d2 == 0.0) ? 0.0 : (knots[i+k] - t) / d2 * bspline(i+1, k-1, t, knots)
-    return v1 + v2
-end
 
-function d_bspline(i, k, t, knots)
-    if k == 1; return 0.0; end
-    d1 = knots[i+k-1] - knots[i]
-    d2 = knots[i+k] - knots[i+1]
-    v1 = (d1 == 0.0) ? 0.0 : bspline(i, k-1, t, knots) / d1
-    v2 = (d2 == 0.0) ? 0.0 : bspline(i+1, k-1, t, knots) / d2
-    return (k-1) * (v1 - v2)
-end
+    # 3. Compute Derivatives (Optional) - uses Order k-1 values
+    if CompDeriv
+        for r in 1:k
+            val_im1 = (r == 1) ? 0.0 : out_vals[r-1]
+            val_i   = (r == k) ? 0.0 : out_vals[r]
 
-function eval_expansion(coeffs, basis, x)
-    val = 0.0
-    for i in 1:basis.num_splines
-        if basis.knots[i] <= x < basis.knots[i+basis.order]
-            val += coeffs[i] * bspline(i, basis.order, x, basis.knots)
+            denom1 = knots[i+r-1] - knots[i-k+r]
+            denom2 = knots[i+r]   - knots[i-k+r+1]
+
+            term1 = (denom1 == 0.0) ? 0.0 : val_im1 / denom1
+            term2 = (denom2 == 0.0) ? 0.0 : val_i   / denom2
+
+            out_derivs[r] = (k - 1) * (term1 - term2)
         end
     end
-    return val
+
+    # 4. Compute Final Values (Optional) - Order k-1 -> k
+    if CompVal
+        j = k - 1
+        saved = 0.0
+        for r in 1:j
+            left  = knots[i - j + r]
+            right = knots[i + r]
+            if right == left
+                term = 0.0
+            else
+                term = out_vals[r] / (right - left)
+            end
+            out_vals[r] = saved + (right - t) * term
+            saved = (t - left) * term
+        end
+        out_vals[j+1] = saved
+    end
 end
+
+function generate_basis(r_max, num_elements, order; γ=2.0)
+    x = range(0, 1, length=num_elements + 1)
+    r_knots = r_max .* (exp.(γ .* x) .- 1) ./ (exp(γ) - 1)
+    # Clamp small errors to 0
+    r_knots[1] = 0.0
+    
+    # Open knot vector (repeat start and end)
+    knots = vcat(fill(r_knots[1], order-1), r_knots, fill(r_knots[end], order-1))
+    return BSplineBasis(order, length(knots)-order, knots, length(knots)-1)
+end
+

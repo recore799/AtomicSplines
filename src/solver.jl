@@ -61,3 +61,5 @@ function solve_eigen(H::AbstractMatrix, S::AbstractMatrix; nev=1, method=:auto)
     
     return sel_vals, full_vecs
 end
+
+

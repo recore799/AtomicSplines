@@ -5,22 +5,12 @@ using SparseArrays
 using FastGaussQuadrature
 using Arpack
 
-# Exportaciones
-# export BSplineBasis, generate_basis
-# export bspline, d_bspline, eval_expansion
-# export assemble_core, assemble_J_matrix, assemble_centrifugal, assemble_operator_matrix, assemble_interaction_matrix, assemble_exchange_matrix, assemble_projection_operator
-# export solve_poisson_potential, solve_poisson_general
-# export solve_eigen, Orbital, Atom
-# export solve_orbital!
-# export wigner_3j_squared, generate_interactions, assemble_fock_matrix
-# export Shell, AtomicConfig, InteractionTerm
-
 # Basis
-export BSplineBasis, eval_bspline_kernel!,  generate_basis
+export BSplineBasis, SolverWorkspace, generate_basis, eval_bspline_kernel!
 # Integrals
-export assemble_core, assemble_J_matrix
+export assemble_core, assemble_J_matrix, init_scf_workspace, build_interaction_tensors, assemble_J_matrix_param, assemble_J_matrix_tensor
 # Poisson
-export solve_poisson_potential
+export solve_poisson_potential, solve_poisson_fast, solve_poisson_tensor
 # Helpers
 export evaluate_orbital
 

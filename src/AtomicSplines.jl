@@ -1,16 +1,15 @@
 module AtomicSplines
 
 using LinearAlgebra
-using SparseArrays
+using BandedMatrices
 using FastGaussQuadrature
-using Arpack
 
 # Basis
 export BSplineBasis, SolverWorkspace, generate_basis, eval_bspline_kernel!
 # Integrals
-export assemble_core, assemble_J_matrix, init_scf_workspace, build_interaction_tensors, assemble_J_matrix_param, assemble_J_matrix_tensor
+export init_scf_workspace, assemble_J_matrix, assemble_K_matrix
 # Poisson
-export solve_poisson_potential, solve_poisson_fast, solve_poisson_tensor
+export solve_poisson_J, solve_generalized_poisson
 # Helpers
 export evaluate_orbital
 

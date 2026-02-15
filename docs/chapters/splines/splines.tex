@@ -1,0 +1,93 @@
+\documentclass[12pt, a4paper, oneside, spanish]{article}
+
+\input{../preamble}
+
+% Metadata
+\title{\textbf{Implementación Eficiente de B-splines}}
+\author{Rafael Obed Egurrola Corella}
+\date{\today}
+
+\begin{document}
+
+\section{El enfoque ingenuo: evaluación recursiva y costo computacional}
+
+La implementación inicial del solucionador se basó en una traducción directa de la fórmula de recurrencia de Cox-de Boor. Si bien esta formulación es matemáticamente elegante para definic un B-spline en cualquier punto \( r \), su uso directo dentro de los ciclos iterativos del método de Campo Autoconsistente (SCF) resulta computacionalmente ineficiente.
+
+El cuello de botella principal reside en la construcción de las matrices de interacción (como la matriz de superposición \( \bm{S} \) o la cinética \( \bm{T} \)). Para un sistema con \( N \) funciones base, la construcción de una matriz implica calcular \( N \cross N \) elementos. Si cada integral se evalúa mediante cuadratura numérica sobre \( M \) puntos, la complejidad bruto del ensamblaje es de orden \( \order{N^2\cdot M} \).
+
+En el enfoque "ingenuo", cada vez que el integrador solicitaba el valor de un spline \( B_i(r) \), el algoritmo recorría la recursión completa desde el orden 0 hasta el orden \( k \). Esto implicaba:
+
+\begin{itemize}
+\item Redundancia de cálculo: Se re-evaluaban los mismos polinomios base milos de veces a lo largo de las iteraciones del SCF.
+\item Evaluación bajo demanda ("lazy evaluation"): El sistema calculaba los valores "en la marcha" durante la integración.
+\end{itemize}
+
+La optimización clave consistió en separar la evaluación de la integración. Se observó que los valores de los B-splines en los puntos de cuadratura son invariantes geométricos del sistema. Por lo tanto, en lugar de evaluar recursivamente en cada paso del SCF, es posible llamar al kernel de evaluación una única vez durante la fase de inicialización (setup), almacenando los resultados en una estructura de datos persistente (Workspace). Esto reduce la complejudad del ciclo SCF de una operación de evaluación de funciones a una simple recuperación de memoria.
+
+\section{Geometría de B-splines}
+
+En B-splines, el espacio geométrico está definido por el vector de nudos (knot vector) y el grado del polinomio. Una vez que se discretiza el espacio con una cuadriatura (Gauss-Legendre), estamos proyectando el espacio de funciones continuas a un espacio vectorial discreto.
+
+\begin{definition}[Tensor de colocación]
+
+  Sea \( \mathcal{S}_k \) el espacio de B-splines de orden \( k \) definidos sobre una secuencia de nudos \( t \). Sea \( \{ B_i(x) \}_{i=1}^N \) la base de este espacio.
+
+  Sea \( \mathcal{Q} = \{ (x_q,w_q) \}_{q=1}^Q \) el conjunto de puntos y pesos de cuadratura que definen la geometría de integración.
+
+  Definimos el tensor (o matriz en 1D) de proyección al espacio de cuadratura como \( \bm{E} \):
+
+  \begin{equation}
+    \label{eq:collocation-tensor}
+    E_{iq} = B_i(x_q)
+  \end{equation}
+
+\end{definition}
+
+\subsection{Interpretación geométrica y optimización}
+
+Siguiendo la perspectiva del famoso Programa de Erlangen, donde la geometría se comprende a través de sus invariantes bajo transformaciones, podemos identificar una estructura fundamental en nuestro sistema numérico.
+
+En el contexta de un cálculo iterativo (como el de Campo Autoconsistente), los coeficientes que definen la función de onda cambian en cada paso. Sin embargo, la relación espacial entre la base de funciones (B-splines) y la malla de integración (puntos de cuadratura) permanece inalterada.
+
+La matriz \( \bm{E} \) encapsula esta rigidez geométrica. Representa un operador lineal invariante que mapea el espacio abstracto de la base \( \mathcal{S}_k \) al espacio física discretizado de la cuadratura.
+
+\textbf{La optimización surge de esta observación:} al reconocer \( E_{iq} \) como un invariante geométrico, logramos desacoplar la evaluación de la integración.
+
+\begin{enumerate}
+\item\label{item:1} Pre-cálculo (setup): La evaluación de los polinomios (mediante las costosas recurrencias de Cox-de Boor) se realiza una única vez para construir \( E \).
+\item Ejecución (SCF loop): La integración numérica, que debe repetirse una y otra vez, se reduce matemáticamente a una contracción tensorial.
+\end{enumerate}
+
+Esto transforma la complejidad del problema: pasamos de evaluar funciones recursivas dentro de bucles, a realizar multiplicaciones de matrices altamente eficientes.
+
+
+\section{Cambio de paradigma}
+
+Para optimizar el ensamblaje de matrices y aprovechar la estructura de los B-splines, se refactorizó la arquitectura del código pasando de un diseño centrado en la función o uno centrado en el elemento.
+
+\subsection{Arquitectura función-céntrica (el problema)}
+
+En el diseño original, el algoritmo iteraba sobre el índice de las funciones base (\( i = 1,...,N \)). Para cada función, se recorría el dominio espacial completo buscando su contribución.
+
+\begin{itemize}
+\item \textbf{Ineficiencia:} Dado que los B-splines tienen soporte compacto, este enfoque desperdiciaba ciclos de CPU comprobando regiones donde la función y sus derivadas eran nulas.
+\item \textbf{Dispersión de memoria:} El acceso a los datos no seguía un patrón lineal, provocando saltos constantes en la memoria.
+\end{itemize}
+
+\subsection{Arquitectura elemento-céntrica (la solución)}
+
+El diseño que utilizamos invierte el bucle principal: en lugar de iterar sobre funciones, iteramos sobre los intervalos de nudos (o elementos finitos) \( [t_j, t_{j+1}) \).
+
+Dentro de un intervalo específico, sabemos por definición que solo existen \( k \) splines no nulos (donde \( k \) es el orden del spline). Esto permite:
+
+\begin{itemize}
+\item \textbf{Cálculo denso:} Construir pequeñas matrices locales de tamaño \( k \cross k \) que son densas, eliminando cualquier operación aritmética innecesaria.
+\item \textbf{Localidad de referencia:} Todos los datos necesarios para procesar un intervalo (coeficientes, puntos de cuadratura y valores pre-calculados) se encuentran contiguos en memoria.
+\item \textbf{Ensamblaje global:} Una vez procesado el elemento, su contribución local se dispersa (scatter) hacia la matriz global de manera determinista.
+\end{itemize}
+
+Este cambio elimina la necesidad de buscar dónde es válida una función. El algoritmo solo procesa regiones con contribución física real, alineando el flujo de ejecución con la estructura matemática de la base. Produciendo matrices banda con ancho de banda \( k-1 \).
+
+
+
+\end{document}

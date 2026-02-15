@@ -13,17 +13,23 @@ end
 struct SolverWorkspace{K}
     basis::BSplineBasis{K}
     
-    # Matrices (Dense for now, could be Sparse)
-    T::Matrix{Float64}
-    V::Matrix{Float64}
-    S::Matrix{Float64}
-    
+    # S, T, V have bandwith K-1 each side.
+    S::BandedMatrix{Float64}
+    T::BandedMatrix{Float64}
+    V::BandedMatrix{Float64}
+    V2::BandedMatrix{Float64}
+    # Coulomb matrix
+    J::BandedMatrix{Float64}
+    K_mat::Matrix{Float64}
+
+   
     # Stores the local KxKxK tensor for each element
     # W[element_index][k, a, b]
     interaction_tensors::Vector{Array{Float64, 3}}
 
-    # Poisson Solver Cache (Cholesky)
-    poisson_fact::Cholesky{Float64, Matrix{Float64}}
+    # Store multiple Cholesky factorizations
+    # Key = k (multipole order), Value = Factorization
+    poisson_factors::Dict{Int, Any}
 
     # Pre-allocated Scratch Vectors (Size K)
     scratch_vals::Vector{Float64}
@@ -42,9 +48,9 @@ function generate_basis(R_max, N_elems, ::Val{K}; γ=2.0) where {K}
     
     n_splines = length(knots) - K
     
-    # 2. Pre-compute Quadrature (Order + 4 rule)
+    # 2. Pre-compute Quadrature (Order + 6 rule)
     # This runs once at setup, so allocation is fine here.
-    gl_p, gl_w = gausslegendre(K + 4)
+    gl_p, gl_w = gausslegendre(K + 6)
     
     return BSplineBasis{K}(n_splines, knots, gl_p, gl_w)
 end

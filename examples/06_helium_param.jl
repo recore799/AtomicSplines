@@ -12,9 +12,6 @@ function solve_helium_parametric()
 
     println("Workspace Initialized. Basis Order K=$(typeof(basis).parameters[1])")
 
-    println("Quadrature Nodes: ", length(basis.gl_nodes))
-    println("First Tensor Sum: ", sum(ws.interaction_tensors[div(60, 2)]))
-
     # Initial Guess
     active = 2:(basis.num_splines - 1)
     H_core = ws.T + ws.V
@@ -45,11 +42,11 @@ function solve_helium_parametric()
         # Solve Poisson (Instant!)
         #    Use the pre-computed Cholesky factorization in ws.poisson_fact
         #    (You'll need to adapt solve_poisson to take the 'ws' struct)
-        y_coeffs = solve_poisson_tensor(ws, c_current) 
+        y_coeffs = solve_poisson_J(ws, c_current) 
 
         
         # Assemble J (Uses ws.scratch_vals, no allocs)
-        J = assemble_J_matrix_tensor(ws, y_coeffs)
+        J = assemble_J_matrix(ws, y_coeffs)
 
 
         # Construct Fock Matrix

@@ -1,151 +1,36 @@
 function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
     n = basis.num_splines
+
+    # println("   > Assembling Geometry (Matrices & Tensors)...")
+    S, T, V, V2, tensors = assemble_geometry(basis, Z)
     
-    # Allocate Matrices
-    T = zeros(Float64, n, n)
-    V = zeros(Float64, n, n)
-    S = zeros(Float64, n, n)
+    bw = (K-1, K-1)
+    J = BandedMatrix(Zeros(n, n), bw)
+
+    # Initialize Factorization Dictionary
+    factors = Dict{Int, Any}()
     
-    # Scratch buffers (Exact size K)
-    scratch_v = zeros(Float64, K)
-    scratch_d = zeros(Float64, K)
-    
-    for i in 1:(length(basis.knots) - 1)
-        t_a = basis.knots[i]; t_b = basis.knots[i+1]
-        if t_a == t_b; continue; end
-        
-        mid = (t_a + t_b)/2; scale = (t_b - t_a)/2
-        first_global = i - K + 1
-
-        for q in 1:length(basis.gl_nodes)
-            r = scale * basis.gl_nodes[q] + mid
-            w = scale * basis.gl_weights[q]
-
-            # Pass Val{K} to kernel
-            eval_bspline_kernel!(scratch_v, scratch_d, Val(true), Val(true), 
-                                 i, r, basis.knots, Val(K))
-
-            # Block Scatter
-            for a in 1:K
-                g_a = first_global + a - 1
-                if g_a < 1 || g_a > n; continue; end
-                
-                Na = scratch_v[a]; dNa = scratch_d[a]
-                
-                for b in a:K # Symmetry optimization
-                    g_b = first_global + b - 1
-                    if g_b < 1 || g_b > n; continue; end
-                    
-                    Nb = scratch_v[b]; dNb = scratch_d[b]
-                    
-                    S[g_a, g_b] += w * Na * Nb
-                    T[g_a, g_b] += w * 0.5 * dNa * dNb
-                    if r > 1e-12
-                        V[g_a, g_b] += w * (-Z / r) * Na * Nb
-                    end
-                end
-            end
-        end
-    end
-    
-    # Symmetrize
-    S = Symmetric(S); T = Symmetric(T); V = Symmetric(V)
-
-    # Build the Interaction Tensors
-    tensors = build_interaction_tensors(basis)
-
-    # --- PRE-COMPUTE POISSON (k=0) ---
-    # Stiffness K = 2*T. Factorize inner block.
-    K_mat = 2.0 .* T
+    # Pre-compute k=0 (Standard Poisson)
+    #    Operator: 2*T + 0*V2
+    # println("   > Factorizing Poisson (k=0)...")
+    K0 = 2.0 .* T
     active = 2:(n-1)
-    
-    # This is the "Cholesky Trick" you wanted
-    # We store the factorization, not the matrix!
-    poisson_fact = cholesky(K_mat[active, active])
-    
-    return SolverWorkspace{K}(basis, Matrix(T), Matrix(V), Matrix(S), 
-                              tensors, poisson_fact, scratch_v, scratch_d)
+    factors[0] = cholesky(K0[active, active])
+
+    K_mat = zeros(n,n)
+   
+    return SolverWorkspace(basis, S, T, V, V2, J, K_mat, tensors, 
+                           factors, zeros(K), zeros(K))
 end
 
-
-"""
-Builds T (Kinetic), V_nuc (Nuclear), and S (Overlap) in a single pass.
-Iterates over ELEMENTS (intervals), not functions.
-"""
-function assemble_core(basis, Z)
-    n = basis.num_splines
-    k = basis.order
-    
-    # Use dense matrices for N < 500. 
-    T = zeros(Float64, n, n)
-    V = zeros(Float64, n, n)
-    S = zeros(Float64, n, n)
-    
-    scratch = BSplineScratch(Vector{Float64}(undef, k), Vector{Float64}(undef, k))
-    
-    # Gauss-Legendre Quadrature
-    gl_p, gl_w = gausslegendre(k + 2) 
-
-    # Iterate over knot intervals (elements)
-    # The active range of splines is roughly [1, n+k] in the knot vector
-    for i in 1:(length(basis.knots) - 1)
-        t_a = basis.knots[i]; t_b = basis.knots[i+1]
-        if t_a == t_b; continue; end
-
-        # Map bounds
-        mid = (t_a + t_b) / 2
-        scale = (t_b - t_a) / 2
-        
-        # Identify active B-splines: B_{i-k+1} ... B_{i} are non-zero here
-        first_global = i - k + 1
-
-        for q in 1:length(gl_p)
-            r = scale * gl_p[q] + mid
-            w = scale * gl_w[q]
-
-            # Kernel Call: Get Vals AND Derivs
-            eval_bspline_kernel!(scratch.vals, scratch.derivs, Val(true), Val(true), 
-                                 i, k, r, basis.knots)
-
-            # Add to matrix blocks
-            for a in 1:k
-                g_a = first_global + a - 1
-                if g_a < 1 || g_a > n; continue; end
-                
-                # Pre-fetch for inner loop
-                Na  = scratch.vals[a]
-                dNa = scratch.derivs[a]
-
-                for b in 1:k
-                    g_b = first_global + b - 1
-                    if g_b < 1 || g_b > n; continue; end
-                    
-                    Nb  = scratch.vals[b]
-                    dNb = scratch.derivs[b]
-                    
-                    # Overlap: <a|b>
-                    S[g_a, g_b] += w * Na * Nb
-                    
-                    # Kinetic: 0.5 * <da|db>
-                    T[g_a, g_b] += w * 0.5 * dNa * dNb
-                    
-                    # Nuclear: -Z * <a|1/r|b>
-                    # Avoid singularity at r=0 (though GL points shouldn't hit 0)
-                    if r > 1e-12
-                        V[g_a, g_b] += w * (-Z / r) * Na * Nb
-                    end
-                end
-            end
-        end
-    end
-    
-    return Symmetric(T), Symmetric(V), Symmetric(S)
-end
-
-function assemble_J_matrix_tensor(ws::SolverWorkspace{K}, y_coeffs) where {K}
+function assemble_J_matrix(ws::SolverWorkspace{K}, y_coeffs) where {K}
     n = ws.basis.num_splines
-    J_mat = zeros(Float64, n, n)
-    
+    J_mat = ws.J
+
+    # Reset values to zero for the new iteration
+    # 'fill!' is extremely fast and preserves the Banded structure.
+    fill!(J_mat, 0.0)
+
     for i in 1:(length(ws.basis.knots) - 1)
         # Retrieve pre-computed physics
         if !isassigned(ws.interaction_tensors, i); continue; end
@@ -177,169 +62,211 @@ function assemble_J_matrix_tensor(ws::SolverWorkspace{K}, y_coeffs) where {K}
                 for b in 1:K
                     g_b = first_global + b - 1
                     if g_b < 1 || g_b > n; continue; end
-                    
-                    J_mat[g_a, g_b] += weight * W_local[k, a, b]
+
+                    val_J = weight * W_local[k, a, b]
+                    J_mat[g_a, g_b] += val_J
                 end
             end
         end
     end
     
-    return Symmetric(J_mat)
+    return J_mat
 end
 
-function assemble_J_matrix_param(ws::SolverWorkspace{K}, y_coeffs) where {K}
-    basis = ws.basis
+function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
     n = basis.num_splines
+    bw = (K-1, K-1)
+    
+    #    We use 'Zeros' which BandedMatrices understands efficiently
+    S = BandedMatrix(Zeros(n, n), bw)
+    T = BandedMatrix(Zeros(n, n), bw)
+    V = BandedMatrix(Zeros(n, n), bw)
+    V2 = BandedMatrix(Zeros(n, n), bw)
+    
+    # Pre-allocate tensor storage
+    tensors = Vector{Array{Float64, 3}}(undef, length(basis.knots) - 1)
+    
+    # Scratch buffers
+    vals = zeros(Float64, K)
+    derivs = zeros(Float64, K)
 
-    J_mat = zeros(Float64, n, n)
-
+    # The Great Loop (Iterate Once)
     for i in 1:(length(basis.knots) - 1)
         t_a = basis.knots[i]; t_b = basis.knots[i+1]
         if t_a == t_b; continue; end
-
+        
         mid = (t_a + t_b)/2; scale = (t_b - t_a)/2
         first_global = i - K + 1
 
-        for q in 1:length(basis.gl_nodes)
-            r = scale * basis.gl_nodes[q] + mid
-            w = scale * basis.gl_weights[q]
-
-            eval_bspline_kernel!(ws.scratch_vals, ws.scratch_derivs, Val(true), Val(true),
-                                 i, r, basis.knots, Val(K))
-        
-            # Compute y(r) = r * V_H(r)
-            # Actually, usually y_coeffs ARE the density projection coeffs.
-            # Let's assume y_coeffs represents the solution to Poisson: U(r) = y(r)/r
-            # So here we reconstruct y(r)
-            y_val = 0.0
-            for idx in 1:K
-                g_idx = first_global + idx - 1
-                if g_idx >= 1 && g_idx <= n
-                    y_val += y_coeffs[g_idx] * ws.scratch_vals[idx]
-                end
-            end
-            
-            # Potential V_H = y(r) / r
-            if r < 1e-12; continue; end # Avoid singularity
-            V_H = y_val / r
-            
-            # Fill Matrix J_ab = <a | V_H | b>
-            for a in 1:K
-                g_a = first_global + a - 1
-                if g_a < 1 || g_a > n; continue; end
-                
-                term_a = ws.scratch_vals[a] * w * V_H
-                
-                for b in 1:K
-                    g_b = first_global + b - 1
-                    if g_b < 1 || g_b > n; continue; end
-                
-                    J_mat[g_a, g_b] += term_a * ws.scratch_vals[b]
-                end
-            end
-        end
-    end
-    return Symmetric(J_mat)
-end
-
-"""
-Builds the Hartree Potential Matrix J.
-Calculates density y(r) on the fly without extra searches.
-"""
-function assemble_J_matrix(basis, y_coeffs)
-    n = basis.num_splines; k = basis.order
-    J_mat = zeros(Float64, n, n)
-    
-    scratch = BSplineScratch(Vector{Float64}(undef, k), Vector{Float64}(undef, k))
-    gl_p, gl_w = gausslegendre(k + 2)
-
-    for i in 1:(length(basis.knots) - 1)
-        t_a = basis.knots[i]; t_b = basis.knots[i+1]
-        if t_a == t_b; continue; end
-        
-        first_global = i - k + 1
-        mid = (t_a + t_b)/2; scale = (t_b - t_a)/2
-
-        for q in 1:length(gl_p)
-            r = scale * gl_p[q] + mid
-            w = scale * gl_w[q]
-
-            # Need Values only
-            eval_bspline_kernel!(scratch.vals, scratch.derivs, Val(true), Val(false), 
-                                 i, k, r, basis.knots)
-
-            # Compute y(r) = r * V_H(r)
-            # Actually, usually y_coeffs ARE the density projection coeffs.
-            # Let's assume y_coeffs represents the solution to Poisson: U(r) = y(r)/r
-            # So here we reconstruct y(r)
-            y_val = 0.0
-            for idx in 1:k
-                g_idx = first_global + idx - 1
-                if g_idx >= 1 && g_idx <= n
-                    y_val += y_coeffs[g_idx] * scratch.vals[idx]
-                end
-            end
-            
-            # Potential V_H = y(r) / r
-            if r < 1e-12; continue; end # Avoid singularity
-            V_H = y_val / r
-            
-            # Fill Matrix J_ab = <a | V_H | b>
-            for a in 1:k
-                g_a = first_global + a - 1
-                if g_a < 1 || g_a > n; continue; end
-                
-                term_a = scratch.vals[a] * w * V_H
-                
-                for b in 1:k
-                    g_b = first_global + b - 1
-                    if g_b < 1 || g_b > n; continue; end
-                    
-                    J_mat[g_a, g_b] += term_a * scratch.vals[b]
-                end
-            end
-        end
-    end
-    return Symmetric(J_mat)
-end
-
-
-function build_interaction_tensors(basis::BSplineBasis{K}) where {K}
-    tensors = Vector{Array{Float64, 3}}(undef, length(basis.knots) - 1)
-
-    # Scratch for kernel
-    vals = zeros(Float64, K); derivs = zeros(Float64, K)
-
-    for i in 1:(length(basis.knots) - 1)
-        t_a = basis.knots[i]; t_b = basis.knots[i+1]
-        if t_a == t_b; continue; end
-        mid = (t_a + t_b)/2; scale = (t_b - t_a)/2
-
-        # Local tensor for this element
+        # Allocate local tensor for this element
         W_local = zeros(Float64, K, K, K)
 
         for q in 1:length(basis.gl_nodes)
             r = scale * basis.gl_nodes[q] + mid
             w = scale * basis.gl_weights[q]
+            inv_r = (r > 1e-12) ? 1.0/r : 0.0
+            inv_r2 = inv_r * inv_r
 
-            # Singularity check
-            inv_r = (r > 1e-10) ? 1.0/r : 0.0
+            # --- SINGLE KERNEL CALL ---
+            eval_bspline_kernel!(vals, derivs, Val(true), Val(true), 
+                                 i, r, basis.knots, Val(K))
 
-            # Eval basis
-            eval_bspline_kernel!(vals, derivs, Val(true), Val(false), i, r, basis.knots, Val(K))
+            # --- ACCUMULATE EVERYTHING ---
+            for a in 1:K
+                g_a = first_global + a - 1
+                
+                # Pre-fetch values for 'a'
+                Na = vals[a]; dNa = derivs[a]
+                
+                # Pre-calc parts of Tensor W to save mults
+                # W_kab = (B_k/r) * B_a * B_b
+                # We can cache (B_a * w * inv_r) for the tensor loops
+                wa_tensor_factor = Na * w * inv_r 
 
-            for k_idx in 1:K
-                val_k = vals[k_idx] * w * inv_r
-                for a in 1:K
-                    val_ka = val_k * vals[a]
-                    for b in a:K # Symmetric in a,b
-                        W_local[k_idx, a, b] += val_ka * vals[b]
-                        W_local[k_idx, b, a] = W_local[k_idx, a, b]
+                # Inner Loop (Triangular for Symmetry)
+                for b in a:K
+                    g_b = first_global + b - 1
+                    
+                    Nb = vals[b]; dNb = derivs[b]
+                    
+                    # Build Matrices S, T, V
+                    # Check bounds only if strictly necessary
+                    if g_a >= 1 && g_a <= n && g_b >= 1 && g_b <= n
+                        term_S = w * Na * Nb
+                        term_T = w * 0.5 * dNa * dNb
+                        term_V = -Z * term_S * inv_r # Reuse term_S * inv_r
+                        term_V2 = term_S * inv_r2
+                        
+                        S[g_a, g_b] += term_S
+                        T[g_a, g_b] += term_T
+                        V[g_a, g_b] += term_V
+                        V2[g_a, g_b] += term_V2
+                        
+                        if g_a != g_b
+                            S[g_b, g_a] += term_S
+                            T[g_b, g_a] += term_T
+                            V[g_b, g_a] += term_V
+                            V2[g_b, g_a] += term_V2
+                        end
+                    end
+                    
+                    # Build Tensor W (Using the same vals!)
+                    # We need to loop 'k' here.
+                    # W_kab = B_k * (B_a * B_b / r)
+                    # We already have (B_a * B_b / r) implied.
+                    term_tensor_base = wa_tensor_factor * Nb
+                    
+                    for k in 1:K
+                        # W[k, a, b] += B_k * term_base
+                        val = vals[k] * term_tensor_base
+                        W_local[k, a, b] += val
+                        
+                        # Symmetry for Tensor W (a,b)
+                        if a != b
+                            W_local[k, b, a] += val
+                        end
                     end
                 end
             end
         end
         tensors[i] = W_local
     end
-    return tensors
+    
+    return S, T, V, V2, tensors
 end
+function assemble_K_matrix(ws::SolverWorkspace{K}, occupied_orbitals::Vector{Vector{Float64}}) where {K}
+    K_mat = ws.K_mat
+    fill!(K_mat, 0.0)
+    n = ws.basis.num_splines
+    b_vec = zeros(Float64, n)
+    
+    # 1. Loop over occupied orbitals
+    for psi in occupied_orbitals
+        
+        # 2. Loop over basis functions 'nu'
+        for nu in 1:n
+            fill!(b_vec, 0.0)
+            
+            # --- CALCULATE BOUNDARY CONDITION (Q) ---
+            # Q = Integral( psi * B_nu ) = <psi | B_nu>
+            # Since psi = sum(c_a * B_a), Q = sum_a c_a * S[a, nu]
+            # We use the Banded Mass Matrix S for speed.
+            boundary_charge = 0.0
+            
+            # Optimization: Only loop over the band of S
+            s_start = max(1, nu - K + 1)
+            s_end   = min(n, nu + K - 1)
+            
+            for a in s_start:s_end
+                boundary_charge += psi[a] * ws.S[a, nu]
+            end
+            
+            # --- BUILD SOURCE VECTOR (Unchanged) ---
+            # Iterate relevant elements...
+            for i in 1:(length(ws.basis.knots)-1)
+                if !isassigned(ws.interaction_tensors, i); continue; end
+                W = ws.interaction_tensors[i]
+                first = i - K + 1
+                
+                # Check if B_nu is in this element
+                loc_nu = nu - first + 1
+                if loc_nu < 1 || loc_nu > K; continue; end
+                
+                # Get local psi coeffs
+                c_loc = zeros(Float64, K)
+                for idx in 1:K
+                    g = first + idx - 1; if g>=1&&g<=n; c_loc[idx] = psi[g]; end
+                end
+                
+                for k in 1:K
+                    g_k = first + k - 1; if g_k<1||g_k>n; continue; end
+                    val = 0.0
+                    for a in 1:K
+                        val += c_loc[a] * W[k, a, loc_nu]
+                    end
+                    b_vec[g_k] += val
+                end
+            end
+            
+            # --- SOLVE WITH BC ---
+            # Only k=0 monopole has a non-zero charge at infinity.
+            # Higher multipoles decay to 0 faster.
+            bc_val = (0 == 0) ? boundary_charge : 0.0 # Hardcoded k=0 for s-orbitals
+            
+            y_k = solve_generalized_poisson(ws, b_vec, 0; boundary_val=bc_val)
+            
+            # --- ACCUMULATE (Unchanged) ---
+            # ... (Copy your previous accumulation loop here) ...
+            for i in 1:(length(ws.basis.knots)-1)
+                 # ... (Your logic for K_mat += ... is correct) ...
+                 # (Just ensure you removed the banded check 'abs(g_mu-nu)' as discussed!)
+                 if !isassigned(ws.interaction_tensors, i); continue; end
+                 W = ws.interaction_tensors[i]
+                 first = i - K + 1
+
+                 c_psi = zeros(Float64, K); c_y = zeros(Float64, K)
+                 for idx in 1:K
+                     g = first + idx - 1
+                     if g>=1 && g<=n; c_psi[idx]=psi[g]; c_y[idx]=y_k[g]; end
+                 end
+
+                 for mu in 1:K
+                     g_mu = first + mu - 1
+                     if g_mu < 1 || g_mu > n; continue; end
+                     
+                     val = 0.0
+                     for a in 1:K
+                         pot = 0.0
+                         for lam in 1:K; pot += c_y[lam] * W[lam, mu, a]; end
+                         val += c_psi[a] * pot
+                     end
+                     K_mat[g_mu, nu] += val
+                 end
+            end
+        end 
+    end
+    return Symmetric(K_mat)
+end
+
+
+

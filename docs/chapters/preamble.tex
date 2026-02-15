@@ -1,0 +1,105 @@
+% --- CODIFICACIÓN E IDIOMA ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[es-tabla, es-nodecimaldot]{babel}
+
+% --- MATEMÁTICAS Y FÍSICA ---
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{physics}
+\usepackage{bm}
+
+% --- GRÁFICOS Y TABLAS ---
+\usepackage{graphicx}
+\graphicspath{{figures/}} % This allows you to just use {image.png} instead of {figures/image.png}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{ragged2e}
+\renewcommand\tabularxcolumn[1]{m{#1}}
+
+% --- CÓDIGO (Juia Support) ---
+\usepackage{xcolor}
+\usepackage{listings}
+\lstdefinelanguage{Julia}%
+  {morekeywords={abstract,break,case,catch,const,continue,do,else,elseif,%
+      end,export,false,for,function,immutable,import,importall,if,in,%
+      macro,module,otherwise,quote,return,switch,true,try,type,typealias,%
+      using,while},%
+   sensitive=true,%
+   morecomment=[l]\#,%
+   morestring=[b]",%
+  }
+
+% --- TEOREMAS (thmtools) ---
+\usepackage{mdframed}
+\usepackage{thmtools}
+
+
+% 1. Estilo para Teoremas (Texto en cursiva, cabecera negrita sans-serif)
+\declaretheoremstyle[
+    headfont=\bfseries\sffamily, 
+    bodyfont=\itshape,
+    spaceabove=12pt, 
+    spacebelow=12pt
+]{miestilo-plano}
+
+% 2. Estilo para Definiciones (Caja gris lateral, texto normal)
+\declaretheoremstyle[
+    headfont=\bfseries\sffamily,
+    bodyfont=\normalfont,
+    mdframed={
+        linewidth=1pt,
+        linecolor=gray!50,      % Color de la línea
+        backgroundcolor=gray!5, % Fondo muy tenue
+        topline=false, bottomline=false, rightline=false, % Solo barra izquierda
+    }
+]{miestilo-caja}
+
+
+% --- DEFINICIÓN DE ENTORNOS ---
+% Al ser 'article', numeramos por 'section'.
+\declaretheorem[style=miestilo-plano, name=Teorema, numberwithin=section]{theorem}
+
+% Estos comparten el contador con 'theorem' (e.g., Teorema 1.1, Lema 1.2)
+\declaretheorem[style=miestilo-plano, name=Lema, sharenumber=theorem]{lemma}
+\declaretheorem[style=miestilo-plano, name=Proposición, sharenumber=theorem]{proposition}
+\declaretheorem[style=miestilo-plano, name=Corolario, sharenumber=theorem]{corollary}
+
+% Definiciones y Ejemplos usan el estilo de caja
+\declaretheorem[style=miestilo-caja, name=Definición, sharenumber=theorem]{definition}
+\declaretheorem[style=miestilo-caja, name=Ejemplo, sharenumber=theorem]{example}
+
+
+
+% Demostración
+\makeatletter
+\renewenvironment{proof}[1][\proofname]{\par
+  \pushQED{\qed}
+  \normalfont \topsep6\p@\@plus6\p@\relax
+  \trivlist
+  \item[\hskip\labelsep
+        \bfseries\sffamily
+        #1\@addpunct{.}]\ignorespaces
+}{%
+  \popQED\endtrivlist\@endpefalse
+}
+\makeatother
+
+
+% --- HIPERVÍNCULOS ---
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=red, urlcolor=teal]{hyperref}
+\usepackage[nameinlink, noabbrev]{cleveref}
+
+% --- BIBLIOGRAFÍA ---
+\usepackage[
+    backend=biber, 
+    style=apa,      % Opciones: apa, ieee, numeric, alphabetic
+    sorting=nyt     % Ordenar por Nombre, Año, Título
+]{biblatex}
+\addbibresource{bib/referencias.bib} % Note the path change
+
+% --- MÁRGENES ---
+\usepackage{geometry}
+\geometry{a4paper, total={170mm,257mm}, left=25mm, top=25mm}

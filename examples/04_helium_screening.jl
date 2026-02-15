@@ -19,12 +19,12 @@ function solve_helium_screening()
     GAMMA = 2.5         # Distribución de nodos
     
     # 2. Generar Base
-    basis = generate_basis(R_MAX, N_ELEMS, ORDER, γ=GAMMA)
+    basis = generate_basis(R_MAX, N_ELEMS, Val(ORDER), γ=GAMMA)
     println("A. > Base generada con $(basis.num_splines) splines.")
 
     # 3. Ensamblar Operadores Nucleares (T, V, S)
     print("   > Ensamblando matrices Core... ")
-    T, V_nuc, S = assemble_core(basis, Z)
+    ws = init_scf_workspace(basis, 2.0)
     println("Listo.")
 
     # Definir subespacio activo (Dirichlet BCs: u(0)=0, u(R)=0)
@@ -35,10 +35,10 @@ function solve_helium_screening()
     # --------------------------------------------------------------------------
     println("\nB. Calculando Estado Inicial (Sin interacción e-e)...")
 
-    H_core = T + V_nuc
-    
+    H_core = ws.T + ws.V
+
     # Resolver eigenproblema H c = E S c
-    evals, evecs = eigen(H_core[active, active], S[active, active])
+    evals, evecs = eigen(H_core[active, active], ws.S[active, active])
     
     # Reconstruir vector completo
     coeffs_initial = zeros(Float64, basis.num_splines)
@@ -46,7 +46,7 @@ function solve_helium_screening()
     coeffs_initial[active] = evecs[:, perm[1]]
     
     # Normalizar
-    coeffs_initial ./= sqrt(dot(coeffs_initial, S * coeffs_initial))
+    coeffs_initial ./= sqrt(dot(coeffs_initial, ws.S * coeffs_initial))
     
     E_initial_single = evals[perm[1]]
     E_initial_total = 2 * E_initial_single # 2 electrones sin repulsión
@@ -74,17 +74,17 @@ function solve_helium_screening()
     for iter in 1:MAX_ITER
         # 1. Potencial de Hartree (J)
         #    Resuelve Poisson: V_H(r) = U(r)/r
-        y_coeffs = solve_poisson_potential(basis, c_current, T)
+        y_coeffs = solve_poisson_J(ws, c_current)
         
         # 2. Ensamblar Matriz de Interacción Directa J
-        J_mat = assemble_J_matrix(basis, y_coeffs)
+        J_mat = assemble_J_matrix(ws, y_coeffs)
 
         # 3. Construir Operador de Fock: F = H_core + J
         #    (Restricted Hartree-Fock para capa cerrada 1s^2)
         F = H_core + J_mat
 
         # 4. Resolver Eigenproblema Generalizado
-        evals, evecs = eigen(F[active, active], S[active, active])
+        evals, evecs = eigen(F[active, active], ws.S[active, active])
         
         # 5. Obtener nuevo estado (menor energía)
         perm = sortperm(Real.(evals))
@@ -92,7 +92,7 @@ function solve_helium_screening()
         c_new[active] = evecs[:, perm[1]]
         
         # Normalizar nuevo estado
-        c_new ./= sqrt(dot(c_new, S * c_new))
+        c_new ./= sqrt(dot(c_new, ws.S * c_new))
 
         # 6. Calcular Energía Total Correcta
         #    E_tot = 2*eps - <J> (corrección por doble conteo)
@@ -115,7 +115,7 @@ function solve_helium_screening()
         c_current = MIXING * c_current + (1.0 - MIXING) * c_new
         
         # Re-normalizar después del mixing (CRUCIAL)
-        c_current ./= sqrt(dot(c_current, S * c_current))
+        c_current ./= sqrt(dot(c_current, ws.S * c_current))
         
         E_old = E_total
     end

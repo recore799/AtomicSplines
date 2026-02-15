@@ -20,22 +20,22 @@ function solve_helium_confined(R_box)
     # near the wall (where the wavefunction is forced to zero).
     GAMMA = 2.0        
     
-    basis = generate_basis(R_box, N_ELEMS, ORDER, γ=GAMMA)
+    basis = generate_basis(R_box, N_ELEMS, Val(ORDER), γ=GAMMA)
 
     # 2. Assemble Hamiltonian Operators
     #    Silence the print output for the loop
-    T, V_nuc, S = assemble_core(basis, Z)
+    ws = init_scf_workspace(basis, Z)
 
     # 3. Initial Guess (He+)
-    H_core = T + V_nuc
+    H_core = ws.T + ws.V
     active = 2:(basis.num_splines - 1) # Hard Wall BCs
     
-    evals, evecs = eigen(H_core[active, active], S[active, active])
+    evals, evecs = eigen(H_core[active, active], ws.S[active, active])
     
     c_current = zeros(Float64, basis.num_splines)
     perm = sortperm(Real.(evals))
     c_current[active] = evecs[:, perm[1]]
-    c_current ./= sqrt(dot(c_current, S * c_current))
+    c_current ./= sqrt(dot(c_current, ws.S * c_current))
     
     # 4. SCF Loop
     MAX_ITER = 50 # Increased slightly for hard compression
@@ -46,22 +46,22 @@ function solve_helium_confined(R_box)
     
     for iter in 1:MAX_ITER
         # A. Poisson
-        y_coeffs = solve_poisson_potential(basis, c_current, T)
+        y_coeffs = solve_poisson_J(ws, c_current)
         
         # B. J Matrix
-        J = assemble_J_matrix(basis, y_coeffs)
+        J = assemble_J_matrix(ws, y_coeffs)
         
         # C. Fock
         F = H_core + J
         
         # D. Solve
-        evals, evecs = eigen(F[active, active], S[active, active])
+        evals, evecs = eigen(F[active, active], ws.S[active, active])
 
         # E. Update
         perm = sortperm(Real.(evals))
         c_new = zeros(Float64, basis.num_splines)
         c_new[active] = evecs[:, perm[1]]
-        c_new ./= sqrt(dot(c_new, S * c_new))
+        c_new ./= sqrt(dot(c_new, ws.S * c_new))
         
         # F. Energy
         epsilon = evals[perm[1]]
@@ -70,7 +70,7 @@ function solve_helium_confined(R_box)
         
         # G. Mixing
         c_current = MIXING * c_current + (1.0 - MIXING) * c_new
-        c_current ./= sqrt(dot(c_current, S * c_current)) 
+        c_current ./= sqrt(dot(c_current, ws.S * c_current)) 
         
         delta = abs(E_total - E_old)
         E_final = E_total

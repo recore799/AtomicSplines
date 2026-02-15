@@ -21,21 +21,23 @@ function solve_confined_hydrogen(R_box)
     ORDER = 5
     GAMMA = 1.2 # Less aggressive clustering for confined boxes (we need resolution at the wall)
     
-    basis = generate_basis(R_box, n_elems, ORDER, γ=GAMMA)
+    basis = generate_basis(R_box, n_elems, Val(ORDER), γ=GAMMA)
     
     # 2. Assemble Operators (Z=1.0)
-    T, V, S = assemble_core(basis, 1.0)
+    ws = init_scf_workspace(basis, 1.0)
     
     # 3. Apply Hard-Wall Boundary Conditions (Dirichlet)
     #    c[1]=0 -> u(0)=0 (Regularity at origin)
     #    c[N]=0 -> u(R_box)=0 (Infinite Potential Wall)
     active = 2:(basis.num_splines - 1)
     
-    H = T + V
+    H = ws.T + ws.V
     
     # 4. Solve Eigenproblem
     #    We only need the ground state (lowest eigenvalue)
-    evals, evecs = eigen(H[active, active], S[active, active])
+    H_active = Matrix(H[active, active])
+    S_active = Matrix(ws.S[active, active])
+    evals, evecs = eigen(H_active, S_active)
     
     # Sort to ensure we get the ground state
     perm = sortperm(Real.(evals))
@@ -46,7 +48,7 @@ function solve_confined_hydrogen(R_box)
     coeffs[active] = evecs[:, perm[1]]
     
     # Normalize (L2 norm)
-    norm = sqrt(dot(coeffs, S * coeffs))
+    norm = sqrt(dot(coeffs, ws.S * coeffs))
     coeffs ./= norm
     
     return E_ground, coeffs, basis

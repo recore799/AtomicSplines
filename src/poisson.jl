@@ -9,12 +9,7 @@ function solve_generalized_poisson(ws::SolverWorkspace{K}, source::Vector{Float6
     n = length(source)
     active = 2:(n-1)
     
-    # Apply Boundary Condition Shift
-    # The equation is A * y = b. 
-    # For Dirichlet y(N) = val, we move the last column to RHS.
-    # rhs = source - Column_N * (2.0 * boundary_val) 
-    # (The factor 2.0 comes from the Stiffness matrix definition 2*T)
-    
+
     b_inner = source[active]
     if boundary_val != 0.0
         col_n = ws.T[active, n]
@@ -61,13 +56,7 @@ function solve_poisson_J(ws::SolverWorkspace{K}, orbital_coeffs::Vector{Float64}
         end
     end
     
-    # Boundary Condition y(R) = Z_eff (Total Charge)
-    # For J, charge is N_electrons. For Exchange, usually 0.
-    # Actually, J potential y(r) -> N_electrons as r -> inf.
-    active = 2:(n-1); y_bound = sum(orbital_coeffs) # Approximate total charge? No, just force 1.0 for normalized density.
-    # WAIT: Input 'orbital_coeffs' is Density coeffs (c^2). Sum is not 1.
-    # Let's assume standard BC: y(R) = Total Integrated Charge.
-    # For now, force y(R)=1.0 (assuming input is normalized orbital squared)
+    active = 2:(n-1); y_bound = sum(orbital_coeffs)
     y_bound = 1.0 
     
     col_n = ws.T[active, n]

@@ -338,10 +338,13 @@ function eval_expansion_optimized(coeffs, basis, x)
 end
 
 
-* TODO Fix old examples
+* DONE Fix old examples
 
-* TODO Implement generalized poisson
+* DONE Implement generalized poisson
 
-* TODO Add K_mat
+* DONE Add K_mat
 
-* TODO Test beryllium (1s^22s^2)
+* DONE Test beryllium (1s^22s^2)                         
+
+
+* Unsold’s theorem for spherical harmonics

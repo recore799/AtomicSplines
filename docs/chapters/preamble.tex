@@ -1,7 +1,7 @@
 % --- CODIFICACIÓN E IDIOMA ---
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[es-tabla, es-nodecimaldot]{babel}
+\usepackage[es-tabla, es-nodecimaldot, es-noquoting]{babel}
 
 % --- MATEMÁTICAS Y FÍSICA ---
 \usepackage{mathtools}
@@ -18,19 +18,65 @@
 \usepackage{tabularx}
 \usepackage{ragged2e}
 \renewcommand\tabularxcolumn[1]{m{#1}}
+\usepackage{enumitem}
 
 % --- CÓDIGO (Juia Support) ---
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{inconsolata} 
+
+% DEFINIR EL LENGUAJE JULIA
 \lstdefinelanguage{Julia}%
   {morekeywords={abstract,break,case,catch,const,continue,do,else,elseif,%
-      end,export,false,for,function,immutable,import,importall,if,in,%
-      macro,module,otherwise,quote,return,switch,true,try,type,typealias,%
-      using,while},%
+      end,export,false,for,function,global,if,import,in,%
+      let,local,macro,module,quote,return,struct,mutable,primitive,switch,true,try,type,using,while,where},%
    sensitive=true,%
    morecomment=[l]\#,%
    morestring=[b]",%
+   literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1%
   }
+
+% --- COLORES GRUVBOX LIGHT ---
+\definecolor{gruvbg}{HTML}{fbf1c7}      % Fondo crema claro
+\definecolor{gruvfg}{HTML}{3c3836}      % Texto oscuro
+\definecolor{gruvred}{HTML}{9d0006}
+\definecolor{gruvgreen}{HTML}{79740e}
+\definecolor{gruvgray}{HTML}{928374}
+
+% % --- DEFINICIÓN DE COLORES GRUVBOX DARK ---
+% \definecolor{gruvbg}{HTML}{282828}      % Fondo oscuro
+% \definecolor{gruvfg}{HTML}{ebdbb2}      % Texto claro (crema)
+% \definecolor{gruvred}{HTML}{cc241d}     % Keywords
+% \definecolor{gruvgreen}{HTML}{98971a}   % Strings
+% \definecolor{gruvyellow}{HTML}{d79921}  % Funciones (si se detectan)
+% \definecolor{gruvblue}{HTML}{458588}    % Variables especiales
+% \definecolor{gruvpurple}{HTML}{b16286}  % Constantes
+% \definecolor{gruvgray}{HTML}{928374}    % Comentarios
+
+\lstset{
+    language=Julia,
+    backgroundcolor=\color{gruvbg},   % Fondo del bloque
+    basicstyle=\color{gruvfg}\ttfamily\footnotesize, % Fuente base color crema
+    keywordstyle=\color{gruvred}\bfseries,
+    commentstyle=\color{gruvgray}\itshape, % Comentarios grises e itálicos
+    stringstyle=\color{gruvgreen},
+    numberstyle=\tiny\color{gruvgray}, % Números de línea sutiles
+    %
+    frame=single,           % Un marco simple
+    rulecolor=\color{gruvbg}, % Que el marco sea del mismo color del fondo
+    frameround=ffff,        % Esquinas rectas (o tttt para redondas)
+    %
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=8pt,
+    showspaces=false,
+    tabsize=4,
+    xleftmargin=10pt,       % Margen extra para que no se pegue al borde
+    framexleftmargin=10pt   % Relleno del fondo a la izquierda
+}
+
 
 % --- TEOREMAS (thmtools) ---
 \usepackage{mdframed}

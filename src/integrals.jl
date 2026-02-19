@@ -73,6 +73,22 @@ function assemble_J_matrix(ws::SolverWorkspace{K}, y_coeffs) where {K}
     return J_mat
 end
 
+function build_total_J_matrix(ws::SolverWorkspace, orbitals::Vector{Orbital})
+    # Sum up the potentials, scaled by occupation
+    y_total = zeros(Float64, ws.basis.num_splines)
+    for orb in orbitals
+        if orb.occ > 0.0
+            y_orb = solve_poisson_J(ws, orb)
+            y_total .+= orb.occ .* y_orb
+        end
+    end
+    
+    # Assemble the J matrix using y_total
+    J_mat = assemble_J_matrix(ws, y_total)
+    
+    return J_mat
+end
+
 function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
     n = basis.num_splines
     bw = (K-1, K-1)
@@ -174,99 +190,212 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
     
     return S, T, V, V2, tensors
 end
-function assemble_K_matrix(ws::SolverWorkspace{K}, occupied_orbitals::Vector{Vector{Float64}}) where {K}
+
+function assemble_K_matrix(ws::SolverWorkspace{K}, target_l::Int, orbitals::Vector{Orbital}) where {K}
     K_mat = ws.K_mat
     fill!(K_mat, 0.0)
     n = ws.basis.num_splines
     b_vec = zeros(Float64, n)
     
-    # 1. Loop over occupied orbitals
-    for psi in occupied_orbitals
+    # Loop over all source orbitals (the environment)
+    for psi in orbitals
+        if psi.occ == 0.0; continue; end
         
-        # 2. Loop over basis functions 'nu'
+        # --- DETERMINE ALLOWED MULTIPOLES & MULTIPLIERS ---
+        # Tuples of (k_mult, angular_multiplier)
+        multipoles = Tuple{Int, Float64}[]
+        
+        if target_l == 0 && psi.l == 0
+            push!(multipoles, (0, 1.0))
+        elseif target_l == 0 && psi.l == 1
+            push!(multipoles, (1, 1.0))
+        elseif target_l == 1 && psi.l == 0
+            push!(multipoles, (1, 1.0 / 3.0))
+        elseif target_l == 1 && psi.l == 1
+            push!(multipoles, (0, 1.0))
+            push!(multipoles, (2, 2.0 / 5.0))
+        end
+        
+        # Exchange only happens between electrons of the SAME spin.
+        # Since 'occ' is total electrons, spatial exchange weight is occ / 2.0
+        spin_weight = psi.occ / 2.0
+        
+        # 2. Loop over basis functions 'nu' to build exchange density
         for nu in 1:n
             fill!(b_vec, 0.0)
             
             # --- CALCULATE BOUNDARY CONDITION (Q) ---
-            # Q = Integral( psi * B_nu ) = <psi | B_nu>
-            # Since psi = sum(c_a * B_a), Q = sum_a c_a * S[a, nu]
-            # We use the Banded Mass Matrix S for speed.
+            # Used ONLY for k=0. 
             boundary_charge = 0.0
-            
-            # Optimization: Only loop over the band of S
             s_start = max(1, nu - K + 1)
             s_end   = min(n, nu + K - 1)
-            
             for a in s_start:s_end
-                boundary_charge += psi[a] * ws.S[a, nu]
+                boundary_charge += psi.coeffs[a] * ws.S[a, nu]
             end
             
-            # --- BUILD SOURCE VECTOR (Unchanged) ---
-            # Iterate relevant elements...
+            # --- BUILD SOURCE VECTOR (Unchanged Math) ---
             for i in 1:(length(ws.basis.knots)-1)
                 if !isassigned(ws.interaction_tensors, i); continue; end
                 W = ws.interaction_tensors[i]
                 first = i - K + 1
                 
-                # Check if B_nu is in this element
                 loc_nu = nu - first + 1
                 if loc_nu < 1 || loc_nu > K; continue; end
                 
-                # Get local psi coeffs
                 c_loc = zeros(Float64, K)
                 for idx in 1:K
-                    g = first + idx - 1; if g>=1&&g<=n; c_loc[idx] = psi[g]; end
+                    g = first + idx - 1
+                    if g>=1 && g<=n; c_loc[idx] = psi.coeffs[g]; end
                 end
                 
-                for k in 1:K
-                    g_k = first + k - 1; if g_k<1||g_k>n; continue; end
+                for k_idx in 1:K
+                    g_k = first + k_idx - 1; if g_k<1 || g_k>n; continue; end
                     val = 0.0
                     for a in 1:K
-                        val += c_loc[a] * W[k, a, loc_nu]
+                        val += c_loc[a] * W[k_idx, a, loc_nu]
                     end
                     b_vec[g_k] += val
                 end
             end
             
-            # --- SOLVE WITH BC ---
-            # Only k=0 monopole has a non-zero charge at infinity.
-            # Higher multipoles decay to 0 faster.
-            bc_val = (0 == 0) ? boundary_charge : 0.0 # Hardcoded k=0 for s-orbitals
-            
-            y_k = solve_generalized_poisson(ws, b_vec, 0; boundary_val=bc_val)
-            
-            # --- ACCUMULATE (Unchanged) ---
-            # ... (Copy your previous accumulation loop here) ...
-            for i in 1:(length(ws.basis.knots)-1)
-                 # ... (Your logic for K_mat += ... is correct) ...
-                 # (Just ensure you removed the banded check 'abs(g_mu-nu)' as discussed!)
-                 if !isassigned(ws.interaction_tensors, i); continue; end
-                 W = ws.interaction_tensors[i]
-                 first = i - K + 1
+            # --- SOLVE & ACCUMULATE FOR EACH ALLOWED MULTIPOLE ---
+            for (k_mult, angular_mult) in multipoles
+                
+                # Boundary is only non-zero for monopoles
+                bc_val = (k_mult == 0) ? boundary_charge : 0.0 
+                
+                y_k = solve_generalized_poisson(ws, b_vec, k_mult; boundary_val=bc_val)
+                
+                total_multiplier = angular_mult * spin_weight
+                
+                # --- ACCUMULATE INTO K_MAT ---
+                for i in 1:(length(ws.basis.knots)-1)
+                     if !isassigned(ws.interaction_tensors, i); continue; end
+                     W = ws.interaction_tensors[i]
+                     first = i - K + 1
 
-                 c_psi = zeros(Float64, K); c_y = zeros(Float64, K)
-                 for idx in 1:K
-                     g = first + idx - 1
-                     if g>=1 && g<=n; c_psi[idx]=psi[g]; c_y[idx]=y_k[g]; end
-                 end
-
-                 for mu in 1:K
-                     g_mu = first + mu - 1
-                     if g_mu < 1 || g_mu > n; continue; end
-                     
-                     val = 0.0
-                     for a in 1:K
-                         pot = 0.0
-                         for lam in 1:K; pot += c_y[lam] * W[lam, mu, a]; end
-                         val += c_psi[a] * pot
+                     c_psi = zeros(Float64, K); c_y = zeros(Float64, K)
+                     for idx in 1:K
+                         g = first + idx - 1
+                         if g>=1 && g<=n
+                             c_psi[idx] = psi.coeffs[g]
+                             c_y[idx] = y_k[g]
+                         end
                      end
-                     K_mat[g_mu, nu] += val
-                 end
+
+                     for mu in 1:K
+                         g_mu = first + mu - 1
+                         if g_mu < 1 || g_mu > n; continue; end
+                         
+                         val = 0.0
+                         for a in 1:K
+                             pot = 0.0
+                             for lam in 1:K; pot += c_y[lam] * W[lam, mu, a]; end
+                             val += c_psi[a] * pot
+                         end
+                         # Multiply the integral by the angular and spin weights
+                         K_mat[g_mu, nu] += val * total_multiplier 
+                     end
+                end
             end
         end 
     end
     return Symmetric(K_mat)
 end
+
+# function assemble_K_matrix(ws::SolverWorkspace{K}, occupied_orbitals::Vector{Vector{Float64}}) where {K}
+#     K_mat = ws.K_mat
+#     fill!(K_mat, 0.0)
+#     n = ws.basis.num_splines
+#     b_vec = zeros(Float64, n)
+    
+#     # 1. Loop over occupied orbitals
+#     for psi in occupied_orbitals
+        
+#         # 2. Loop over basis functions 'nu'
+#         for nu in 1:n
+#             fill!(b_vec, 0.0)
+            
+#             # --- CALCULATE BOUNDARY CONDITION (Q) ---
+#             # Q = Integral( psi * B_nu ) = <psi | B_nu>
+#             # Since psi = sum(c_a * B_a), Q = sum_a c_a * S[a, nu]
+#             # We use the Banded Mass Matrix S for speed.
+#             boundary_charge = 0.0
+            
+#             # Optimization: Only loop over the band of S
+#             s_start = max(1, nu - K + 1)
+#             s_end   = min(n, nu + K - 1)
+            
+#             for a in s_start:s_end
+#                 boundary_charge += psi[a] * ws.S[a, nu]
+#             end
+            
+#             # --- BUILD SOURCE VECTOR (Unchanged) ---
+#             # Iterate relevant elements...
+#             for i in 1:(length(ws.basis.knots)-1)
+#                 if !isassigned(ws.interaction_tensors, i); continue; end
+#                 W = ws.interaction_tensors[i]
+#                 first = i - K + 1
+                
+#                 # Check if B_nu is in this element
+#                 loc_nu = nu - first + 1
+#                 if loc_nu < 1 || loc_nu > K; continue; end
+                
+#                 # Get local psi coeffs
+#                 c_loc = zeros(Float64, K)
+#                 for idx in 1:K
+#                     g = first + idx - 1; if g>=1&&g<=n; c_loc[idx] = psi[g]; end
+#                 end
+                
+#                 for k in 1:K
+#                     g_k = first + k - 1; if g_k<1||g_k>n; continue; end
+#                     val = 0.0
+#                     for a in 1:K
+#                         val += c_loc[a] * W[k, a, loc_nu]
+#                     end
+#                     b_vec[g_k] += val
+#                 end
+#             end
+            
+#             # --- SOLVE WITH BC ---
+#             # Only k=0 monopole has a non-zero charge at infinity.
+#             # Higher multipoles decay to 0 faster.
+#             bc_val = (0 == 0) ? boundary_charge : 0.0 # Hardcoded k=0 for s-orbitals
+            
+#             y_k = solve_generalized_poisson(ws, b_vec, 0; boundary_val=bc_val)
+            
+#             # --- ACCUMULATE (Unchanged) ---
+#             # ... (Copy your previous accumulation loop here) ...
+#             for i in 1:(length(ws.basis.knots)-1)
+#                  # ... (Your logic for K_mat += ... is correct) ...
+#                  # (Just ensure you removed the banded check 'abs(g_mu-nu)' as discussed!)
+#                  if !isassigned(ws.interaction_tensors, i); continue; end
+#                  W = ws.interaction_tensors[i]
+#                  first = i - K + 1
+
+#                  c_psi = zeros(Float64, K); c_y = zeros(Float64, K)
+#                  for idx in 1:K
+#                      g = first + idx - 1
+#                      if g>=1 && g<=n; c_psi[idx]=psi[g]; c_y[idx]=y_k[g]; end
+#                  end
+
+#                  for mu in 1:K
+#                      g_mu = first + mu - 1
+#                      if g_mu < 1 || g_mu > n; continue; end
+                     
+#                      val = 0.0
+#                      for a in 1:K
+#                          pot = 0.0
+#                          for lam in 1:K; pot += c_y[lam] * W[lam, mu, a]; end
+#                          val += c_psi[a] * pot
+#                      end
+#                      K_mat[g_mu, nu] += val
+#                  end
+#             end
+#         end 
+#     end
+#     return Symmetric(K_mat)
+# end
 
 
 

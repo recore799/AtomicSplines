@@ -358,6 +358,8 @@ end
 
 * Wigner for s-p
 
+
+
 + Target is an s-orbital (l=0)
 
   - Source is an s-orbital: k=0, multiplier = 1.0
@@ -372,3 +374,6 @@ end
     - Term 2: k=2, multipier = 2/5
 
 Nota: p interactuando consigomismo genera dos terminos multipolares, significa que tenemos que resolver Poisson dos veces.
+
+
+* Include all the A_k factorizations in inti_scf for generalized poisson

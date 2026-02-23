@@ -13,29 +13,59 @@ end
 struct SolverWorkspace{K}
     basis::BSplineBasis{K}
     
-    # S, T, V have bandwith K-1 each side.
+    # S, T, V have bandwidth K-1 each side.
     S::BandedMatrix{Float64}
     T::BandedMatrix{Float64}
     V::BandedMatrix{Float64}
     V2::BandedMatrix{Float64}
+    
     # Coulomb matrix
     J::BandedMatrix{Float64}
-    K_mat::Matrix{Float64}
+    
+    # Maps angular momentum 'l' to its specific K matrix
+    K_mats::Dict{Int, Matrix{Float64}}
 
-   
     # Stores the local KxKxK tensor for each element
-    # W[element_index][k, a, b]
     interaction_tensors::Vector{Array{Float64, 3}}
 
     # Store multiple Cholesky factorizations
-    # Key = k (multipole order), Value = Factorization
     poisson_factors::Dict{Int, Any}
 
     # Pre-allocated Scratch Vectors (Size K)
     scratch_vals::Vector{Float64}
     scratch_derivs::Vector{Float64}
     
+    # Size N buffers for Poisson solvers ---
+    b_buffer::Vector{Float64}
+    y_buffer::Vector{Float64}
 end
+
+# struct SolverWorkspace{K}
+#     basis::BSplineBasis{K}
+    
+#     # S, T, V have bandwith K-1 each side.
+#     S::BandedMatrix{Float64}
+#     T::BandedMatrix{Float64}
+#     V::BandedMatrix{Float64}
+#     V2::BandedMatrix{Float64}
+#     # Coulomb matrix
+#     J::BandedMatrix{Float64}
+#     K_mat::Matrix{Float64}
+
+   
+#     # Stores the local KxKxK tensor for each element
+#     # W[element_index][k, a, b]
+#     interaction_tensors::Vector{Array{Float64, 3}}
+
+#     # Store multiple Cholesky factorizations
+#     # Key = k (multipole order), Value = Factorization
+#     poisson_factors::Dict{Int, Any}
+
+#     # Pre-allocated Scratch Vectors (Size K)
+#     scratch_vals::Vector{Float64}
+#     scratch_derivs::Vector{Float64}
+    
+# end
 
 function generate_basis(R_max, N_elems, ::Val{K}; γ=2.0) where {K}
     # Knot Generation

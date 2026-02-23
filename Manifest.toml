@@ -2,7 +2,7 @@
 
 julia_version = "1.12.4"
 manifest_format = "2.0"
-project_hash = "1b1d04ae283ddc884ff1e8ccf110556cfa72966e"
+project_hash = "91c0fbbc5a91bfe7ce3d7574811d63ba9b05dd5f"
 
 [[deps.AliasTables]]
 deps = ["PtrArrays", "Random"]
@@ -41,7 +41,7 @@ uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 version = "1.11.0"
 
 [[deps.AtomicSplines]]
-deps = ["Arpack", "FastGaussQuadrature", "LinearAlgebra", "Plots", "SparseArrays", "Test"]
+deps = ["Arpack", "BandedMatrices", "FastGaussQuadrature", "LinearAlgebra", "Plots", "SparseArrays", "Test"]
 path = "."
 uuid = "2d5145e3-f199-4b73-8c97-396f7f2326c9"
 version = "0.1.0"
@@ -817,9 +817,9 @@ version = "1.0.4"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
-git-tree-sha1 = "eee1b9ad8b29ef0d936e3ec9838c7ec089620308"
+git-tree-sha1 = "0f529006004a8be48f1be25f3451186579392d47"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.16"
+version = "1.9.17"
 
     [deps.StaticArrays.extensions]
     StaticArraysChainRulesCoreExt = "ChainRulesCore"

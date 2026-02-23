@@ -1,26 +1,30 @@
 function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
     n = basis.num_splines
 
-    # println("   > Assembling Geometry (Matrices & Tensors)...")
+    # Assemble core matrices
     S, T, V, V2, tensors = assemble_geometry(basis, Z)
     
     bw = (K-1, K-1)
     J = BandedMatrix(Zeros(n, n), bw)
 
-    # Initialize Factorization Dictionary
+    # Pre-allocate K matrices for s (l=0) and p (l=1) blocks.
+    K_mats = Dict{Int, Matrix{Float64}}(
+        0 => zeros(Float64, n, n),
+        1 => zeros(Float64, n, n)
+    )
+
     factors = Dict{Int, Any}()
     
-    # Pre-compute k=0 (Standard Poisson)
-    #    Operator: 2*T + 0*V2
-    # println("   > Factorizing Poisson (k=0)...")
-    K0 = 2.0 .* T
-    active = 2:(n-1)
-    factors[0] = cholesky(K0[active, active])
+    # Pre-allocate the N-length Poisson solver buffers
+    b_buf = zeros(Float64, n)
+    y_buf = zeros(Float64, n)
 
-    K_mat = zeros(n,n)
-   
-    return SolverWorkspace(basis, S, T, V, V2, J, K_mat, tensors, 
-                           factors, zeros(K), zeros(K))
+    return SolverWorkspace{K}(
+        basis, S, T, V, V2, J, 
+        K_mats, tensors, factors, 
+        zeros(Float64, K), zeros(Float64, K),
+        b_buf, y_buf
+    )
 end
 
 function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
@@ -181,19 +185,20 @@ function build_total_J_matrix(ws::SolverWorkspace, orbitals::Vector{Orbital})
     return assemble_J_matrix(ws, y_total)
 end
 
-function assemble_K_matrix(ws::SolverWorkspace{K}, target_l::Int, orbitals::Vector{Orbital}) where {K}
-    K_mat = ws.K_mat
+using StaticArrays
+
+function assemble_K_matrix!(ws::SolverWorkspace{K}, K_mat::Matrix{Float64}, target_l::Int, orbitals::Vector{Orbital}) where {K}
     fill!(K_mat, 0.0)
     n = ws.basis.num_splines
+    
     b_vec = zeros(Float64, n)
+    y_k   = zeros(Float64, n)
     
     for psi in orbitals
         if psi.occ == 0.0; continue; end
         
         # --- Determine Allowed Multipoles & Multipliers ---
-        # Tuples of (k_mult, angular_multiplier)
         multipoles = Tuple{Int, Float64}[]
-        
         if target_l == 0 && psi.l == 0
             push!(multipoles, (0, 1.0))
         elseif target_l == 0 && psi.l == 1
@@ -205,20 +210,10 @@ function assemble_K_matrix(ws::SolverWorkspace{K}, target_l::Int, orbitals::Vect
             push!(multipoles, (2, 2.0 / 15.0))
         end
         
-        # Exchange weight accounts for same-spin interactions (occ / 2.0)
         spin_weight = psi.occ / 2.0
         
         for nu in 1:n
             fill!(b_vec, 0.0)
-            
-            # --- Compute Boundary Condition (Q) ---
-            # Used only for k=0 evaluations
-            boundary_charge = 0.0
-            s_start = max(1, nu - K + 1)
-            s_end   = min(n, nu + K - 1)
-            for a in s_start:s_end
-                boundary_charge += psi.coeffs[a] * ws.S[a, nu]
-            end
             
             # --- Build Source Vector ---
             for i in 1:(length(ws.basis.knots)-1)
@@ -229,14 +224,16 @@ function assemble_K_matrix(ws::SolverWorkspace{K}, target_l::Int, orbitals::Vect
                 loc_nu = nu - first + 1
                 if loc_nu < 1 || loc_nu > K; continue; end
                 
-                c_loc = zeros(Float64, K)
+                # Zero-allocation stack vector
+                c_loc = MVector{K, Float64}(undef)
                 for idx in 1:K
                     g = first + idx - 1
-                    if g>=1 && g<=n; c_loc[idx] = psi.coeffs[g]; end
+                    c_loc[idx] = (g >= 1 && g <= n) ? psi.coeffs[g] : 0.0
                 end
                 
                 for k_idx in 1:K
-                    g_k = first + k_idx - 1; if g_k<1 || g_k>n; continue; end
+                    g_k = first + k_idx - 1
+                    if g_k < 1 || g_k > n; continue; end
                     val = 0.0
                     for a in 1:K
                         val += c_loc[a] * W[k_idx, a, loc_nu]
@@ -245,44 +242,57 @@ function assemble_K_matrix(ws::SolverWorkspace{K}, target_l::Int, orbitals::Vect
                 end
             end
             
-            # --- Solve & Accumulate for Each Multipole ---
+            # --- Solve & Accumulate ---
             for (k_mult, angular_mult) in multipoles
-                
-                y_k = solve_generalized_poisson(ws, b_vec, k_mult)
+                # Mutates y_k directly!
+                solve_generalized_poisson!(ws, y_k, b_vec, k_mult)
                 total_multiplier = angular_mult * spin_weight
                 
-                # --- Accumulate into K_mat ---
                 for i in 1:(length(ws.basis.knots)-1)
-                     if !isassigned(ws.interaction_tensors, i); continue; end
-                     W = ws.interaction_tensors[i]
-                     first = i - K + 1
+                    if !isassigned(ws.interaction_tensors, i); continue; end
+                    W = ws.interaction_tensors[i]
+                    first = i - K + 1
 
-                     c_psi = zeros(Float64, K); c_y = zeros(Float64, K)
-                     for idx in 1:K
-                         g = first + idx - 1
-                         if g>=1 && g<=n
-                             c_psi[idx] = psi.coeffs[g]
-                             c_y[idx] = y_k[g]
-                         end
-                     end
+                    # Zero-allocation stack vectors!
+                    c_psi = MVector{K, Float64}(undef)
+                    c_y   = MVector{K, Float64}(undef)
+                    
+                    for idx in 1:K
+                        g = first + idx - 1
+                        if g >= 1 && g <= n
+                            c_psi[idx] = psi.coeffs[g]
+                            c_y[idx]   = y_k[g]
+                        else
+                            c_psi[idx] = 0.0
+                            c_y[idx]   = 0.0
+                        end
+                    end
 
-                     for mu in 1:K
-                         g_mu = first + mu - 1
-                         if g_mu < 1 || g_mu > n; continue; end
-                         
-                         val = 0.0
-                         for a in 1:K
-                             pot = 0.0
-                             for lam in 1:K; pot += c_y[lam] * W[lam, mu, a]; end
-                             val += c_psi[a] * pot
-                         end
-                         
-                         # Apply angular and spin weights to the exchange integral
-                         K_mat[g_mu, nu] += val * total_multiplier 
-                     end
+                    for mu in 1:K
+                        g_mu = first + mu - 1
+                        if g_mu < 1 || g_mu > n; continue; end
+                        
+                        val = 0.0
+                        for a in 1:K
+                            pot = 0.0
+                            for lam in 1:K
+                                pot += c_y[lam] * W[lam, mu, a]
+                            end
+                            val += c_psi[a] * pot
+                        end
+                        K_mat[g_mu, nu] += val * total_multiplier 
+                    end
                 end
             end
         end 
     end
-    return Symmetric(copy(K_mat))
+    
+    # Explicitly symmetrize in-place to avoid `copy()` and type changes
+    for i in 1:n
+        for j in (i+1):n
+            K_mat[j, i] = K_mat[i, j]
+        end
+    end
+    
+    return K_mat
 end

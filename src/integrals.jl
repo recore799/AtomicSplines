@@ -4,8 +4,7 @@ function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
     # Assemble core matrices
     S, T, V, V2, tensors = assemble_geometry(basis, Z)
     
-    bw = (K-1, K-1)
-    J = BandedMatrix(Zeros(n, n), bw)
+    J = zeros(Float64, n, n)
 
     # Pre-allocate K matrices for s (l=0) and p (l=1) blocks.
     K_mats = Dict{Int, Matrix{Float64}}(
@@ -13,30 +12,33 @@ function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
         1 => zeros(Float64, n, n)
     )
 
+    F_s = zeros(Float64, n,n)
+    F_p = zeros(Float64, n,n)
+
     factors = Dict{Int, Any}()
     
     # Pre-allocate the N-length Poisson solver buffers
     b_buf = zeros(Float64, n)
     y_buf = zeros(Float64, n)
+    y_orb_buffer = zeros(Float64, n)
+    y_total_buffer = zeros(Float64, n)
 
     return SolverWorkspace{K}(
         basis, S, T, V, V2, J, 
-        K_mats, tensors, factors, 
+        K_mats, F_s, F_p , tensors, factors, 
         zeros(Float64, K), zeros(Float64, K),
-        b_buf, y_buf
+        b_buf, y_buf, y_orb_buffer, y_total_buffer
     )
 end
 
 function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
     n = basis.num_splines
-    bw = (K-1, K-1)
-    
-    #    We use 'Zeros' which BandedMatrices understands efficiently
-    S = BandedMatrix(Zeros(n, n), bw)
-    T = BandedMatrix(Zeros(n, n), bw)
-    V = BandedMatrix(Zeros(n, n), bw)
-    V2 = BandedMatrix(Zeros(n, n), bw)
-    
+
+    S  = zeros(Float64, n, n)
+    T  = zeros(Float64, n, n)
+    V  = zeros(Float64, n, n)
+    V2 = zeros(Float64, n, n)   
+
     # Pre-allocate tensor storage
     tensors = Vector{Array{Float64, 3}}(undef, length(basis.knots) - 1)
     
@@ -96,12 +98,6 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
                         V[g_a, g_b] += term_V
                         V2[g_a, g_b] += term_V2
                         
-                        if g_a != g_b
-                            S[g_b, g_a] += term_S
-                            T[g_b, g_a] += term_T
-                            V[g_b, g_a] += term_V
-                            V2[g_b, g_a] += term_V2
-                        end
                     end
                     
                     # Build Tensor W (Using the same vals!)
@@ -126,10 +122,10 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
         tensors[i] = W_local
     end
     
-    return S, T, V, V2, tensors
+    return Symmetric(S), Symmetric(T), Symmetric(V), Symmetric(V2), tensors
 end
 
-function assemble_J_matrix(ws::SolverWorkspace{K}, y_coeffs) where {K}
+function assemble_J_matrix!(ws::SolverWorkspace{K}, y_coeffs) where {K}
     n = ws.basis.num_splines
     J_mat = ws.J
 
@@ -141,29 +137,26 @@ function assemble_J_matrix(ws::SolverWorkspace{K}, y_coeffs) where {K}
         
         first_global = i - K + 1
         
-        # Extract local y coefficients
-        y_local = zeros(Float64, K)
+        y_local = MVector{K, Float64}(undef)
         for idx in 1:K
             g_idx = first_global + idx - 1
-            if g_idx >= 1 && g_idx <= n
-                y_local[idx] = y_coeffs[g_idx]
-            end
+            y_local[idx] = (g_idx >= 1 && g_idx <= n) ? y_coeffs[g_idx] : 0.0
         end
         
         # Contract Tensor: J_ab = sum_k ( y_k * W_kab )
-        for k in 1:K
-            weight = y_local[k]
+        for k_idx in 1:K
+            weight = y_local[k_idx]
             if abs(weight) < 1e-12; continue; end
             
             for a in 1:K
                 g_a = first_global + a - 1
                 if g_a < 1 || g_a > n; continue; end
                 
-                for b in 1:K
-                    g_b = first_global + b - 1
+                for b_idx in 1:K
+                    g_b = first_global + b_idx - 1
                     if g_b < 1 || g_b > n; continue; end
 
-                    val_J = weight * W_local[k, a, b]
+                    val_J = weight * W_local[k_idx, a, b_idx]
                     J_mat[g_a, g_b] += val_J
                 end
             end
@@ -173,19 +166,17 @@ function assemble_J_matrix(ws::SolverWorkspace{K}, y_coeffs) where {K}
     return J_mat
 end
 
-function build_total_J_matrix(ws::SolverWorkspace, orbitals::Vector{Orbital})
-    y_total = zeros(Float64, ws.basis.num_splines)
+function build_total_J_matrix!(ws::SolverWorkspace, orbitals::Vector{Orbital})
+    fill!(ws.y_total_buffer, 0.0)
     for orb in orbitals
         if orb.occ > 0.0
-            y_orb = solve_poisson_J(ws, orb)
-            y_total .+= orb.occ .* y_orb
+            solve_poisson_J!(ws, ws.y_orb_buffer, orb)
+            ws.y_total_buffer .+= orb.occ .* ws.y_orb_buffer
         end
     end
     
-    return assemble_J_matrix(ws, y_total)
+    return assemble_J_matrix!(ws, ws.y_total_buffer)
 end
-
-using StaticArrays
 
 function assemble_K_matrix!(ws::SolverWorkspace{K}, K_mat::Matrix{Float64}, target_l::Int, orbitals::Vector{Orbital}) where {K}
     fill!(K_mat, 0.0)
@@ -287,12 +278,11 @@ function assemble_K_matrix!(ws::SolverWorkspace{K}, K_mat::Matrix{Float64}, targ
         end 
     end
     
-    # Explicitly symmetrize in-place to avoid `copy()` and type changes
-    for i in 1:n
-        for j in (i+1):n
-            K_mat[j, i] = K_mat[i, j]
-        end
-    end
+    # for i in 1:n
+    #     for j in (i+1):n
+    #         K_mat[j, i] = K_mat[i, j]
+    #     end
+    # end
     
-    return K_mat
+    return Symmetric(K_mat)
 end

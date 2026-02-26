@@ -7,11 +7,24 @@ using LinearAlgebra
 using Printf
 using JLD2
 
+function build_active_density(orbitals, active_idx, target_l)
+    dim = length(active_idx)
+    D = zeros(Float64, dim, dim)
+    for orb in orbitals
+        if orb.l == target_l
+            c_act = orb.coeffs[active_idx]
+            # Outer product of coefficients scaled by occupation
+            D .+= orb.occ .* (c_act * c_act') 
+        end
+    end
+    return D
+end
+
 function solve_radon(R_max; verbose::Bool=true)
     println("=== Radon (Z=86) ===")
     
     time1 = time()
-    N_elems = 350
+    N_elems = 400
     Z = 86.0
     basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
     ws = init_scf_workspace(basis, Z)
@@ -96,6 +109,10 @@ function solve_radon(R_max; verbose::Bool=true)
         println("-"^78)
     end
 
+    max_diis_history = 6  # 6 to 8 is usually the sweet spot for heavy atoms
+    F_hist = [] 
+    E_hist = []
+
     for iter in 1:1000
         t0 = time()
 
@@ -111,46 +128,152 @@ function solve_radon(R_max; verbose::Bool=true)
         ws.F_p .= H_core_p .+ ws.J .- ws.K_mats[1]
         ws.F_d .= H_core_d .+ ws.J .- ws.K_mats[2]
         ws.F_f .= H_core_f .+ ws.J .- ws.K_mats[3] # Added for f
+
+        # --- Compute Density Matrices for Active Blocks ---
+        D_s = build_active_density(orbitals, active_s, 0)
+        D_p = build_active_density(orbitals, active_p, 1)
+        D_d = build_active_density(orbitals, active_d, 2)
+        D_f = build_active_density(orbitals, active_f, 3)
+
+        # --- Compute Commutator Error Matrices (E = FDS - SDF) ---
+        S_s, S_p = ws.S[active_s, active_s], ws.S[active_p, active_p]
+        S_d, S_f = ws.S[active_d, active_d], ws.S[active_f, active_f]
+
+        F_s_act, F_p_act = ws.F_s[active_s, active_s], ws.F_p[active_p, active_p]
+        F_d_act, F_f_act = ws.F_d[active_d, active_d], ws.F_f[active_f, active_f]
+
+        E_s = F_s_act * D_s * S_s - S_s * D_s * F_s_act
+        E_p = F_p_act * D_p * S_p - S_p * D_p * F_p_act
+        E_d = F_d_act * D_d * S_d - S_d * D_d * F_d_act
+        E_f = F_f_act * D_f * S_f - S_f * D_f * F_f_act
+
+        # --- Store History ---
+        push!(F_hist, (copy(ws.F_s), copy(ws.F_p), copy(ws.F_d), copy(ws.F_f)))
+        push!(E_hist, (E_s, E_p, E_d, E_f))
+
+        if length(F_hist) > max_diis_history
+            popfirst!(F_hist)
+            popfirst!(E_hist)
+        end
+
+        num_hist = length(F_hist)
         
-        # --- Diagonalize Independent Blocks ---
-        evals_fs, evecs_fs = eigen(Symmetric(ws.F_s[active_s, active_s]), ws.S[active_s, active_s])
-        evals_fp, evecs_fp = eigen(Symmetric(ws.F_p[active_p, active_p]), ws.S[active_p, active_p])
-        evals_fd, evecs_fd = eigen(Symmetric(ws.F_d[active_d, active_d]), ws.S[active_d, active_d])
-        evals_ff, evecs_ff = eigen(Symmetric(ws.F_f[active_f, active_f]), ws.S[active_f, active_f])
+        # --- Build and Solve the Pulay Matrix ---
+        if num_hist >= 2
+            B = zeros(Float64, num_hist + 1, num_hist + 1)
+            for i in 1:num_hist
+                for j in i:num_hist
+                    # The inner product is the sum of Frobenius products over all l-blocks
+                    val = dot(E_hist[i][1], E_hist[j][1]) + 
+                          dot(E_hist[i][2], E_hist[j][2]) + 
+                          dot(E_hist[i][3], E_hist[j][3]) + 
+                          dot(E_hist[i][4], E_hist[j][4])
+                    B[i, j] = val
+                    B[j, i] = val
+                end
+                B[i, end] = -1.0
+                B[end, i] = -1.0
+            end
+            B[end, end] = 0.0
+
+            rhs = zeros(Float64, num_hist + 1)
+            rhs[end] = -1.0
+
+            # Solve for the mixing coefficients c_i
+            c_diis = B \ rhs
+
+            # Extrapolate the new Fock matrices
+            F_s_eff, F_p_eff = zeros(size(ws.F_s)), zeros(size(ws.F_p))
+            F_d_eff, F_f_eff = zeros(size(ws.F_d)), zeros(size(ws.F_f))
+
+            for i in 1:num_hist
+                F_s_eff .+= c_diis[i] .* F_hist[i][1]
+                F_p_eff .+= c_diis[i] .* F_hist[i][2]
+                F_d_eff .+= c_diis[i] .* F_hist[i][3]
+                F_f_eff .+= c_diis[i] .* F_hist[i][4]
+            end
+        else
+            # Not enough history yet, use current iteration
+            F_s_eff, F_p_eff = ws.F_s, ws.F_p
+            F_d_eff, F_f_eff = ws.F_d, ws.F_f
+        end
+
+        # --- Diagonalize the Effective Fock Matrices ---
+        evals_fs, evecs_fs = eigen(Symmetric(F_s_eff[active_s, active_s]), S_s)
+        evals_fp, evecs_fp = eigen(Symmetric(F_p_eff[active_p, active_p]), S_p)
+        evals_fd, evecs_fd = eigen(Symmetric(F_d_eff[active_d, active_d]), S_d)
+        evals_ff, evecs_ff = eigen(Symmetric(F_f_eff[active_f, active_f]), S_f)
+
+        # --- Update Orbitals (NO MIXING NEEDED) ---
+        # With DIIS, you take the resulting eigenvectors exactly as they are.
         
-        # --- Update Orbitals ---
-        
-        for (i, orb_idx) in enumerate(1:6)
-            c_new = zeros(Float64, n); c_new[active_s] = evecs_fs[:, i]
-            c_new ./= sqrt(dot(c_new, ws.S * c_new))
-            orbitals[orb_idx].coeffs = MIXING * orbitals[orb_idx].coeffs + (1 - MIXING) * c_new
+        for (i, orb_idx) in enumerate(1:6) # s
+            orbitals[orb_idx].coeffs .= 0.0
+            orbitals[orb_idx].coeffs[active_s] = evecs_fs[:, i]
             orbitals[orb_idx].coeffs ./= sqrt(dot(orbitals[orb_idx].coeffs, ws.S * orbitals[orb_idx].coeffs))
             orbitals[orb_idx].energy = evals_fs[i]
         end
 
-        for (i, orb_idx) in enumerate(7:11)
-            c_new = zeros(Float64, n); c_new[active_p] = evecs_fp[:, i]
-            c_new ./= sqrt(dot(c_new, ws.S * c_new))
-            orbitals[orb_idx].coeffs = MIXING * orbitals[orb_idx].coeffs + (1 - MIXING) * c_new
+        for (i, orb_idx) in enumerate(7:11) # p
+            orbitals[orb_idx].coeffs .= 0.0
+            orbitals[orb_idx].coeffs[active_p] = evecs_fp[:, i]
             orbitals[orb_idx].coeffs ./= sqrt(dot(orbitals[orb_idx].coeffs, ws.S * orbitals[orb_idx].coeffs))
             orbitals[orb_idx].energy = evals_fp[i]
         end
 
-        for (i, orb_idx) in enumerate(12:14)
-            c_new = zeros(Float64, n); c_new[active_d] = evecs_fd[:, i]
-            c_new ./= sqrt(dot(c_new, ws.S * c_new))
-            orbitals[orb_idx].coeffs = MIXING * orbitals[orb_idx].coeffs + (1 - MIXING) * c_new
+        for (i, orb_idx) in enumerate(12:14) # d
+            orbitals[orb_idx].coeffs .= 0.0
+            orbitals[orb_idx].coeffs[active_d] = evecs_fd[:, i]
             orbitals[orb_idx].coeffs ./= sqrt(dot(orbitals[orb_idx].coeffs, ws.S * orbitals[orb_idx].coeffs))
             orbitals[orb_idx].energy = evals_fd[i]
         end
 
-        for (i, orb_idx) in enumerate(15:15) # f-orbital update
-            c_new = zeros(Float64, n); c_new[active_f] = evecs_ff[:, i]
-            c_new ./= sqrt(dot(c_new, ws.S * c_new))
-            orbitals[orb_idx].coeffs = MIXING * orbitals[orb_idx].coeffs + (1 - MIXING) * c_new
+        for (i, orb_idx) in enumerate(15:15) # f
+            orbitals[orb_idx].coeffs .= 0.0
+            orbitals[orb_idx].coeffs[active_f] = evecs_ff[:, i]
             orbitals[orb_idx].coeffs ./= sqrt(dot(orbitals[orb_idx].coeffs, ws.S * orbitals[orb_idx].coeffs))
             orbitals[orb_idx].energy = evals_ff[i]
         end
+        
+        # --- Diagonalize Independent Blocks ---
+        # evals_fs, evecs_fs = eigen(Symmetric(ws.F_s[active_s, active_s]), ws.S[active_s, active_s])
+        # evals_fp, evecs_fp = eigen(Symmetric(ws.F_p[active_p, active_p]), ws.S[active_p, active_p])
+        # evals_fd, evecs_fd = eigen(Symmetric(ws.F_d[active_d, active_d]), ws.S[active_d, active_d])
+        # evals_ff, evecs_ff = eigen(Symmetric(ws.F_f[active_f, active_f]), ws.S[active_f, active_f])
+        
+        # # --- Update Orbitals ---
+        
+        # for (i, orb_idx) in enumerate(1:6)
+        #     c_new = zeros(Float64, n); c_new[active_s] = evecs_fs[:, i]
+        #     c_new ./= sqrt(dot(c_new, ws.S * c_new))
+        #     orbitals[orb_idx].coeffs = MIXING * orbitals[orb_idx].coeffs + (1 - MIXING) * c_new
+        #     orbitals[orb_idx].coeffs ./= sqrt(dot(orbitals[orb_idx].coeffs, ws.S * orbitals[orb_idx].coeffs))
+        #     orbitals[orb_idx].energy = evals_fs[i]
+        # end
+
+        # for (i, orb_idx) in enumerate(7:11)
+        #     c_new = zeros(Float64, n); c_new[active_p] = evecs_fp[:, i]
+        #     c_new ./= sqrt(dot(c_new, ws.S * c_new))
+        #     orbitals[orb_idx].coeffs = MIXING * orbitals[orb_idx].coeffs + (1 - MIXING) * c_new
+        #     orbitals[orb_idx].coeffs ./= sqrt(dot(orbitals[orb_idx].coeffs, ws.S * orbitals[orb_idx].coeffs))
+        #     orbitals[orb_idx].energy = evals_fp[i]
+        # end
+
+        # for (i, orb_idx) in enumerate(12:14)
+        #     c_new = zeros(Float64, n); c_new[active_d] = evecs_fd[:, i]
+        #     c_new ./= sqrt(dot(c_new, ws.S * c_new))
+        #     orbitals[orb_idx].coeffs = MIXING * orbitals[orb_idx].coeffs + (1 - MIXING) * c_new
+        #     orbitals[orb_idx].coeffs ./= sqrt(dot(orbitals[orb_idx].coeffs, ws.S * orbitals[orb_idx].coeffs))
+        #     orbitals[orb_idx].energy = evals_fd[i]
+        # end
+
+        # for (i, orb_idx) in enumerate(15:15) # f-orbital update
+        #     c_new = zeros(Float64, n); c_new[active_f] = evecs_ff[:, i]
+        #     c_new ./= sqrt(dot(c_new, ws.S * c_new))
+        #     orbitals[orb_idx].coeffs = MIXING * orbitals[orb_idx].coeffs + (1 - MIXING) * c_new
+        #     orbitals[orb_idx].coeffs ./= sqrt(dot(orbitals[orb_idx].coeffs, ws.S * orbitals[orb_idx].coeffs))
+        #     orbitals[orb_idx].energy = evals_ff[i]
+        # end
 
         # --- Compute Total Energy ---
         E_total = 0.0

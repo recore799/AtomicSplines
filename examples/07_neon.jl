@@ -7,10 +7,10 @@ using LinearAlgebra
 using Printf
 
 
-function solve_neon(R_max; verbose::Bool=true)
+function solve_neon(R_max; verbose::Bool=false)
     println("=== Neon (Z=10) ===")
     
-    N_elems = 200
+    N_elems = 30
     Z = 10.0
     basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
     ws = init_scf_workspace(basis, Z)
@@ -152,4 +152,10 @@ function solve_neon(R_max; verbose::Bool=true)
     end
 end
 
-solve_neon(1.0)
+R_c = [1.00, 1.35, 1.40, 1.45, 1.50, 1.75, 1.80, 1.85, 2.00, 2.50, 3.00, 3.50, 4.00, 4.50]
+
+for r in R_c
+    solve_neon(r)
+end
+
+# solve_neon(10.0)

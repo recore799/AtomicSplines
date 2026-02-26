@@ -4,10 +4,12 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 using AtomicSplines
 using LinearAlgebra
 using Printf
+using JLD2
 
 function solve_argon(R_max)
     println("=== Argon (Z=18) RHF Solver ===")
     
+    t1 = time()
     # 1. Setup
     N_elems = 200  # Increased for the tighter core and more nodes
     Z = 18.0
@@ -135,7 +137,16 @@ function solve_argon(R_max)
             println("Box size: $R_max a.u.")
             @printf("Final Energy: %.6f Ha\n", E_total)
             println("Reference   : ~ -526.817 Ha")
+            t2 = time()
+            t_total = t2 - t1
+            @printf("Tiempo total: %.4f", t_total)
             println("===== END =====")
+
+            # --- Save the results ---
+            filename = "argon_results_R$(R_max).jld2"
+            @save filename orbitals E_total R_max
+            println("Saved orbitals and energy to $filename")
+ 
             break
         end
         

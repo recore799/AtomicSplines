@@ -27,6 +27,8 @@ struct SolverWorkspace{K}
 
     F_s::Matrix{Float64}
     F_p::Matrix{Float64}
+    F_d::Matrix{Float64}
+    F_f::Matrix{Float64}
 
     # Stores the local KxKxK tensor for each element
     interaction_tensors::Vector{Array{Float64, 3}}

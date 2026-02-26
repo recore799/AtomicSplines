@@ -9,11 +9,15 @@ function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
     # Pre-allocate K matrices for s (l=0) and p (l=1) blocks.
     K_mats = Dict{Int, Matrix{Float64}}(
         0 => zeros(Float64, n, n),
-        1 => zeros(Float64, n, n)
+        1 => zeros(Float64, n, n),
+        2 => zeros(Float64, n, n),
+        3 => zeros(Float64, n, n)
     )
 
     F_s = zeros(Float64, n,n)
     F_p = zeros(Float64, n,n)
+    F_d = zeros(Float64, n,n)
+    F_f = zeros(Float64, n,n)
 
     factors = Dict{Int, Any}()
     
@@ -25,7 +29,7 @@ function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
 
     return SolverWorkspace{K}(
         basis, S, T, V, V2, J, 
-        K_mats, F_s, F_p , tensors, factors, 
+        K_mats, F_s, F_p, F_d, F_f, tensors, factors, 
         zeros(Float64, K), zeros(Float64, K),
         b_buf, y_buf, y_orb_buffer, y_total_buffer
     )
@@ -199,6 +203,42 @@ function assemble_K_matrix!(ws::SolverWorkspace{K}, K_mat::Matrix{Float64}, targ
         elseif target_l == 1 && psi.l == 1
             push!(multipoles, (0, 1.0 / 3.0))
             push!(multipoles, (2, 2.0 / 15.0))
+        # --- s-d and d-s ---
+        elseif (target_l == 0 && psi.l == 2) || (target_l == 2 && psi.l == 0)
+            push!(multipoles, (2, 1.0 / 5.0))
+            
+        # --- p-d and d-p ---
+        elseif (target_l == 1 && psi.l == 2) || (target_l == 2 && psi.l == 1)
+            push!(multipoles, (1, 2.0 / 15.0))
+            push!(multipoles, (3, 3.0 / 35.0))
+            
+        # --- d-d ---
+        elseif target_l == 2 && psi.l == 2
+            push!(multipoles, (0, 1.0 / 5.0))
+            push!(multipoles, (2, 2.0 / 35.0))
+            push!(multipoles, (4, 2.0 / 35.0))
+        
+        # --- s-f and f-s ---
+        elseif (target_l == 0 && psi.l == 3) || (target_l == 3 && psi.l == 0)
+            push!(multipoles, (3, 1.0 / 7.0))
+            
+        # --- p-f and f-p ---
+        elseif (target_l == 1 && psi.l == 3) || (target_l == 3 && psi.l == 1)
+            push!(multipoles, (2, 3.0 / 35.0))
+            push!(multipoles, (4, 4.0 / 63.0))
+            
+        # --- d-f and f-d ---
+        elseif (target_l == 2 && psi.l == 3) || (target_l == 3 && psi.l == 2)
+            push!(multipoles, (1, 3.0 / 35.0))
+            push!(multipoles, (3, 4.0 / 105.0))
+            push!(multipoles, (5, 10.0 / 231.0))
+            
+        # --- f-f ---
+        elseif target_l == 3 && psi.l == 3
+            push!(multipoles, (0, 1.0 / 7.0))
+            push!(multipoles, (2, 4.0 / 105.0))
+            push!(multipoles, (4, 2.0 / 77.0))
+            push!(multipoles, (6, 100.0 / 3003.0))
         end
         
         spin_weight = psi.occ / 2.0

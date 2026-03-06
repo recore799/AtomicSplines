@@ -7,11 +7,11 @@ using Printf
 using JLD2
 
 
-function solve_neon(R_max; verbose::Bool=false)
-    println("=== Neon (Z=10) ===")
+function solve_neon_core(R_max; verbose::Bool=false)
+    println("=== Na+ (Z=10) ===")
     
-    N_elems = 100
-    Z = 10.0
+    N_elems = 300
+    Z = 11.0
     basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
     ws = init_scf_workspace(basis, Z)
 
@@ -145,22 +145,16 @@ function solve_neon(R_max; verbose::Bool=false)
             println("Radio de confinamiento: $R_max a.u.")
             @printf("Energía final: %.6f Ha\n", E_total)
 
-            # Save the data needed for transition calculations
-            # jldsave("neon_scf_results.jld2";
-            #     R_mat=ws.R,
-            #     evals_fs,
-            #     evecs_fs,
-            #     evals_fp,
-            #     evecs_fp,
-            #     active_s,
-            #     active_p,
-            #     num_splines=n
-            # )
-            # println("Saved SCF results to neon_scf_results.jld2")
-            filename = "neon_results_R$(R_max).jld2"
-            @save filename orbitals E_total R_max
-            println("Saved orbitals and energy to $filename")
- 
+            jldsave("sodium_core_results.jld2";
+                R_mat=ws.R,
+                evals_fs, evecs_fs,
+                evals_fp, evecs_fp,
+                active_s, active_p,
+                num_splines=n
+            )
+            println("Saved Na+ core results.")
+
+
             println("===== END =====")
             break
         end
@@ -169,10 +163,4 @@ function solve_neon(R_max; verbose::Bool=false)
     end
 end
 
-# R_c = [1.00, 1.35, 1.40, 1.45, 1.50, 1.75, 1.80, 1.85, 2.00, 2.50, 3.00, 3.50, 4.00, 4.50]
-
-# for r in R_c
-#     solve_neon(r)
-# end
-
-solve_neon(10.0)
+solve_neon_core(50.0)

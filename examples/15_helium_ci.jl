@@ -4,12 +4,13 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 using AtomicSplines
 using LinearAlgebra
 using Printf
+using JLD2
 
 
 function solve_helium(R_max; verbose::Bool=false)
     println("=== Helium (Z=2) ===")
     
-    N_elems = 30
+    N_elems = 200
     Z = 2.0 # Changed from 10.0 to 2.0 for Helium
     basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
     ws = init_scf_workspace(basis, Z)
@@ -17,7 +18,9 @@ function solve_helium(R_max; verbose::Bool=false)
     n = basis.num_splines
 
     # Enforce origin boundary conditions: P(r) ~ r^(l+1)
-    active_s = 2:(n-1)  # s-orbitals (l=0): Drop B1 to enforce P(0) = 0
+    active_s = 2:(n-1)
+    active_p = 3:(n-1)
+    active_d = 4:(n-1)
 
    
     if verbose
@@ -102,10 +105,43 @@ function solve_helium(R_max; verbose::Bool=false)
                 println("-"^78)
                 println("Converged in $iter iterations.")
             end
+            
+            # ==========================================
+            # POST-SCF: GENERATE VIRTUAL BASIS FOR CI
+            # ==========================================
+            println("Generando orbitales virtuales p y d...")
+            
+            # 1. Build Exchange matrices for an electron in p or d feeling the 1s core
+            assemble_K_matrix!(ws, ws.K_mats[1], 1, orbitals)
+            assemble_K_matrix!(ws, ws.K_mats[2], 2, orbitals)
+            
+            # 2. Build the exact Fock matrices
+            # Note: ws.J is already converged and correct from the final SCF step!
+            ws.F_p .= H_core_p .+ ws.J .- ws.K_mats[1]
+            ws.F_d .= H_core_d .+ ws.J .- ws.K_mats[2]
+            
+            # 3. Diagonalize to get the virtual eigenvectors
+            evals_fp, evecs_fp = eigen(Symmetric(ws.F_p[active_p, active_p]), ws.S[active_p, active_p])
+            evals_fd, evecs_fd = eigen(Symmetric(ws.F_d[active_d, active_d]), ws.S[active_d, active_d])
+            
+            # 4. Extract them using the function we discussed earlier
+            N_VIRTUALS = 50
+            virt_s = extract_virtuals(evals_fs, evecs_fs, 0, 1, N_VIRTUALS, active_s, n, ws)
+            virt_p = extract_virtuals(evals_fp, evecs_fp, 1, 0, N_VIRTUALS, active_p, n, ws)
+            virt_d = extract_virtuals(evals_fd, evecs_fd, 2, 0, N_VIRTUALS, active_d, n, ws)
+            
+            all_virtuals = vcat(virt_s, virt_p, virt_d)
+            println("Total de orbitales virtuales extraídos: $(length(all_virtuals))")
+            
+            # Save orbitals and all_virtuals to a .jld2 file here
+            filename = "helium_results_R$(R_max).jld2"
+            @save filename orbitals all_virtuals E_total R_max
+            println("Saved orbitals and energy to $filename")
+            # ==========================================
+            
             println("Radio de confinamiento: $R_max a.u.")
             @printf("Energía final: %.6f Ha\n", E_total)
             println("===== END =====")
-            
             break
         end
         
@@ -113,5 +149,5 @@ function solve_helium(R_max; verbose::Bool=false)
     end
 end
 
-solve_helium(10.0, verbose=true)
+solve_helium(20.0, verbose=true)
 

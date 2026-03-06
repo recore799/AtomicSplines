@@ -2,7 +2,7 @@ function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
     n = basis.num_splines
 
     # Assemble core matrices
-    S, T, V, V2, tensors = assemble_geometry(basis, Z)
+    S, T, V, V2, R, tensors = assemble_geometry(basis, Z)
     
     J = zeros(Float64, n, n)
 
@@ -28,7 +28,7 @@ function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
     y_total_buffer = zeros(Float64, n)
 
     return SolverWorkspace{K}(
-        basis, S, T, V, V2, J, 
+        basis, S, T, V, V2, R, J, 
         K_mats, F_s, F_p, F_d, F_f, tensors, factors, 
         zeros(Float64, K), zeros(Float64, K),
         b_buf, y_buf, y_orb_buffer, y_total_buffer
@@ -42,6 +42,7 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
     T  = zeros(Float64, n, n)
     V  = zeros(Float64, n, n)
     V2 = zeros(Float64, n, n)   
+    R  = zeros(Float64, n, n) # NEW: Matrix for the dipole operator 'r'
 
     # Pre-allocate tensor storage
     tensors = Vector{Array{Float64, 3}}(undef, length(basis.knots) - 1)
@@ -96,11 +97,13 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
                         term_T = w * 0.5 * dNa * dNb
                         term_V = -Z * term_S * inv_r # Reuse term_S * inv_r
                         term_V2 = term_S * inv_r2
+                        term_R = term_S * r # Length gauge operator
                         
                         S[g_a, g_b] += term_S
                         T[g_a, g_b] += term_T
                         V[g_a, g_b] += term_V
                         V2[g_a, g_b] += term_V2
+                        R[g_a, g_b] += term_R
                         
                     end
                     
@@ -126,7 +129,7 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
         tensors[i] = W_local
     end
     
-    return Symmetric(S), Symmetric(T), Symmetric(V), Symmetric(V2), tensors
+    return Symmetric(S), Symmetric(T), Symmetric(V), Symmetric(V2), Symmetric(R), tensors
 end
 
 function assemble_J_matrix!(ws::SolverWorkspace{K}, y_coeffs) where {K}

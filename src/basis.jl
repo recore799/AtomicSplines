@@ -18,6 +18,7 @@ struct SolverWorkspace{K}
     T::Matrix{Float64}
     V::Matrix{Float64}
     V2::Matrix{Float64}
+    R::Matrix{Float64}
     
     # Coulomb matrix
     J::Matrix{Float64}

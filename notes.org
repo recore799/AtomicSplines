@@ -381,3 +381,15 @@ Nota: p interactuando consigomismo genera dos terminos multipolares, significa q
 * Views and in-place ldiv!
 
 * Start saving final orbitals
+
+* Are b-splines STOs?
+
+* Frozen-core CI for barium seems very doable
+
+Barium has a closed Xenon core plus two 6s valence electrons.
+
+- Run closed-shell solver for Ba2+ (isoelectronic to Xenon, Z=56)
+- Freeze that core
+- Use the frozen core potential as the one-electron operator (h_core) for a Helium CI calculation
+- Populate it with two electrons
+

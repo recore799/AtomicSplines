@@ -13,7 +13,8 @@ export init_scf_workspace, build_total_J_matrix!, assemble_K_matrix!, assemble_J
 export solve_poisson_J!, solve_generalized_poisson!
 # Helpers
 export evaluate_orbital
-
+# CI
+export extract_virtuals, compute_Rk
 
 # Structs
 include("structs.jl") 
@@ -35,5 +36,7 @@ include("solver.jl")
 # High level logic
 include("atomic_calculations.jl")
 
+# CI
+include("ci.jl")
 
 end

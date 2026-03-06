@@ -172,59 +172,11 @@ function solve_krypton(R_max; verbose::Bool=true)
             @save filename orbitals E_total R_max
             println("Saved orbitals and energy to $filename")
             
-            # plot_krypton_orbitals(ws.basis, orbitals, R_max)
             break
         end
         
         E_old = E_total
     end
-end
-
-function plot_krypton_orbitals(basis::BSplineBasis, orbitals::Vector{Orbital}, R_max::Float64)
-    # 1. Define a dense radial grid for smooth plotting
-    # We focus on the inner region (e.g., up to 10 a.u.) where most core density lives,
-    # but you can extend it to R_max if you want to see the long tails.
-    plot_max = min(R_max, 8.0) 
-    r_points = collect(range(1e-5, plot_max, length=1000))
-    
-    # 2. Extract evaluated functions
-    # Assuming your Krypton orbitals array is ordered: 
-    # [1s, 2s, 3s, 4s, 2p, 3p, 4p, 3d]
-    labels = ["1s", "2s", "3s", "4s", "2p", "3p", "4p", "3d"]
-    psi_dict = Dict{String, Vector{Float64}}()
-    
-    for (i, orb) in enumerate(orbitals)
-        # Your evaluate_orbital function handles the B-spline contraction
-        psi_dict[labels[i]] = evaluate_orbital(basis, orb.coeffs, r_points)
-    end
-
-    # 3. Create subplots grouped by angular momentum
-    
-    # --- Plot s-orbitals (l=0) ---
-    p_s = plot(title="s-orbitals (l=0)", xlabel="r (a.u.)", ylabel="P(r)", xlims=(0, plot_max))
-    plot!(p_s, r_points, psi_dict["1s"], label="1s", lw=2)
-    plot!(p_s, r_points, psi_dict["2s"], label="2s", lw=2)
-    plot!(p_s, r_points, psi_dict["3s"], label="3s", lw=2)
-    plot!(p_s, r_points, psi_dict["4s"], label="4s", lw=2)
-    
-    # --- Plot p-orbitals (l=1) ---
-    p_p = plot(title="p-orbitals (l=1)", xlabel="r (a.u.)", ylabel="P(r)", xlims=(0, plot_max))
-    plot!(p_p, r_points, psi_dict["2p"], label="2p", lw=2)
-    plot!(p_p, r_points, psi_dict["3p"], label="3p", lw=2)
-    plot!(p_p, r_points, psi_dict["4p"], label="4p", lw=2)
-    
-    # --- Plot d-orbitals (l=2) ---
-    p_d = plot(title="d-orbitals (l=2)", xlabel="r (a.u.)", ylabel="P(r)", xlims=(0, plot_max))
-    plot!(p_d, r_points, psi_dict["3d"], label="3d", lw=2, color=:purple)
-    
-    # 4. Combine into a single layout
-    final_plot = plot(p_s, p_p, p_d, layout=(3, 1), size=(800, 900), margin=5Plots.mm)
-    
-    # Display the plot
-    display(final_plot)
-    
-    # Optional: Save it to a file
-    # savefig(final_plot, "krypton_radial_functions.png")
 end
 
 solve_krypton(20.0)

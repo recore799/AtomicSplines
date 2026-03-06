@@ -10,8 +10,7 @@ function solve_argon(R_max)
     println("=== Argon (Z=18) RHF Solver ===")
     
     t1 = time()
-    # 1. Setup
-    N_elems = 200  # Increased for the tighter core and more nodes
+    N_elems = 100
     Z = 18.0
     basis = generate_basis(R_max, N_elems, Val(7), γ=3.0)
     ws = init_scf_workspace(basis, Z)

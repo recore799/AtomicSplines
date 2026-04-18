@@ -124,10 +124,14 @@ function solve_radon(R_max; verbose::Bool=true)
         assemble_K_matrix!(ws, ws.K_mats[3], 3, orbitals) # Added for f
         
         # --- Build Fock Matrices ---
-        ws.F_s .= H_core_s .+ ws.J .- ws.K_mats[0]
-        ws.F_p .= H_core_p .+ ws.J .- ws.K_mats[1]
-        ws.F_d .= H_core_d .+ ws.J .- ws.K_mats[2]
-        ws.F_f .= H_core_f .+ ws.J .- ws.K_mats[3] # Added for f
+        F_s = ws.F_mats[0]
+        F_p = ws.F_mats[1]
+        F_d = ws.F_mats[2]
+        F_f = ws.F_mats[3]
+        F_s .= H_core_s .+ ws.J .- ws.K_mats[0]
+        F_p .= H_core_p .+ ws.J .- ws.K_mats[1]
+        F_d .= H_core_d .+ ws.J .- ws.K_mats[2]
+        F_f .= H_core_f .+ ws.J .- ws.K_mats[3] # Added for f
 
         # --- Compute Density Matrices for Active Blocks ---
         D_s = build_active_density(orbitals, active_s, 0)
@@ -139,8 +143,8 @@ function solve_radon(R_max; verbose::Bool=true)
         S_s, S_p = ws.S[active_s, active_s], ws.S[active_p, active_p]
         S_d, S_f = ws.S[active_d, active_d], ws.S[active_f, active_f]
 
-        F_s_act, F_p_act = ws.F_s[active_s, active_s], ws.F_p[active_p, active_p]
-        F_d_act, F_f_act = ws.F_d[active_d, active_d], ws.F_f[active_f, active_f]
+        F_s_act, F_p_act = F_s[active_s, active_s], F_p[active_p, active_p]
+        F_d_act, F_f_act = F_d[active_d, active_d], F_f[active_f, active_f]
 
         E_s = F_s_act * D_s * S_s - S_s * D_s * F_s_act
         E_p = F_p_act * D_p * S_p - S_p * D_p * F_p_act
@@ -148,7 +152,7 @@ function solve_radon(R_max; verbose::Bool=true)
         E_f = F_f_act * D_f * S_f - S_f * D_f * F_f_act
 
         # --- Store History ---
-        push!(F_hist, (copy(ws.F_s), copy(ws.F_p), copy(ws.F_d), copy(ws.F_f)))
+        push!(F_hist, (copy(F_s), copy(F_p), copy(F_d), copy(F_f)))
         push!(E_hist, (E_s, E_p, E_d, E_f))
 
         if length(F_hist) > max_diis_history
@@ -183,8 +187,8 @@ function solve_radon(R_max; verbose::Bool=true)
             c_diis = B \ rhs
 
             # Extrapolate the new Fock matrices
-            F_s_eff, F_p_eff = zeros(size(ws.F_s)), zeros(size(ws.F_p))
-            F_d_eff, F_f_eff = zeros(size(ws.F_d)), zeros(size(ws.F_f))
+            F_s_eff, F_p_eff = zeros(size(F_s)), zeros(size(F_p))
+            F_d_eff, F_f_eff = zeros(size(F_d)), zeros(size(F_f))
 
             for i in 1:num_hist
                 F_s_eff .+= c_diis[i] .* F_hist[i][1]
@@ -194,8 +198,8 @@ function solve_radon(R_max; verbose::Bool=true)
             end
         else
             # Not enough history yet, use current iteration
-            F_s_eff, F_p_eff = ws.F_s, ws.F_p
-            F_d_eff, F_f_eff = ws.F_d, ws.F_f
+            F_s_eff, F_p_eff = F_s, F_p
+            F_d_eff, F_f_eff = F_d, F_f
         end
 
         # --- Diagonalize the Effective Fock Matrices ---

@@ -10,7 +10,7 @@ using JLD2
 function solve_helium(R_max; verbose::Bool=false)
     println("=== Helium (Z=2) ===")
     
-    N_elems = 200
+    N_elems = 500
     Z = 2.0 # Changed from 10.0 to 2.0 for Helium
     basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
     ws = init_scf_workspace(basis, Z)
@@ -21,6 +21,9 @@ function solve_helium(R_max; verbose::Bool=false)
     active_s = 2:(n-1)
     active_p = 3:(n-1)
     active_d = 4:(n-1)
+    active_f = 5:(n-1)
+    active_g = 6:(n-1)
+    active_i = 7:(n-1)
 
    
     if verbose
@@ -43,6 +46,9 @@ function solve_helium(R_max; verbose::Bool=false)
 
     H_core_p = ws.T + ws.V + ws.V2 
     H_core_d = ws.T + ws.V + 3.0 * ws.V2
+    H_core_f = ws.T + ws.V + 6.0 * ws.V2
+    H_core_g = ws.T + ws.V + 10.0 * ws.V2
+    H_core_i = ws.T + ws.V + 15.0 * ws.V2
 
     # --- Initial Guess ---
     evals_s, evecs_s = eigen(Symmetric(H_core_s[active_s, active_s]), ws.S[active_s, active_s])
@@ -105,32 +111,48 @@ function solve_helium(R_max; verbose::Bool=false)
                 println("-"^78)
                 println("Converged in $iter iterations.")
             end
-            
             # ==========================================
             # POST-SCF: GENERATE VIRTUAL BASIS FOR CI
             # ==========================================
-            println("Generando orbitales virtuales p y d...")
+            println("Generando orbitales virtuales p, d y f...")
             
-            # 1. Build Exchange matrices for an electron in p or d feeling the 1s core
+            # 1. Build Exchange matrices
             assemble_K_matrix!(ws, ws.K_mats[1], 1, orbitals)
             assemble_K_matrix!(ws, ws.K_mats[2], 2, orbitals)
+            assemble_K_matrix!(ws, ws.K_mats[3], 3, orbitals) 
+            assemble_K_matrix!(ws, ws.K_mats[4], 4, orbitals) 
+            assemble_K_matrix!(ws, ws.K_mats[5], 5, orbitals) 
             
             # 2. Build the exact Fock matrices
-            # Note: ws.J is already converged and correct from the final SCF step!
             ws.F_p .= H_core_p .+ ws.J .- ws.K_mats[1]
             ws.F_d .= H_core_d .+ ws.J .- ws.K_mats[2]
+            ws.F_f .= H_core_f .+ ws.J .- ws.K_mats[3]
+            ws.F_f .= H_core_f .+ ws.J .- ws.K_mats[4]
+            ws.F_f .= H_core_f .+ ws.J .- ws.K_mats[5]
             
             # 3. Diagonalize to get the virtual eigenvectors
             evals_fp, evecs_fp = eigen(Symmetric(ws.F_p[active_p, active_p]), ws.S[active_p, active_p])
             evals_fd, evecs_fd = eigen(Symmetric(ws.F_d[active_d, active_d]), ws.S[active_d, active_d])
+            evals_ff, evecs_ff = eigen(Symmetric(ws.F_f[active_f, active_f]), ws.S[active_f, active_f])
+            evals_fg, evecs_fg = eigen(Symmetric(ws.F_g[active_g, active_g]), ws.S[active_g, active_g])
+            evals_fi, evecs_fi = eigen(Symmetric(ws.F_i[active_i, active_i]), ws.S[active_i, active_i])
             
-            # 4. Extract them using the function we discussed earlier
-            N_VIRTUALS = 50
+            # 4. Extract them
+            N_VIRTUALS = 60
+            # Keep s and p starting from the bottom
             virt_s = extract_virtuals(evals_fs, evecs_fs, 0, 1, N_VIRTUALS, active_s, n, ws)
             virt_p = extract_virtuals(evals_fp, evecs_fp, 1, 0, N_VIRTUALS, active_p, n, ws)
-            virt_d = extract_virtuals(evals_fd, evecs_fd, 2, 0, N_VIRTUALS, active_d, n, ws)
-            
-            all_virtuals = vcat(virt_s, virt_p, virt_d)
+
+            virt_d = extract_virtuals(evals_fd, evecs_fd, 2, 0, N_VIRTUALS, active_d, n, ws, offset=2)
+
+            virt_f = extract_virtuals(evals_ff, evecs_ff, 3, 0, N_VIRTUALS, active_f, n, ws, offset=15)
+            virt_g = extract_virtuals(evals_fg, evecs_fg, 4, 0, N_VIRTUALS, active_g, n, ws, offset=25)
+            virt_i = extract_virtuals(evals_fi, evecs_fi, 5, 0, N_VIRTUALS, active_i, n, ws, offset=35)
+
+
+            # Combine them all
+            all_virtuals = vcat(virt_s, virt_p, virt_d, virt_f, virt_g, virt_i)
+
             println("Total de orbitales virtuales extraídos: $(length(all_virtuals))")
             
             # Save orbitals and all_virtuals to a .jld2 file here

@@ -68,8 +68,8 @@ function calc_h2_1S(ws, a::Orbital, b::Orbital, c::Orbital, d::Orbital)
         if abs(w3j) > 1e-10
             C_k = ((-1)^k) * sqrt((2l + 1) * (2l_prime + 1)) * (w3j^2)
             
-            rk1 = compute_Rk(ws, a, b, c, d, k)
-            rk2 = compute_Rk(ws, a, b, d, c, k)
+            rk1 = get_cached_Rk!(ws, a, b, c, d, k)
+            rk2 = get_cached_Rk!(ws, a, b, d, c, k)
             
             val += C_k * (rk1 + rk2)
         end
@@ -78,33 +78,67 @@ function calc_h2_1S(ws, a::Orbital, b::Orbital, c::Orbital, d::Orbital)
     return val / (N_ab * N_cd)
 end
 
-function build_helium_ci_matrix(ws, orbitals, virtuals)
+function build_helium_ci_matrix(ws, orbitals, virtuals; pt2_threshold=1e-8)
     orb_1s = orbitals[1]
     ci_basis = Config1S[]
     
-    # 1. Ground State (1s^2)
+    # Ground State (1s^2)
     push!(ci_basis, Config1S(orb_1s, orb_1s))
-    
-    # 2. Singly Excited States (1s ns)
-    for v in virtuals
-        if v.l == 0
-            push!(ci_basis, Config1S(orb_1s, v))
-        end
-    end
-    
-    # 3. Doubly Excited States (n1_l n2_l)
+
+    # Brillouin
+    # Singly Excited States (1s ns)
+    # for v in virtuals
+    #     if v.l == 0
+    #         push!(ci_basis, Config1S(orb_1s, v))
+    #     end
+    # end
+    # Doubly Excited States (n1_l n2_l) - WITH PERTURBATIVE SCREENING
+    println("Filtrando configuraciones dobles (Threshold = $pt2_threshold Ha)...")
+    rejected_count = 0
+
     for i in 1:length(virtuals)
         for j in i:length(virtuals)
-            # Both electrons must jump into the same angular momentum shell to maintain L=0
-            if virtuals[i].l == virtuals[j].l
-                push!(ci_basis, Config1S(virtuals[i], virtuals[j]))
+            v1 = virtuals[i]
+            v2 = virtuals[j]
+            
+            if v1.l == v2.l
+                # Compute the off-diagonal interaction: < 1s^2 | H | v1 v2 >
+                H_0D = calc_h2_1S(ws, orb_1s, orb_1s, v1, v2)
+                
+                # Compute the Møller-Plesset energy denominator
+                # E_D (excited state) - E_0 (ground state)
+                E_D = v1.energy + v2.energy
+                E_0 = 2.0 * orb_1s.energy 
+                delta_E = E_D - E_0
+                
+                # Estimate correlation contribution
+                E_est = (H_0D^2) / delta_E
+                
+                # Screen it
+                if E_est > pt2_threshold
+                    push!(ci_basis, Config1S(v1, v2))
+                else
+                    rejected_count += 1
+                end
             end
         end
-    end
-    
+    end   
+
+    # # 3. Doubly Excited States (n1_l n2_l)
+    # for i in 1:length(virtuals)
+    #     for j in i:length(virtuals)
+    #         # Both electrons must jump into the same angular momentum shell to maintain L=0
+    #         if virtuals[i].l == virtuals[j].l
+    #             push!(ci_basis, Config1S(virtuals[i], virtuals[j]))
+    #         end
+    #     end
+    # end
     N = length(ci_basis)
+    println("Configuraciones aceptadas: $N")
+    println("Configuraciones rechazadas: $rejected_count")   
+
     H_CI = zeros(Float64, N, N)
-    println("Construyendo matriz CI COMPLETA para Helio ($N x $N)...")
+    println("Construyendo matriz CI ($N x $N)...")
     
     for i in 1:N
         for j in i:N
@@ -132,13 +166,15 @@ function run_helium_ci(filename)
     
     # 2. Reconstruct the computational workspace
     println("Reconstruyendo el espacio de trabajo B-spline...")
-    N_elems = 200 # Must match exactly what you used in solve_helium!
+    N_elems = 500
     Z = 2.0
     basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
     ws = init_scf_workspace(basis, Z)
     
     # 3. Build the Hamiltonian
+    t1 = time()
     H_CI = build_helium_ci_matrix(ws, orbitals, all_virtuals)
+    elapsed0 = time() - t1
     
     # 4. Diagonalize
     println("Diagonalizando la matriz CI...")
@@ -152,13 +188,26 @@ function run_helium_ci(filename)
     E_corr = E_CI - E_HF
     
     println("\n=== Resultados Finales ===")
+    @printf("Tiempo de construccion.      : %.4f s\n", elapsed0)
     @printf("Tiempo de diag.      : %.4f s\n", elapsed)
     @printf("Energía Hartree-Fock : %12.6f Ha\n", E_HF)
     @printf("Energía CI (Total)   : %12.6f Ha\n", E_CI)
     println("-"^30)
     @printf("Energía Correlación  : %12.6f Ha\n", E_corr)
     println("==========================\n")
-    
+
+    # Determine L_max based on the loaded virtuals
+    L_max = maximum(v.l for v in all_virtuals)
+    matrix_size = size(H_CI, 1)
+
+    # Append to a tracking file
+    open("ci_convergence.csv", "a") do io
+        # Write header if file is empty
+        if filesize("ci_convergence.csv") == 0
+            println(io, "L_max,MatrixSize,E_corr")
+        end
+        @printf(io, "%d,%d,%.8f\n", L_max, matrix_size, E_corr)
+    end
     return evals, evecs, H_CI
 end
 

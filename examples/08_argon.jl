@@ -65,12 +65,14 @@ function solve_argon(R_max)
         assemble_K_matrix!(ws, ws.K_mats[1], 1, orbitals)
         
         # --- BUILD FOCK MATRICES ---
-        ws.F_s .= H_core_s .+ ws.J .- ws.K_mats[0]
-        ws.F_p .= H_core_p .+ ws.J .- ws.K_mats[1]
+        F_s = ws.F_mats[0]
+        F_p = ws.F_mats[1]
+        F_s .= H_core_s .+ ws.J .- ws.K_mats[0]
+        F_p .= H_core_p .+ ws.J .- ws.K_mats[1]
         
         # --- DIAGONALIZE ---
-        evals_fs, evecs_fs = eigen(Symmetric(ws.F_s[active_s, active_s]), Symmetric(ws.S[active_s, active_s]))
-        evals_fp, evecs_fp = eigen(Symmetric(ws.F_p[active_p, active_p]), Symmetric(ws.S[active_p, active_p]))
+        evals_fs, evecs_fs = eigen(Symmetric(F_s[active_s, active_s]), Symmetric(ws.S[active_s, active_s]))
+        evals_fp, evecs_fp = eigen(Symmetric(F_p[active_p, active_p]), Symmetric(ws.S[active_p, active_p]))
         
         # --- UPDATE ORBITALS ---
         # 1s
@@ -138,7 +140,7 @@ function solve_argon(R_max)
             println("Reference   : ~ -526.817 Ha")
             t2 = time()
             t_total = t2 - t1
-            @printf("Tiempo total: %.4f", t_total)
+            @printf("Tiempo total: %.4f\n", t_total)
             println("===== END =====")
 
             # --- Save the results ---

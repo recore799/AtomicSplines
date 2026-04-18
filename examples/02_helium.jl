@@ -66,11 +66,12 @@ function solve_helium(R_max; verbose::Bool=false)
         # Only need l=0 exchange matrix for Helium
         assemble_K_matrix!(ws, ws.K_mats[0] , 0, orbitals)
         
-        # --- Build Fock Matrices ---
-        ws.F_s .= H_core_s .+ ws.J .- ws.K_mats[0]
+        # --- Build Fock Matrix ---
+        F_s = ws.F_mats[0]
+        F_s .= H_core_s .+ ws.J .- ws.K_mats[0]
         
         # --- Diagonalize Independent Blocks ---
-        evals_fs, evecs_fs = eigen(Symmetric(ws.F_s[active_s, active_s]), ws.S[active_s, active_s])
+        evals_fs, evecs_fs = eigen(Symmetric(F_s[active_s, active_s]), ws.S[active_s, active_s])
         
         # --- Update Orbitals (With Mixing) ---
         # 1s

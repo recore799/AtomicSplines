@@ -1,0 +1,63 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+
+\geometry{margin=25mm}
+
+\titleformat{\section}{\large\bfseries\color{blue!60!black}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\bfseries\color{blue!40!black}}{}{0em}{}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE \textbf{Metodología Progresiva en el Cálculo del Átomo de Carbono}} \\
+    \vspace{0.5cm}
+    {\large \textit{Corrección de Capa Abierta sobre el Promedio de la Configuración}} \\
+    \vspace{0.3cm}
+    \textbf{Suplemento a la Tesis de Licenciatura en Física}
+\end{center}
+
+\section{Introducción}
+En el desarrollo de un motor Hartree-Fock basado en B-splines, la resolución de sistemas de capa abierta como el Carbono ($1s^2 2s^2 2p^2$) presenta un desafío inherente debido a la ruptura de la simetría esférica en la densidad de carga de valencia. La primera aproximación metodológica para este problema consiste en forzar una simetría esférica artificial para resolver las ecuaciones integro-diferenciales radiales, obteniendo lo que se denomina el \textit{Promedio de la Configuración} ($E_{av}$). Este documento detalla la mecánica de dicha aproximación y el post-procesamiento requerido para recuperar los multipletes de estructura fina y el estado base no relativista verdadero.
+
+\section{La Aproximación Esférica tipo Neón en el Ciclo SCF}
+Para mantener la tratabilidad del problema dentro de un modelo de campo central unidimensional, el potencial efectivo debe carecer de dependencia angular. Según el teorema de Unsöld, solo las subcapas completamente llenas exhiben una densidad de probabilidad puramente radial y esféricamente simétrica. Un átomo de Neón ($1s^2 2s^2 2p^6$) cumple esta condición de forma natural.
+
+Para incorporar la subcapa direccional $2p^2$ del Carbono en el ciclo Self-Consistent Field (SCF) sin recurrir a un formalismo de acoplamiento de momento angular completo, se emplea una \textbf{aproximación esférica tipo Neón}. Esto implica promediar estadísticamente la densidad de los dos electrones sobre los seis estados espín-orbitales posibles. Computacionalmente, a cada estado degenerado se le asigna una ocupación fraccionaria de $2/6 = 1/3$. Esto permite que el motor procese la capa $2p$ utilizando la misma topología de integración de capa cerrada, sacrificando temporalmente la correlación angular exacta en favor de la convergencia del potencial de campo central.
+
+\section{Derivación Analítica del Factor de Auto-interacción}
+Una consecuencia crítica de modelar la carga discreta como un fluido fraccionario continuo es la introducción de un error de auto-interacción (Self-Interaction Error). El operador escalar sobreestima la repulsión electrónica, la cual debe ser purgada analíticamente.
+
+Para comprender el origen de este error, debemos considerar la topología de la capa cerrada sobre la cual opera el motor. Físicamente, una capa $p^6$ completamente llena posee $w=6$ electrones. La combinatoria de pares interactuantes de Coulomb para este sistema está dada por $\frac{w(w-1)}{2}$. Por lo tanto, la matriz geométrica del motor evalúa la repulsión de $\frac{6(5)}{2} = 15$ pares.
+
+En el caso del Carbono, la densidad de carga global $\rho(\vec{r})$ es escalada por la fracción de ocupación $\frac{1}{3}$. Debido a que la energía repulsiva de Coulomb es un operador de dos cuerpos gobernado por una integral doble sobre el espacio de coordenadas:
+\[ E_{repulsi\acute{o}n} \propto \iint \frac{\rho(\vec{r}_1)\rho(\vec{r}_2)}{|\vec{r}_1 - \vec{r}_2|} d\vec{r}_1 d\vec{r}_2 \]
+el factor de escalamiento se eleva cuadráticamente. La repulsión evaluada por la integración continua queda atenuada por un factor de $\left(\frac{1}{3}\right)^2 = \frac{1}{9}$.
+
+En consecuencia, el motor SCF computa un número de pares repulsivos efectivos equivalente a:
+\[ \text{Pares calculados} = 15 \times \frac{1}{9} = \frac{15}{9} = \frac{5}{3} \approx 1.666 \]
+
+Sin embargo, la física estricta dicta que un sistema de $2$ electrones discretos debe poseer exactamente $\frac{2(1)}{2} = 1$ par interactuante. La diferencia entre el modelo de fluido continuo promediado y la realidad corpuscular arroja el número exacto de pares espurios generados por la auto-interacción de las ocupaciones fraccionarias:
+\[ \Delta \text{Pares Espurios} = \text{Pares calculados} - \text{Pares reales} = \frac{5}{3} - 1 = \frac{2}{3} \]
+
+Para recuperar una Energía Promedio de la Configuración ($E_{av}$) físicamente rigurosa, se debe sustraer exactamente esta fracción del término directo asociado. La corrección de Energía de Auto-interacción (SIC) es:
+\[ \Delta E_{SIC} = \frac{2}{3} \cdot F^0(2p, 2p) \]
+
+\section{Resolución de los Términos $LS$ mediante Integrales de Slater}
+Con el promedio de la configuración rigurosamente limpio de artefactos continuos, se procede a romper la degeneración impuesta por el modelo esférico. La introducción de la integral de cuadrupolo de Slater $F^2(2p, 2p)$ cuantifica la anisotropía angular real de los electrones. Utilizando el formalismo de Cowan, la estructura multiplete resultante se expresa como:
+
+\begin{itemize}
+    \item \textbf{Término $^3P$ (Estado Base):} $E(^3P) = E_{av} - \frac{5}{25} F^2(2p, 2p)$
+    \item \textbf{Término $^1D$:} $E(^1D) = E_{av} + \frac{1}{25} F^2(2p, 2p)$
+    \item \textbf{Término $^1S$:} $E(^1S) = E_{av} + \frac{6}{25} F^2(2p, 2p)$
+\end{itemize}
+
+\section{Conclusiones y Validación}
+La aplicación de la fracción de corrección exacta de $2/3$, seguida del desdoblamiento del cuadrupolo, arroja un valor calculado para el estado $^3P$ del Carbono de $-37.6661$ Ha. Frente al límite no relativista aceptado en la literatura ($\approx -37.6886$ Ha), este formalismo de post-procesamiento recupera con éxito una porción sobresaliente de la energía real sin requerir un ciclo acoplado de capa abierta. Este resultado consolida de forma independiente la robustez de la base B-spline y valida la necesidad teórica de tratar explícitamente el espacio de momento angular en las iteraciones futuras del simulador.
+
+\end{document}
+

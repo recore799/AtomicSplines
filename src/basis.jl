@@ -19,17 +19,22 @@ struct SolverWorkspace{K}
     V::Matrix{Float64}
     V2::Matrix{Float64}
     R::Matrix{Float64}
+    R2::Matrix{Float64}
+    R_inv3::Matrix{Float64}
     
     # Coulomb matrix
     J::Matrix{Float64}
     
     # Maps angular momentum 'l' to its specific K matrix
     K_mats::Dict{Int, Matrix{Float64}}
+    F_mats::Dict{Int, Matrix{Float64}}
 
-    F_s::Matrix{Float64}
-    F_p::Matrix{Float64}
-    F_d::Matrix{Float64}
-    F_f::Matrix{Float64}
+    # F_s::Matrix{Float64}
+    # F_p::Matrix{Float64}
+    # F_d::Matrix{Float64}
+    # F_f::Matrix{Float64}
+    # F_g::Matrix{Float64}
+    # F_i::Matrix{Float64}
 
     # Stores the local KxKxK tensor for each element
     interaction_tensors::Vector{Array{Float64, 3}}
@@ -47,6 +52,11 @@ struct SolverWorkspace{K}
 
     y_orb_buffer::Vector{Float64}   # Added for single orbital J potential
     y_total_buffer::Vector{Float64} # Added for the accumulated J potential
+
+    # CI scratch buffers
+    scratch_source::Vector{Float64}
+    scratch_y::Vector{Float64}
+    rk_cache::Dict{UInt64, Float64}
 end
 
 # struct SolverWorkspace{K}

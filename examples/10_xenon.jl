@@ -100,16 +100,17 @@ function solve_xenon(R_max; verbose::Bool=true)
         assemble_K_matrix!(ws, ws.K_mats[2], 2, orbitals)
         
         # --- Build Fock Matrices ---
-        ws.F_s .= H_core_s .+ ws.J .- ws.K_mats[0]
-        ws.F_p .= H_core_p .+ ws.J .- ws.K_mats[1]
-        ws.F_d .= H_core_d .+ ws.J .- ws.K_mats[2]
+        F_s = ws.F_mats[0]
+        F_p = ws.F_mats[1]
+        F_d = ws.F_mats[2]
+        F_s .= H_core_s .+ ws.J .- ws.K_mats[0]
+        F_p .= H_core_p .+ ws.J .- ws.K_mats[1]
+        F_d .= H_core_d .+ ws.J .- ws.K_mats[2]
         
         # --- Diagonalize Independent Blocks ---
-        evals_fs, evecs_fs = eigen(Symmetric(ws.F_s[active_s, active_s]), ws.S[active_s, active_s])
-        evals_fp, evecs_fp = eigen(Symmetric(ws.F_p[active_p, active_p]), ws.S[active_p, active_p])
-        evals_fd, evecs_fd = eigen(Symmetric(ws.F_d[active_d, active_d]), ws.S[active_d, active_d])
-        
-        # --- Update Orbitals (With Mixing) ---
+        evals_fs, evecs_fs = eigen(Symmetric(F_s[active_s, active_s]), ws.S[active_s, active_s])
+        evals_fp, evecs_fp = eigen(Symmetric(F_p[active_p, active_p]), ws.S[active_p, active_p])
+        evals_fd, evecs_fd = eigen(Symmetric(F_d[active_d, active_d]), ws.S[active_d, active_d])
         
         # Update s-orbitals
         for (i, orb_idx) in enumerate(1:5)

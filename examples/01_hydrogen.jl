@@ -29,8 +29,8 @@ println("    Goal:       Retrieve first $Target_States radial eigenfunctions")
 println("\nB. Discretizing Space...")
 
 R_MAX = 80.0        
-N_ELEMS = 100        
-ORDER = 6          # Spline Order k
+N_ELEMS = 1000        
+ORDER = 7          # Spline Order k
 GAMMA = 2.5        
 
 # UPDATE 1: Use Val(ORDER) for parametric dispatch

@@ -393,3 +393,9 @@ Barium has a closed Xenon core plus two 6s valence electrons.
 - Use the frozen core potential as the one-electron operator (h_core) for a Helium CI calculation
 - Populate it with two electrons
 
+* ROHF is better but harder?
+* UHF is pople-nesbet, but introduces spin contamination
+
+
+
+* Why do I need dest_mat in assemble_J_matrix?

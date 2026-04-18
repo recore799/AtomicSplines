@@ -42,7 +42,7 @@ function plot_radon(basis::BSplineBasis, orbitals::Vector{Orbital}, R_max::Float
     labels = ["1s", "2s", "3s", "4s", "5s", "6s", "2p", "3p", "4p", "5p", "6p", "3d", "4d", "5d" , "4f"]
     
     # Initialize the plot with the custom X-axis ticks
-    p = plot(title="Hartree-Fock Radial Wavefunctions of Radon", 
+    p = plot(title="Hartree-Fock Radial Wavefunctions of Radon (Z=86)", 
              xlabel="r (a.u.)", 
              ylabel="P(r)", 
              legend=:outertopright, 
@@ -112,7 +112,7 @@ function plot_radon_density(basis::BSplineBasis, orbitals::Vector{Orbital}, R_ma
     end
     
     # 4. Create the plot
-    p = plot(title="Total Radial Electron Density of Radon", 
+    p = plot(title="Total Radial Electron Density of Radon (Z=86)", 
              xlabel="r (a.u.)", 
              ylabel="D(r)", 
              legend=false, 

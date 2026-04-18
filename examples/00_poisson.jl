@@ -32,7 +32,7 @@ println("B. Generando base B-Spline...")
 R_MAX = 1.0
 N_ELEMS = 5
 ORDER = 4     # Cúbicos
-basis = generate_basis(R_MAX, N_ELEMS, ORDER, γ=1.0) # γ=1.0 es malla uniforme
+basis = generate_basis(R_MAX, N_ELEMS, Val(ORDER), γ=1.0) # γ=1.0 es malla uniforme
 
 println("   > Base: $N_ELEMS elementos, Orden $ORDER")
 println("   > Total Splines: $(basis.num_splines)")
@@ -47,8 +47,8 @@ println("C. Ensamblando Sistema Matricial...")
 #    La ecuación de Poisson requiere K_ij = integral(B_i' * B_j')
 #    Por lo tanto: K = 2 * T
 print("   > Reutilizando matriz cinética para K... ")
-T, _, S = assemble_core(basis, 0.0) # Z=0 porque no hay núcleo aquí
-K = 2.0 .* T
+ws = init_scf_workspace(basis, 0.0) # Z=0 porque no hay núcleo aquí
+K = 2.0 .* ws.T
 println("Listo.")
 
 # 2. Vector de Carga (Load Vector) F

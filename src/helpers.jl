@@ -45,3 +45,18 @@ function evaluate_orbital(basis::BSplineBasis{K}, coeffs::AbstractVector{Float64
     
     return psi_vals
 end
+
+function group_orbitals_by_l(orbitals::Vector{Orbital})
+    shells = Dict{Int, Vector{Orbital}}()
+    for orb in orbitals
+        # If the l-key doesn't exist, create an empty array and push the orbital
+        push!(get!(shells, orb.l, Orbital[]), orb)
+    end
+    
+    # Sort them by principal quantum number 'n' within each l-block
+    for (l, orbs) in shells
+        sort!(orbs, by = x -> x.n)
+    end
+    
+    return shells
+end

@@ -29,7 +29,7 @@ function calculate_carbon_term_splitting(filename::String)
     # The SCF engine calculated w^2 / 2 = 2.0 pairs.
     # Physics dictates w(w-1) / 2 = 1.0 pair.
     # We must subtract exactly 1.0 spurious pair's worth of energy.
-    E_pair = - (3.0 / 25.0) * F2_pp
+    E_pair = (2.0 / 3.0) * F0_pp - (2.0 / 25.0) * F2_pp
     
     # The true Configuration Average
     E_av = E_raw_scf - E_pair
@@ -56,4 +56,4 @@ function calculate_carbon_term_splitting(filename::String)
     return F0_pp, F2_pp, E_1S, E_1D, E_3P
 end
 
-calculate_carbon_term_splitting("carbon_rohf_results_R30.jld2")
+calculate_carbon_term_splitting("carbon_results_R30.jld2")

@@ -2,33 +2,40 @@ using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 
 using AtomicSplines
-using JLD2
-using Printf
 using LinearAlgebra
+using Printf
+using JLD2
 
-function validate_silicon_orbitals(filename::String)
+
+function validate_germanium_orbitals(filename::String)
     # 1. Load the strictly optimized HF-t data
     data = jldopen(filename, "r")
     orbitals = data["orbitals"]
     E_total = data["E_total"]
     R_max = data["R_max"]
-    Z = 14.0
+    
+    # Germanium specific term and atomic number
+    term_symbol = haskey(data, "term") ? data["term"] : "^3P"
+    Z = 32.0
     
     # 2. Rebuild the B-spline workspace
-    # Assumes init_scf_workspace now also provides ws.R2 and ws.R_inv3
-    N_elems = 100
-    ws = cached_init_scf_workspace(R_max, N_elems, Val(7), Z; γ=2.5, calc_R_matrices=true)
+    N_elems = 300
+    ws = cached_init_scf_workspace(R_max, N_elems, Val(8), Z; γ=3.0, calc_R_matrices=true)
     
-
     # 3. Compute Total Kinetic Energy (T)
-    # CRITICAL FIX: The centrifugal term (ws.V2) must be added for all l > 0 states.
+    # RIGOROUS FIX: The centrifugal term l(l+1)/2 must be properly scaled for s, p, and d shells.
     T_total = 0.0
     for orb in orbitals
         if orb.occ > 0.0
             if orb.l == 0
                 t_val = dot(orb.coeffs, ws.T * orb.coeffs)
-            else
+            elseif orb.l == 1
                 t_val = dot(orb.coeffs, (ws.T + ws.R_inv2) * orb.coeffs)
+            elseif orb.l == 2
+                # d-orbital: l=2 -> 2(3)/2 = 3.0
+                t_val = dot(orb.coeffs, (ws.T + 3.0 * ws.R_inv2) * orb.coeffs)
+            else
+                error("Orbital angular momentum l > 2 not supported in this script.")
             end
             T_total += orb.occ * t_val
         end
@@ -41,6 +48,8 @@ function validate_silicon_orbitals(filename::String)
     println("==========================================================================")
     println("                 INTERNAL VALIDATION: THE VIRIAL THEOREM                  ")
     println("==========================================================================")
+    @printf(" Element                  : Germanium (Z = %.1f)\n", Z)
+    @printf(" Target State             : 4p^2 (%s)\n", term_symbol)
     @printf(" Total Energy (E)         : %15.8f Ha\n", E_total)
     @printf(" Total Kinetic Energy (T) : %15.8f Ha\n", T_total)
     @printf(" Total Potential (V)      : %15.8f Ha\n", V_total)
@@ -48,7 +57,7 @@ function validate_silicon_orbitals(filename::String)
     
     # 5. Compute Radial Expectation Values
     println("\n==========================================================================")
-    println("               RADIAL EXPECTATION VALUES & ORBITAL GEOMETRY               ")
+    println("                RADIAL EXPECTATION VALUES & ORBITAL GEOMETRY               ")
     println("==========================================================================")
     @printf("%-4s | %-12s | %-12s | %-12s | %-12s\n", 
             "Orb", "<r> (Bohr)", "<r²> (Bohr²)", "<1/r> (Bohr⁻¹)", "<1/r³> (Bohr⁻³)")
@@ -56,7 +65,7 @@ function validate_silicon_orbitals(filename::String)
     
     for orb in orbitals
         if orb.occ > 0.0
-            # Dipole <r>
+            # Dipole <r> 
             exp_r = dot(orb.coeffs, ws.R * orb.coeffs)
             
             # Quadrupole <r^2>
@@ -75,21 +84,21 @@ function validate_silicon_orbitals(filename::String)
     end
     println("==========================================================================")
     
-    # 6. Extract the Valence 3p Orbital and Compute Slater Integrals
-    orb_3p = orbitals[5]
+    # 6. Extract the Valence 4p Orbital and Compute Slater Integrals
+    # The 4p orbital strictly resides at index 8 in the Germanium configuration
+    orb_4p = orbitals[8]
     
-    F0_3p = compute_Rk(ws, orb_3p, orb_3p, orb_3p, orb_3p, 0)
-    F2_3p = compute_Rk(ws, orb_3p, orb_3p, orb_3p, orb_3p, 2)
+    F0_4p = compute_Rk(ws, orb_4p, orb_4p, orb_4p, orb_4p, 0)
+    F2_4p = compute_Rk(ws, orb_4p, orb_4p, orb_4p, orb_4p, 2)
     
     println("\n==========================================================================")
-    println("              VALENCE 3p SLATER INTEGRALS (TERM-DEPENDENT)                ")
+    println("              VALENCE 4p SLATER INTEGRALS (TERM-DEPENDENT)                ")
     println("==========================================================================")
-    @printf(" Monopole Interaction   F⁰(3p, 3p) : %10.6f Ha\n", F0_3p)
-    @printf(" Quadrupole Interaction F²(3p, 3p) : %10.6f Ha\n", F2_3p)
+    @printf(" Monopole Interaction   F⁰(4p, 4p) : %10.8f Ha\n", F0_4p)
+    @printf(" Quadrupole Interaction F²(4p, 4p) : %10.8f Ha\n", F2_4p)
     println("==========================================================================")
     
     close(data)
 end
 
-# Execute the validation script
-validate_silicon_orbitals("silicon_rohf_results_R30.0.jld2")
+validate_germanium_orbitals("germanium_rohf_results_R30.0.jld2")

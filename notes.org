@@ -399,3 +399,5 @@ Barium has a closed Xenon core plus two 6s valence electrons.
 
 
 * Why do I need dest_mat in assemble_J_matrix?
+
+* calc_R_matrices = ? make it smarter

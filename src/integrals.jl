@@ -1,32 +1,15 @@
-function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
+function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices::Bool=false) where {K}
     n = basis.num_splines
 
-    # Assemble core matrices
-    S, T, V, V2, R, R2, R_inv3, tensors = assemble_geometry(basis, Z)
+    S, T, V, R_inv2, R_inv3, R, R2, tensors = assemble_geometry(basis, Z; calc_R_matrices=calc_R_matrices)
     
     J = zeros(Float64, n, n)
 
-    # Pre-allocate K matrices for s (l=0) and p (l=1) blocks.
-    K_mats = Dict{Int, Matrix{Float64}}(
-        0 => zeros(Float64, n, n),
-        1 => zeros(Float64, n, n),
-        2 => zeros(Float64, n, n),
-        3 => zeros(Float64, n, n),
-        4 => zeros(Float64, n, n),
-        5 => zeros(Float64, n, n)
-    )
-    F_mats = Dict{Int, Matrix{Float64}}(
-        0 => zeros(Float64, n, n),
-        1 => zeros(Float64, n, n),
-        2 => zeros(Float64, n, n),
-        3 => zeros(Float64, n, n),
-        4 => zeros(Float64, n, n),
-        5 => zeros(Float64, n, n)
-    )
+    K_mats = Dict{Int, Matrix{Float64}}(l => zeros(Float64, n, n) for l in 0:5)
+    F_mats = Dict{Int, Matrix{Float64}}(l => zeros(Float64, n, n) for l in 0:5)
 
     factors = Dict{Int, Any}()
     
-    # Pre-allocate the N-length Poisson solver buffers
     b_buf = zeros(Float64, n)
     y_buf = zeros(Float64, n)
     y_orb_buffer = zeros(Float64, n)
@@ -37,32 +20,79 @@ function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64) where {K}
     rk_cache = Dict{UInt64, Float64}()
 
     return SolverWorkspace{K}(
-        basis, S, T, V, V2, R, R2, R_inv3, J, 
+        basis, S, T, V, R_inv2, R_inv3, R, R2, J, 
         K_mats, F_mats, tensors, factors, 
         zeros(Float64, K), zeros(Float64, K),
         b_buf, y_buf, y_orb_buffer, y_total_buffer, scratch_source, scratch_y, rk_cache
     )
 end
 
-function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
+
+function cached_init_scf_workspace(R_max::Float64, N_elems::Int, ::Val{K}, Z::Float64; γ::Float64=2.0, calc_R_matrices::Bool=true) where {K}
+
+    filename = @sprintf("geometry_Z%.1f_R%.1f_N%d_K%d_g%.2f.jld2", Z, R_max, N_elems, K, γ)
+    
+    basis = generate_basis(R_max, N_elems, Val(K); γ=γ)
+    n = basis.num_splines
+    
+    if isfile(filename)
+        println("Loading cached geometry from $filename ...")
+        data = load(filename)
+        S = data["S"]
+        T = data["T"]
+        V = data["V"]
+        R = data["R"]
+        R2 = data["R2"]
+        R_inv2 = data["R_inv2"]
+        R_inv3 = data["R_inv3"]
+        tensors = data["tensors"]
+    else
+        println("No cache found. Computing geometry and saving to $filename ...")
+        S, T, V, R, R2, R_inv2, R_inv3, tensors = assemble_geometry(basis, Z; calc_R_matrices=calc_R_matrices)
+        
+        jldsave(filename; S=S, T=T, V=V, R=R, R2=R2, R_inv2=R_inv2, R_inv3=R_inv3, tensors=tensors)
+    end
+    
+    J = zeros(Float64, n, n)
+    K_mats = Dict{Int, Matrix{Float64}}(l => zeros(Float64, n, n) for l in 0:5)
+    F_mats = Dict{Int, Matrix{Float64}}(l => zeros(Float64, n, n) for l in 0:5)
+    factors = Dict{Int, Any}()
+    
+    b_buf = zeros(Float64, n)
+    y_buf = zeros(Float64, n)
+    y_orb_buffer = zeros(Float64, n)
+    y_total_buffer = zeros(Float64, n)
+
+    scratch_source = zeros(Float64, n)
+    scratch_y = zeros(Float64, n)
+    rk_cache = Dict{UInt64, Float64}()
+
+    return SolverWorkspace{K}(
+        basis, S, T, V, R, R2, R_inv2, R_inv3, J, 
+        K_mats, F_mats, tensors, factors, 
+        zeros(Float64, K), zeros(Float64, K),
+        b_buf, y_buf, y_orb_buffer, y_total_buffer, scratch_source, scratch_y, rk_cache
+    )
+end
+
+
+function assemble_geometry(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices::Bool=true) where {K}
     n = basis.num_splines
 
     S  = zeros(Float64, n, n)
     T  = zeros(Float64, n, n)
     V  = zeros(Float64, n, n)
-    V2 = zeros(Float64, n, n)   
-    R  = zeros(Float64, n, n)
-    R2  = zeros(Float64, n, n)
-    R_inv3  = zeros(Float64, n, n)
+    R  = zeros(Float64, n, n)   
+    
+    R2 = calc_R_matrices ? zeros(Float64, n, n) : zeros(Float64, 0, 0)
+    R_inv2 = calc_R_matrices ? zeros(Float64, n, n) : zeros(Float64, 0, 0)
+    R_inv3 = calc_R_matrices ? zeros(Float64, n, n) : zeros(Float64, 0, 0)
 
-    # Pre-allocate tensor storage
     tensors = Vector{Array{Float64, 3}}(undef, length(basis.knots) - 1)
     
-    # Scratch buffers
     vals = zeros(Float64, K)
     derivs = zeros(Float64, K)
 
-    # The Great Loop (Iterate Once)
     for i in 1:(length(basis.knots) - 1)
         t_a = basis.knots[i]; t_b = basis.knots[i+1]
         if t_a == t_b; continue; end
@@ -70,72 +100,47 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
         mid = (t_a + t_b)/2; scale = (t_b - t_a)/2
         first_global = i - K + 1
 
-        # Allocate local tensor for this element
         W_local = zeros(Float64, K, K, K)
 
         for q in 1:length(basis.gl_nodes)
             r = scale * basis.gl_nodes[q] + mid
             r2 = r * r
             w = scale * basis.gl_weights[q]
+            
             inv_r = (r > 1e-12) ? 1.0/r : 0.0
             inv_r2 = inv_r * inv_r
-            inv_r3 = inv_r * inv_r * inv_r
+            inv_r3 = inv_r * inv_r2
 
-            # --- SINGLE KERNEL CALL ---
-            eval_bspline_kernel!(vals, derivs, Val(true), Val(true), 
-                                 i, r, basis.knots, Val(K))
+            eval_bspline_kernel!(vals, derivs, Val(true), Val(true), i, r, basis.knots, Val(K))
 
-            # --- ACCUMULATE EVERYTHING ---
             for a in 1:K
                 g_a = first_global + a - 1
-                
-                # Pre-fetch values for 'a'
                 Na = vals[a]; dNa = derivs[a]
-                
-                # Pre-calc parts of Tensor W to save mults
-                # W_kab = (B_k/r) * B_a * B_b
-                # We can cache (B_a * w * inv_r) for the tensor loops
                 wa_tensor_factor = Na * w * inv_r 
 
-                # Inner Loop (Triangular for Symmetry)
                 for b in a:K
                     g_b = first_global + b - 1
-                    
                     Nb = vals[b]; dNb = derivs[b]
                     
-                    # Build Matrices S, T, V
-                    # Check bounds only if strictly necessary
                     if g_a >= 1 && g_a <= n && g_b >= 1 && g_b <= n
                         term_S = w * Na * Nb
-                        term_T = w * 0.5 * dNa * dNb
-                        term_V = -Z * term_S * inv_r # Reuse term_S * inv_r
-                        term_V2 = term_S * inv_r2
-                        term_R_inv3 = term_S * inv_r3
-                        term_R = term_S * r # Length gauge operator
-                        term_R2 = term_S * r2
                         
-                        S[g_a, g_b] += term_S
-                        T[g_a, g_b] += term_T
-                        V[g_a, g_b] += term_V
-                        V2[g_a, g_b] += term_V2
-                        R[g_a, g_b] += term_R
-                        R2[g_a, g_b] += term_R2
-                        R_inv3[g_a, g_b] += term_R_inv3
+                        S[g_a, g_b]  += term_S
+                        T[g_a, g_b]  += w * 0.5 * dNa * dNb
+                        V[g_a, g_b]  -= Z * term_S * inv_r
+                        R_inv2[g_a, g_b] += term_S * inv_r2
                         
+                        if calc_R_matrices
+                            R[g_a, g_b]      += term_S * r
+                            R2[g_a, g_b]     += term_S * r2
+                            R_inv3[g_a, g_b] += term_S * inv_r3
+                        end
                     end
                     
-                    # Build Tensor W (Using the same vals!)
-                    # We need to loop 'k' here.
-                    # W_kab = B_k * (B_a * B_b / r)
-                    # We already have (B_a * B_b / r) implied.
                     term_tensor_base = wa_tensor_factor * Nb
-                    
                     for k in 1:K
-                        # W[k, a, b] += B_k * term_base
                         val = vals[k] * term_tensor_base
                         W_local[k, a, b] += val
-                        
-                        # Symmetry for Tensor W (a,b)
                         if a != b
                             W_local[k, b, a] += val
                         end
@@ -146,7 +151,11 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
         tensors[i] = W_local
     end
     
-    return Symmetric(S), Symmetric(T), Symmetric(V), Symmetric(V2), Symmetric(R), Symmetric(R2), Symmetric(R_inv3), tensors
+    if calc_R_matrices
+        return Symmetric(S), Symmetric(T), Symmetric(V), Symmetric(R), Symmetric(R2), Symmetric(R_inv2), Symmetric(R_inv3), tensors
+    else
+        return Symmetric(S), Symmetric(T), Symmetric(V), Symmetric(R), R2, R_inv2, R_inv3, tensors
+    end
 end
 
 function assemble_J_matrix!(ws::SolverWorkspace{K}, y_coeffs) where {K}
@@ -348,7 +357,7 @@ function assemble_K_matrix!(ws::SolverWorkspace{K}, K_mat::Matrix{Float64}, targ
 end
 
 
-# 1. Overload assemble_J_matrix! to accept a destination matrix
+# Overload assemble_J_matrix! to accept a destination matrix
 function assemble_J_matrix!(ws::SolverWorkspace{K}, dest_mat::Matrix{Float64}, y_coeffs) where {K}
     n = ws.basis.num_splines
     fill!(dest_mat, 0.0)
@@ -388,7 +397,7 @@ function assemble_J_matrix!(ws::SolverWorkspace{K}, dest_mat::Matrix{Float64}, y
     return dest_mat
 end
 
-# 2. Build a specific J matrix for a single orbital and a specific scaling factor
+# Build a specific J matrix for a single orbital and a specific scaling factor
 function build_specific_J_matrix!(ws::SolverWorkspace, dest_mat::Matrix{Float64}, orb::Orbital, scale::Float64)
     fill!(ws.y_orb_buffer, 0.0)
     
@@ -401,7 +410,7 @@ function build_specific_J_matrix!(ws::SolverWorkspace, dest_mat::Matrix{Float64}
     return assemble_J_matrix!(ws, dest_mat, ws.y_total_buffer)
 end
 
-# 3. Build a specific K matrix bypassing the multipole logic rules
+# Build a specific K matrix bypassing the multipole logic rules
 function build_specific_K_matrix!(ws::SolverWorkspace{K}, dest_mat::Matrix{Float64}, orb::Orbital, target_k::Int, coeff::Float64) where {K}
     fill!(dest_mat, 0.0)
     n = ws.basis.num_splines
@@ -438,10 +447,10 @@ function build_specific_K_matrix!(ws::SolverWorkspace{K}, dest_mat::Matrix{Float
             end
         end
         
-        # --- Solve strictly for the targeted k multipole ---
+        # --- Solve for the targeted k multipole ---
         solve_generalized_poisson!(ws, y_k, b_vec, target_k)
         
-        # --- Accumulate with the specific Cowan coefficient ---
+        # --- Accumulate with the specific coefficient ---
         for i in 1:(length(ws.basis.knots)-1)
             if !isassigned(ws.interaction_tensors, i); continue; end
             W = ws.interaction_tensors[i]

@@ -1,7 +1,6 @@
 % --- CODIFICACIÓN E IDIOMA ---
-\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[es-tabla, es-nodecimaldot]{babel}
+\usepackage[es-tabla, es-nodecimaldot, es-noquoting]{babel}
 
 % --- MATEMÁTICAS Y FÍSICA ---
 \usepackage{mathtools}
@@ -19,6 +18,10 @@
 \usepackage{ragged2e}
 \renewcommand\tabularxcolumn[1]{m{#1}}
 \usepackage{enumitem}
+
+% --- HERRAMIENTAS DE EDICIÓN EN VIVO ---
+\usepackage[colorinlistoftodos, textsize=tiny]{todonotes} % Notas al margen para revisiones posteriores
+
 
 % --- CÓDIGO (Juia Support) ---
 \usepackage{xcolor}
@@ -42,6 +45,8 @@
 \definecolor{gruvred}{HTML}{9d0006}
 \definecolor{gruvgreen}{HTML}{79740e}
 \definecolor{gruvgray}{HTML}{928374}
+\definecolor{gruvblue}{HTML}{076678}
+\definecolor{gruvyellow}{HTML}{D79921}
 
 % % --- DEFINICIÓN DE COLORES GRUVBOX DARK ---
 % \definecolor{gruvbg}{HTML}{282828}      % Fondo oscuro
@@ -141,8 +146,8 @@
     style=apa,      % Opciones: apa, ieee, numeric, alphabetic
     sorting=nyt     % Ordenar por Nombre, Año, Título
 ]{biblatex}
-\addbibresource{bib/referencias.bib} % Note the path change
+\addbibresource{bib/bibliografia.bib}
 
 % --- MÁRGENES ---
-\usepackage{geometry}
-\geometry{a4paper, total={170mm,257mm}, left=25mm, top=25mm}
+% \usepackage{geometry}
+% \geometry{a4paper, total={170mm,257mm}, left=25mm, top=25mm}

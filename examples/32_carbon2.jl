@@ -11,13 +11,16 @@ function solve_carbon_rohf(R_max; verbose::Bool=true)
     
     N_elems = 100
     Z = 6.0
-    basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
-    ws = init_scf_workspace(basis, Z)
+
+    ws = cached_init_scf_workspace(R_max, N_elems, Val(7), Z; γ=2.5)
+
+    basis = ws.basis
 
     n = basis.num_splines
     active_s = 2:(n-1)  
     active_p = 3:(n-1)  
-    
+
+
     # 1s^2, 2s^2, 2p^2
     orbitals = [
         Orbital(1, 0, 2.0), # 1s (Closed)
@@ -26,7 +29,7 @@ function solve_carbon_rohf(R_max; verbose::Bool=true)
     ]
     
     H_core_s = ws.T + ws.V
-    H_core_p = ws.T + ws.V + ws.V2 
+    H_core_p = ws.T + ws.V + ws.R_inv2 
     
     # --- Initial Guess ---
     evals_s, evecs_s = eigen(Symmetric(H_core_s[active_s, active_s]), ws.S[active_s, active_s])
@@ -52,7 +55,7 @@ function solve_carbon_rohf(R_max; verbose::Bool=true)
     K_2p_intra     = zeros(Float64, n, n)
 
     E_old = 0.0
-    MIXING = 0.3 
+    MIXING = 0.0
     
     println("Comenzando ciclo SCF ROHF...")
     if verbose
@@ -166,17 +169,23 @@ function solve_carbon_rohf(R_max; verbose::Bool=true)
             end
             @printf("Energía final HF-av: %.6f Ha\n", E_total)
 
+            dense_grid = exp.(range(log(1e-8), log(R_max), length=10000))
+            V_eff = compute_effective_central_potential(ws, orbitals, dense_grid, Z)
+            P_2p = evaluate_orbital(ws.basis, orbitals[3].coeffs, dense_grid)
+
             filename = "carbon_rohf_results_R$(R_max).jld2"
             jldsave(filename;
-                orbitals = orbitals,
-                E_total = E_total,
-                R_max = R_max,
-                R_grid = ws.R,
-                V_nuclear = ws.V,
-                num_splines = n,
-                active_s = active_s,
-                active_p = active_p
-            )
+                    orbitals = orbitals,
+                    E_total = E_total,
+                    R_max = R_max,
+                    R_grid = dense_grid,
+                    V_nuclear = ws.V,
+                    V_eff = V_eff,
+                    P_2p = P_2p,
+                    num_splines = n,
+                    active_s = active_s,
+                    active_p = active_p
+                    )
             println("Saved strictly optimized ROHF data to $filename")
             println("===== END =====")
             break

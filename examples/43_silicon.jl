@@ -2,7 +2,6 @@ using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 
 using AtomicSplines
-
 using LinearAlgebra
 using Printf
 using JLD2
@@ -10,28 +9,30 @@ using JLD2
 function solve_silicon_rohf(R_max; verbose::Bool=true)
     println("=== Silicon ROHF Term-Dependent 3P (Z=14) ===")
     
+    # --- Physical & Grid Parameters ---
     N_elems = 100
     Z = 14.0
-    basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
-    ws = init_scf_workspace(basis, Z)
-
+    
+    ws = cached_init_scf_workspace(R_max, N_elems, Val(7), Z; γ=2.5)
+    
+    basis = ws.basis
     n = basis.num_splines
     active_s = 2:(n-1)  
     active_p = 3:(n-1)  
     
-    # 1s^2, 2s^2, 2p^6, 3s^2, 3p^2
+    # --- Orbital Configuration: 1s², 2s², 2p⁶, 3s², 3p² ---
     orbitals = [
         Orbital(1, 0, 2.0), # 1s (Closed)
         Orbital(2, 0, 2.0), # 2s (Closed)
-        Orbital(2, 1, 6.0), # 2p (Closed Core)
+        Orbital(2, 1, 6.0), # 2p (Closed Ne Core)
         Orbital(3, 0, 2.0), # 3s (Closed)
         Orbital(3, 1, 2.0)  # 3p (Open Valence, fractional w=2)
     ]
     
     H_core_s = ws.T + ws.V
-    H_core_p = ws.T + ws.V + ws.R_inv2 
+    H_core_p = ws.T + ws.V + ws.R_inv2
     
-    # --- Initial Guess ---
+    # --- Initial Guess Diagonalization ---
     evals_s, evecs_s = eigen(Symmetric(H_core_s[active_s, active_s]), ws.S[active_s, active_s])
     orbitals[1].coeffs = zeros(Float64, n); orbitals[1].coeffs[active_s] = evecs_s[:, 1]
     orbitals[2].coeffs = zeros(Float64, n); orbitals[2].coeffs[active_s] = evecs_s[:, 2]
@@ -45,7 +46,7 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
         orb.coeffs ./= sqrt(dot(orb.coeffs, ws.S * orb.coeffs))
     end
 
-    # Pre-allocate specific temporary matrices
+    # --- Pre-allocate Temporary SCF Matrices ---
     J_core         = zeros(Float64, n, n)
     K_core_s       = zeros(Float64, n, n)
     K_core_p       = zeros(Float64, n, n)
@@ -57,24 +58,24 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
     J_3p_intra     = zeros(Float64, n, n)
     K_3p_intra     = zeros(Float64, n, n)
     
-    # We now need separate Fock matrices for the two p-shells
-    F_2p = zeros(Float64, n, n)
-    F_3p = zeros(Float64, n, n)
+    F_2p           = zeros(Float64, n, n)
+    F_3p           = zeros(Float64, n, n)
 
+    # --- SCF Loop Setup ---
     E_old = 0.0
-    MIXING = 0.3 
+    MIXING = 0.0
     
-    println("Comenzando ciclo SCF ROHF...")
+    println("Starting ROHF SCF cycle...")
     if verbose
         @printf("%-4s | %-14s | %-10s | %-8s\n", "Iter", "E_total (Ha)", "Delta E", "Time (s)")
         println("-"^78)
     end
 
-    for iter in 1:150 # Increased iteration limit for heavier core relaxation
+    for iter in 1:150
         t0 = time()
 
         # ==========================================
-        # PHASE 1: The Expanded Closed Core (1s + 2s + 2p + 3s)
+        # PHASE 1: Expanded Closed Core (1s + 2s + 2p + 3s)
         # ==========================================
         core_orbs = [orbitals[1], orbitals[2], orbitals[3], orbitals[4]]
         
@@ -88,10 +89,10 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
         K_core_p .= ws.K_mats[1]
 
         # ==========================================
-        # PHASE 2: The Open 3p Shell Contributions
+        # PHASE 2: Open 3p Shell Contributions
         # ==========================================
         
-        # A. What the closed shells feel from the 3p shell:
+        # What the closed shells feel from the 3p shell
         build_specific_J_matrix!(ws, J_3p_spherical, orbitals[5], 2.0)
         
         assemble_K_matrix!(ws, ws.K_mats[0], 0, [orbitals[5]]) 
@@ -100,10 +101,10 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
         assemble_K_matrix!(ws, ws.K_mats[1], 1, [orbitals[5]]) 
         K_3p_on_p .= ws.K_mats[1]
 
-        # B. What the 3p electron feels from its own shell (Term-Dependent 3P):
+        # What the 3p electron feels from its own shell (Term-Dependent 3P)
         build_specific_J_matrix!(ws, J_3p_intra, orbitals[5], 1.0)
         
-        # 3P Exchange Quadrupole (k=2, Coeff = 5/25)
+        # 3P Exchange Quadrupole (k=2, Coeff = 2/25)
         build_specific_K_matrix!(ws, K_3p_intra, orbitals[5], 2, 5.0 / 25.0)
 
         # ==========================================
@@ -112,7 +113,7 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
         
         F_s = ws.F_mats[0]
         
-        # Unified s-block Operator (1s, 2s, 3s)
+        # s-block Operator (1s, 2s, 3s)
         F_s .= H_core_s .+ J_core .+ J_3p_spherical .- K_core_s .- K_3p_on_s
         
         # Core 2p Operator (Feels spherical 3p average)
@@ -122,11 +123,10 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
         F_3p .= H_core_p .+ J_core .+ J_3p_intra .- K_core_p .- K_3p_intra
         
         # ==========================================
-        # PHASE 4: Diagonalization & Gram-Schmidt Projection
+        # PHASE 4: Diagonalization & Projection
         # ==========================================
         
-        evals_fs, evecs_fs = eigen(Symmetric(F_s[active_s, active_s]), ws.S[active_s, active_s])
-        
+        evals_fs, evecs_fs   = eigen(Symmetric(F_s[active_s, active_s]), ws.S[active_s, active_s])
         evals_f2p, evecs_f2p = eigen(Symmetric(F_2p[active_p, active_p]), ws.S[active_p, active_p])
         evals_f3p, evecs_f3p = eigen(Symmetric(F_3p[active_p, active_p]), ws.S[active_p, active_p])
         
@@ -138,26 +138,23 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
         c_2p_new = zeros(Float64, n); c_2p_new[active_p] = evecs_f2p[:, 1]
         c_3p_new = zeros(Float64, n); c_3p_new[active_p] = evecs_f3p[:, 2]
         
-        # --- Gram-Schmidt Orthogonalization for the p-block ---
-        # The 2p core is rigid; we project it out of the 3p valence
+        # Gram-Schmidt Orthogonalization for the p-block
         overlap_2p_3p = dot(c_2p_new, ws.S * c_3p_new)
         c_3p_new .-= overlap_2p_3p .* c_2p_new
         
-        # Normalize all new vectors
         c_1s_new ./= sqrt(dot(c_1s_new, ws.S * c_1s_new))
         c_2s_new ./= sqrt(dot(c_2s_new, ws.S * c_2s_new))
         c_3s_new ./= sqrt(dot(c_3s_new, ws.S * c_3s_new))
         c_2p_new ./= sqrt(dot(c_2p_new, ws.S * c_2p_new))
         c_3p_new ./= sqrt(dot(c_3p_new, ws.S * c_3p_new))
         
-        # --- Update Orbitals (With Linear Mixing) ---
+        # Update Orbitals (With Linear Mixing)
         orbitals[1].coeffs = MIXING * orbitals[1].coeffs + (1 - MIXING) * c_1s_new
         orbitals[2].coeffs = MIXING * orbitals[2].coeffs + (1 - MIXING) * c_2s_new
         orbitals[3].coeffs = MIXING * orbitals[3].coeffs + (1 - MIXING) * c_2p_new
         orbitals[4].coeffs = MIXING * orbitals[4].coeffs + (1 - MIXING) * c_3s_new
         orbitals[5].coeffs = MIXING * orbitals[5].coeffs + (1 - MIXING) * c_3p_new
         
-        # Re-normalize post-mixing to ensure absolute boundary adherence
         for orb in orbitals
             orb.coeffs ./= sqrt(dot(orb.coeffs, ws.S * orb.coeffs))
         end
@@ -166,11 +163,10 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
         orbitals[2].energy = evals_fs[2]
         orbitals[3].energy = evals_f2p[1]
         orbitals[4].energy = evals_fs[3]
-        # We estimate the 3p energy from the diagonalized matrix, but note that projection slightly alters it
         orbitals[5].energy = evals_f3p[2] 
  
         # ==========================================
-        # PHASE 5: Compute Total Energy
+        # PHASE 5: Total Energy Calculation
         # ==========================================
         E_total = 0.0
 
@@ -194,19 +190,25 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
                 println("-"^78)
                 println("Converged in $iter iterations.")
             end
-            @printf("Energía final HF-t (^3P): %.6f Ha\n", E_total)
+            @printf("Final HF-t Energy (^3P): %.6f Ha\n", E_total)
+
+            dense_grid = exp.(range(log(1e-8), log(R_max), length=10000))
+            V_eff = compute_effective_central_potential(ws, orbitals, dense_grid, Z)
+            P_3p = evaluate_orbital(ws.basis, orbitals[5].coeffs, dense_grid)
 
             filename = "silicon_rohf_results_R$(R_max).jld2"
             jldsave(filename;
-                orbitals = orbitals,
-                E_total = E_total,
-                R_max = R_max,
-                R_grid = ws.R,
-                V_nuclear = ws.V,
-                num_splines = n,
-                active_s = active_s,
-                active_p = active_p
-            )
+                    orbitals = orbitals,
+                    E_total = E_total,
+                    R_max = R_max,
+                    R_grid = dense_grid,
+                    V_nuclear = ws.V,
+                    V_eff = V_eff,
+                    P_3p = P_3p,
+                    num_splines = n,
+                    active_s = active_s,
+                    active_p = active_p
+                    )
             println("Saved Term-Dependent ROHF data to $filename")
             println("===== END =====")
             break

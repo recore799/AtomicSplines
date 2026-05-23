@@ -20,3 +20,17 @@ struct Atom
 end
 
 Atom(Z) = Atom(Z, Orbital[])
+
+# ===================================================================
+# Quantum State Data Structures
+# ===================================================================
+
+"""
+Immutable structure representing an atomic LS Term.
+L: Total orbital angular momentum quantum number (0=S, 1=P, 2=D, etc.)
+two_S: Twice the total spin quantum number (2S) to maintain integer exactness.
+"""
+struct LSTerm
+    L::Int
+    two_S::Int
+end

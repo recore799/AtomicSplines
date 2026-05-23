@@ -41,7 +41,7 @@ function solve_carbon(R_max; verbose::Bool=true)
     
     # --- Core Hamiltonians ---
     H_core_s = ws.T + ws.V
-    H_core_p = ws.T + ws.V + ws.V2 
+    H_core_p = ws.T + ws.V + ws.R_inv2 
     
     # --- Initial Guess ---
     evals_s, evecs_s = eigen(Symmetric(H_core_s[active_s, active_s]), ws.S[active_s, active_s])

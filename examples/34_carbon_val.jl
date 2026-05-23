@@ -17,9 +17,10 @@ function validate_converged_orbitals(filename::String)
     # 2. Rebuild the B-spline workspace to access the exact analytical matrices
     # We must rebuild because the T (Kinetic) matrix was not saved, and we need it for the Virial Theorem.
     N_elems = 100
-    basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
-    ws = init_scf_workspace(basis, Z)
-    
+
+    ws = cached_init_scf_workspace(R_max, N_elems, Val(7), Z; γ=2.5, calc_R_matrices=true)
+    basis = ws.basis
+
     # 3. Compute Total Kinetic Energy (T)
     # The kinetic energy is a one-electron operator. The total kinetic energy of the atom 
     # is the strict sum of the expectation value of the T matrix, weighted by orbital occupancy.
@@ -28,7 +29,7 @@ function validate_converged_orbitals(filename::String)
         if orb.occ > 0.0
             t_val = dot(orb.coeffs, ws.T * orb.coeffs)
             if orb.l == 1
-                t_val += dot(orb.coeffs, ws.V2 * orb.coeffs)
+                t_val += dot(orb.coeffs, ws.R_inv2 * orb.coeffs)
             end
             T_total += orb.occ * t_val
         end
@@ -51,26 +52,47 @@ function validate_converged_orbitals(filename::String)
     println("\n============================================================")
     println("     RADIAL EXPECTATION VALUES & ORBITAL GEOMETRY           ")
     println("============================================================")
-    @printf("%-6s | %-14s | %-14s | %-14s\n", "Orbital", "<r> (Bohr)", "<1/r> (Bohr⁻¹)", "Kinetic <T>")
-    println("-"^58)
+    @printf("%-4s | %-12s | %-12s | %-12s | %-12s\n", 
+            "Orb", "<r> (Bohr)", "<r²> (Bohr²)", "<1/r> (Bohr⁻¹)", "<1/r³> (Bohr⁻³)")
+    println("-"^74)
     
     for orb in orbitals
         if orb.occ > 0.0
             # <r> is extracted directly from your dipole interaction matrix ws.R
             exp_r = dot(orb.coeffs, ws.R * orb.coeffs)
+
+            exp_r2 = dot(orb.coeffs, ws.R2 * orb.coeffs)
             
             # <1/r> is extracted from the nuclear potential matrix ws.V
             # Since V_ij = <B_i | -Z/r | B_j>, we divide by -Z to isolate <1/r>
             exp_inv_r = dot(orb.coeffs, ws.V * orb.coeffs) / (-Z)
-            
+
+            exp_inv_r3 = dot(orb.coeffs, ws.R_inv3 * orb.coeffs)
+
             # Individual orbital kinetic energy
             exp_t = dot(orb.coeffs, ws.T * orb.coeffs)
             
             orb_label = string(orb.n, orb.l == 0 ? "s" : (orb.l == 1 ? "p" : "d"))
-            @printf("%-6s | %14.8f | %14.8f | %14.8f\n", orb_label, exp_r, exp_inv_r, exp_t)
+            @printf("%-4s | %12.6f | %12.6f | %12.6f | %12.6f\n", 
+                    orb_label, exp_r, exp_r2, exp_inv_r, exp_inv_r3)
         end
     end
-    println("============================================================")
+    println("==========================================================================")
+
+    # 6. Extract the Valence 4p Orbital and Compute Slater Integrals
+    # The 4p orbital strictly resides at index 8 in the Germanium configuration
+    orb_2p = orbitals[3]
+    
+    F0_2p = compute_Rk(ws, orb_2p, orb_2p, orb_2p, orb_2p, 0)
+    F2_2p = compute_Rk(ws, orb_2p, orb_2p, orb_2p, orb_2p, 2)
+    
+    println("\n==========================================================================")
+    println("              VALENCE 2p SLATER INTEGRALS (TERM-DEPENDENT)                ")
+    println("==========================================================================")
+    @printf(" Monopole Interaction   F⁰(2p, 2p) : %10.8f Ha\n", F0_2p)
+    @printf(" Quadrupole Interaction F²(2p, 2p) : %10.8f Ha\n", F2_2p)
+    println("==========================================================================")
+ 
     
     close(data)
 end

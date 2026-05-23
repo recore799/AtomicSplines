@@ -6,7 +6,7 @@ function solve_generalized_poisson!(ws::SolverWorkspace{K}, y_full::Vector{Float
     
     # Lazy Factorization
     if !haskey(ws.poisson_factors, k_mult)
-        A_k = 2 * ws.T .+ (k_mult * (k_mult + 1)) .* ws.V2
+        A_k = 2 * ws.T .+ (k_mult * (k_mult + 1)) .* ws.R_inv2
         A_k_dense = Matrix(A_k[active_k, active_k])
         A_k_dense[end, end] += k_mult / ws.basis.knots[end] # Robin BC (or is it Noumann?)
         ws.poisson_factors[k_mult] = cholesky(Symmetric(A_k_dense))

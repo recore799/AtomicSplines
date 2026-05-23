@@ -2,26 +2,28 @@ using Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
 
 using AtomicSplines
-using JLD2
-using Printf
 using LinearAlgebra
+using Printf
+using JLD2
 
-function validate_silicon_orbitals(filename::String)
+function validate_phosphorus_orbitals(filename::String)
     # 1. Load the strictly optimized HF-t data
     data = jldopen(filename, "r")
     orbitals = data["orbitals"]
     E_total = data["E_total"]
     R_max = data["R_max"]
-    Z = 14.0
+    
+    # Attempt to read the term symbol if it was saved, otherwise default to ^4S
+    term_symbol = haskey(data, "term") ? data["term"] : "^4S"
+    Z = 15.0
     
     # 2. Rebuild the B-spline workspace
     # Assumes init_scf_workspace now also provides ws.R2 and ws.R_inv3
     N_elems = 100
     ws = cached_init_scf_workspace(R_max, N_elems, Val(7), Z; γ=2.5, calc_R_matrices=true)
     
-
     # 3. Compute Total Kinetic Energy (T)
-    # CRITICAL FIX: The centrifugal term (ws.V2) must be added for all l > 0 states.
+    # CRITICAL FIX: The centrifugal term (ws.R_inv2) must be added for all l > 0 states.
     T_total = 0.0
     for orb in orbitals
         if orb.occ > 0.0
@@ -41,6 +43,8 @@ function validate_silicon_orbitals(filename::String)
     println("==========================================================================")
     println("                 INTERNAL VALIDATION: THE VIRIAL THEOREM                  ")
     println("==========================================================================")
+    @printf(" Element                  : Phosphorus (Z = %.1f)\n", Z)
+    @printf(" Target State             : 3p^3 (%s)\n", term_symbol)
     @printf(" Total Energy (E)         : %15.8f Ha\n", E_total)
     @printf(" Total Kinetic Energy (T) : %15.8f Ha\n", T_total)
     @printf(" Total Potential (V)      : %15.8f Ha\n", V_total)
@@ -91,5 +95,5 @@ function validate_silicon_orbitals(filename::String)
     close(data)
 end
 
-# Execute the validation script
-validate_silicon_orbitals("silicon_rohf_results_R30.0.jld2")
+
+validate_phosphorus_orbitals("phosphorus_rohf_results_R30.0.jld2")

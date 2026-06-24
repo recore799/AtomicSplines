@@ -1,6 +1,13 @@
 % --- CODIFICACIÓN E IDIOMA ---
 \usepackage[T1]{fontenc}
-\usepackage[es-tabla, es-nodecimaldot, es-noquoting]{babel}
+\usepackage[spanish, es-noquoting]{babel}
+
+\addto\captionsspanish{%
+  \renewcommand{\tablename}{Tabla}%
+  \renewcommand{\listtablename}{Indice de tablas}%
+}
+
+\spanishdecimal{.}
 
 % --- MATEMÁTICAS Y FÍSICA ---
 \usepackage{mathtools}
@@ -10,8 +17,9 @@
 \usepackage{bm}
 
 % --- GRÁFICOS Y TABLAS ---
+\usepackage{caption}
 \usepackage{graphicx}
-\graphicspath{{figures/}} % This allows you to just use {image.png} instead of {figures/image.png}
+\graphicspath{{figures/}}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{tabularx}

@@ -18,6 +18,7 @@
 
 # Ignore Emacs auto-save files
 \#*\#
+docs/auto/
 # Ignore Emacs backup files
 *~
 # Ignore Emacs lock files

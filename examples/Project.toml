@@ -2,3 +2,5 @@
 BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+HalfIntegers = "f0d1745a-41c9-11e9-1dd9-e5d34d218721"
+WignerSymbols = "9f57e263-0b3d-5e2e-b1be-24f2bb48858b"

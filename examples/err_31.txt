@@ -1,0 +1,51 @@
+  Activating project at `~/Projects/AtomicSplines`
+┌ Warning: Opening file with JLD2.MmapIO failed, falling back to IOStream
+└ @ JLD2 ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:162
+ERROR: LoadError: SystemError: opening file "carbon_results_R30.jld2": No such file or directory
+Stacktrace:
+  [1] open(fname::String; lock::Bool, read::Bool, write::Bool, create::Bool, truncate::Bool, append::Bool)
+    @ Base ./iostream.jl:317
+  [2] open
+    @ ./iostream.jl:296 [inlined]
+  [3] openfile
+    @ ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:152 [inlined]
+  [4] openfile(T::Type, fname::String, wr::Bool, create::Bool, truncate::Bool, fallback::Type)
+    @ JLD2 ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:163
+  [5] jldopen(fname::String, wr::Bool, create::Bool, truncate::Bool, iotype::Type{JLD2.MmapIO}; fallback::Type{IOStream}, compress::Bool, mmaparrays::Bool, typemap::Function, parallel_read::Bool, plain::Bool)
+    @ JLD2 ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:227
+  [6] jldopen
+    @ ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:174 [inlined]
+  [7] #jldopen#14
+    @ ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:296 [inlined]
+  [8] jldopen
+    @ ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:290 [inlined]
+  [9] calculate_carbon_term_splitting(filename::String)
+    @ Main ~/Projects/AtomicSplines/examples/31_carbon_correction.jl:9
+ [10] top-level scope
+    @ ~/Projects/AtomicSplines/examples/31_carbon_correction.jl:59
+in expression starting at /Users/chacho/Projects/AtomicSplines/examples/31_carbon_correction.jl:59
+
+caused by: SystemError: opening file "carbon_results_R30.jld2": No such file or directory
+Stacktrace:
+  [1] open(fname::String; lock::Bool, read::Bool, write::Bool, create::Bool, truncate::Bool, append::Bool)
+    @ Base ./iostream.jl:317
+  [2] open
+    @ ./iostream.jl:296 [inlined]
+  [3] JLD2.MmapIO(fname::String, write::Bool, create::Bool, truncate::Bool)
+    @ JLD2 ~/.julia/packages/JLD2/qcxKY/src/io/mmapio.jl:101
+  [4] openfile
+    @ ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:155 [inlined]
+  [5] openfile(T::Type, fname::String, wr::Bool, create::Bool, truncate::Bool, fallback::Type)
+    @ JLD2 ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:160
+  [6] jldopen(fname::String, wr::Bool, create::Bool, truncate::Bool, iotype::Type{JLD2.MmapIO}; fallback::Type{IOStream}, compress::Bool, mmaparrays::Bool, typemap::Function, parallel_read::Bool, plain::Bool)
+    @ JLD2 ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:227
+  [7] jldopen
+    @ ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:174 [inlined]
+  [8] #jldopen#14
+    @ ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:296 [inlined]
+  [9] jldopen
+    @ ~/.julia/packages/JLD2/qcxKY/src/JLD2.jl:290 [inlined]
+ [10] calculate_carbon_term_splitting(filename::String)
+    @ Main ~/Projects/AtomicSplines/examples/31_carbon_correction.jl:9
+ [11] top-level scope
+    @ ~/Projects/AtomicSplines/examples/31_carbon_correction.jl:59

@@ -1,0 +1,920 @@
+\documentclass[12pt, a4paper, oneside, spanish]{book}
+
+% --- CODIFICACIÓN E IDIOMA ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[es-tabla]{babel} 
+
+% --- MATEMÁTICAS Y FÍSICA ---
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{physics}
+\usepackage{bm}
+
+% --- GRÁFICOS, TABLAS Y CÓDIGO ---
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{ragged2e}
+\renewcommand\tabularxcolumn[1]{m{#1}} % Centra verticalmente las columnas X
+
+% --- CONFIGURACIÓN DE TEOREMAS (thmtools) ---
+\usepackage{mdframed} 
+\usepackage{thmtools}
+
+% 1. Estilo para Teoremas (Texto en cursiva, cabecera negrita sans-serif)
+\declaretheoremstyle[
+    headfont=\bfseries\sffamily, 
+    bodyfont=\itshape,
+    spaceabove=12pt, 
+    spacebelow=12pt
+]{miestilo-plano}
+
+% 2. Estilo para Definiciones (Caja gris lateral, texto normal)
+\declaretheoremstyle[
+    headfont=\bfseries\sffamily,
+    bodyfont=\normalfont,
+    mdframed={
+        linewidth=1pt,
+        linecolor=gray!50,      % Color de la línea
+        backgroundcolor=gray!5, % Fondo muy tenue
+        topline=false, bottomline=false, rightline=false, % Solo barra izquierda
+    }
+]{miestilo-caja}
+
+% --- DEFINICIÓN DE ENTORNOS ---
+% Al ser 'article', numeramos por 'section'.
+\declaretheorem[style=miestilo-plano, name=Teorema, numberwithin=chapter]{theorem}
+
+% Estos comparten el contador con 'theorem' (e.g., Teorema 1.1, Lema 1.2)
+\declaretheorem[style=miestilo-plano, name=Lema, sharenumber=theorem]{lemma}
+\declaretheorem[style=miestilo-plano, name=Proposición, sharenumber=theorem]{proposition}
+\declaretheorem[style=miestilo-plano, name=Corolario, sharenumber=theorem]{corollary}
+
+% Definiciones y Ejemplos usan el estilo de caja
+\declaretheorem[style=miestilo-caja, name=Definición, sharenumber=theorem]{definition}
+\declaretheorem[style=miestilo-caja, name=Ejemplo, sharenumber=theorem]{example}
+
+% Demostración
+\makeatletter
+\renewenvironment{proof}[1][\proofname]{\par
+  \pushQED{\qed}
+  \normalfont \topsep6\p@\@plus6\p@\relax
+  \trivlist
+  \item[\hskip\labelsep
+        \bfseries\sffamily
+        #1\@addpunct{.}]\ignorespaces
+}{%
+  \popQED\endtrivlist\@endpefalse
+}
+\makeatother
+
+% --- HIPERVÍNCULOS (Cargar casi al final) ---
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=red, urlcolor=teal]{hyperref}
+
+% --- Cargar despues de hyperref
+\usepackage[nameinlink, noabbrev]{cleveref}
+
+% --- Configuración de Bibliografía ---
+\usepackage[
+    backend=biber, 
+    style=apa,      % Opciones: apa, ieee, numeric, alphabetic
+    sorting=nyt     % Ordenar por Nombre, Año, Título
+]{biblatex}
+
+\addbibresource{referencias.bib}
+
+% --- MÁRGENES ---
+\usepackage{geometry}
+\geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=25mm,
+ top=25mm,
+}
+
+% --- DATOS ---
+\title{\textbf{Fundamentos Matemáticos y Computacionales: \\ Método Hartree-Fock con B-splines}}
+\author{Rafael Obed Egurrola Corella}
+\date{\today}
+
+\begin{document}
+
+\frontmatter
+
+\maketitle
+
+\chapter*{Resumen}
+
+Este documento establece las bases teóricas necesarias para la implementación del método Hartree-Fock utilizando B-splines como funciones base. Se describen la formulación variacional, la discretización del espacio mediante splines y la resolución del problema de valores propios generalizado.
+
+
+\tableofcontents
+\listoffigures
+
+\mainmatter
+
+\chapter{Introducción}
+
+\begin{definition}
+    Los \textbf{B-splines} son funciones base definidas por partes...
+\end{definition}
+
+\begin{theorem}[Teorema Variacional]
+    Para cualquier función de onda de prueba $\Psi$, la energía esperada es...
+\end{theorem}
+
+
+\section{B-splines}
+
+Los B-splines (abreviatura de \textit{Basis Splines}) constituyen una base para el espacio vectorial de funciones spline polinómicas definidas a trozos. A diferencia de una representación polinómica global, los B-splines permiten una flexibilidad local controlada y poseen propiedades ideales para el análisis numérico, tales como la no-negatividad y una partición de la unidad. Matemáticamente, un B-spline de grado \( p \) está totalmente determinado por un conjunto ordenado de parámetros denominados nodos.
+
+\subsection{Vector de nodos}
+
+La estructura geométrica y la continuidad de las funciones base están gobernadas por el vector de nodos (\textit{knot vector}). Sea \( T \) una secuencia no decreciente de números reales que particiona el dominio de interés:
+
+\begin{equation}
+\label{eq:knot-vector}
+  T = \{ t_0, t_1, \dots, t_m \},
+\end{equation}
+
+donde se cumple la condición de orden \( t_i \leq t_{i+1} \). Los B-splines se construyen en relación directa con este vector; la multiplicidad de los nodos (cuántas veces se repite un valor \( t_i \)) determina la suavidad de la función en ese punto.
+
+\subsection{Definición histórica y estabilidad numérica}
+
+Antes de abordar la construcción recursiva utilizada en este trabajo, es instructivo revisar la definición original para comprender las motivaciones detrás de los algoritmos modernos. Históricamente, los B-splines fueron introducidos por Curry y Schoenberg, definidos en términos de diferencias divididas de la función de potencia truncada.
+
+Sea la función de potencia truncada definida como:
+\[ (x-t)^p_+ = \begin{cases}(x-t)^p & \text{si } x \geq t \\ 0 & \text{si } x < t. \end{cases} \]
+
+Originalmente, el \( i \)-ésimo B-spline de grado \( p \) se definía como la diferencia dividida de orden \( p+1 \) de esta función sobre los nodos \( t_i, \dots, t_{i+p+1} \):
+
+\[ B_{i,p}(x) = (t_{i+p+1} - t_i)[t_i, \dots, t_{i+p+1}](\cdot - x)^p_+. \]
+
+Aunque esta definición es teóricamente sólida y fundamental para el análisis funcional, resulta computacionalmente ingenua e inestable. El cálculo mediante diferencias divididas implica la sustracción repetida de términos de gran magnitud para obtener valores pequeños (especialmente cuando \( x \) es grande). Esto provoca el fenómeno de cancelación catastrófica, resultando en una pérdida severa de cifras significativas en aritmética de punto flotante.
+
+Para solventar este problema y garantizar la estabilidad incondicional del método numérico, se adopta el enfoque constructivo moderno.
+
+\subsection{Fórmula de recurrencia de Cox-de Boor}
+
+
+La definición estándar actual es constructiva y recursiva. Esta formulación evita las cancelaciones sustractivas al operar exclusivamente mediante combinaciones convexas de cantidades positivas. Para definir el \( i \)-ésimo B-spline de grado \( p \) (u orden \( k = p+1 \)), denotado como \( B_i^p(x) \), utilizamos la fórmula de Cox-de Boor:
+
+\begin{itemize}
+\item \textbf{Paso base} (\( p=0 \)): Se define como una función característica (escalón) sobre el intervalo semiabierto \( [t_i, t_{i+1}) \):
+  \begin{equation}
+  \label{eq:coxdeboor1}
+    B_i^0(x) = \begin{cases} 1 & \text{si } t_i \leq x < t_{i+1} \\ 0 & \text{en otro caso.} \end{cases}
+  \end{equation}
+  
+\item \textbf{Paso recursivo} (\( p>0 \)): Un B-spline de grado \( p \) se construye como una combinación lineal convexa de dos B-splines de grado \( p-1 \):
+  \begin{equation}
+  \label{eq:coxdeboor2}
+    B_i^p(x) = w_i^p(x) B_i^{p-1}(x) + (1- w_{i+1}^p(x)) B_{i+1}^{p-1}(x),
+  \end{equation}
+  donde los pesos \( w_i^p(x) \) están dados por:
+  \[ w_i^p(x) \coloneq \frac{x - t_i}{t_{i+p}- t_i}. \]
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figura_evolucion_splines.pdf}
+    \caption{Evolución de las funciones base B-spline generadas mediante la fórmula de recurrencia de Cox-de Boor. \textbf{a)} Paso base ($p=0$) mostrando funciones escalón ortogonales. \textbf{b-d)} Aumento progresivo del grado ($p=1, 2, 3$) y de la regularidad $C^{p-1}$. Nótese cómo el soporte compacto se ensancha de $1$ intervalo a $p+1$ intervalos conforme aumenta el grado.}
+    \label{fig:bspline-evolucion}
+\end{figure}
+
+Bajo esta construcción, se adopta la convención de que si un denominador es cero (por presencia de nodos repetidos, \( t_{i+p} = t_i \)), el término correspondiente se define como 0. Esto garantiza que la partición de la unidad y el soporte compacto \( [t_i, t_{i+p+1}) \) se preserven automáticamente, tal como se observa en la evolución de los soportes en la Figura \cref{fig:bspline-evolucion}.
+
+\subsection{Derivadas de los B-splines}
+
+En el contexto del Método de Elementos Finitos (FEM), es necesario evaluar las formas débiles que involucran gradientes de la función de onda. Afortunadamente, la derivada de un B-spline de grado \( p \) puede expresarse exactamente en términos de una combinación lineal de B-splines de grado menor (\( p-1 \)).
+
+La fórmula para la primera derivada es:
+
+\[ \dv{x} B_i^p(x) = p \qty( \frac{B_i^{p-1}(x)}{t_{i+p}-t_i} - \frac{B_{i+1}^{p-1}(x)}{t_{i+p+1}-t_{i+1}} ). \]
+
+Es importante destacar las siguientes propiedades para la implementación computacional:
+\begin{itemize}
+\item \textbf{Reducción de grado:} La operación de diferenciación reduce la suavidad de la base, transformando un spline de grado \( p \) en uno de grado \( p-1 \).
+\item \textbf{Interpretación geométrica:} La derivada representa la pendiente de las cuerdas que conectan los nodos, ponderada por las funciones base de orden inferior.
+\item \textbf{Conservación del soporte:} La derivada mantiene el mismo soporte compacto \( [t_i, t_{i+p+1}) \), lo cual es crucial para mantener la dispersión (sparsity) de las matrices del sistema (Hamiltoniano y Solapamiento).
+\end{itemize}
+
+\subsection{Partición de la unidad}
+
+Una propiedad fundamental de la base B-spline es la partición no negativa de la unidad. Para cualquier punto \( x \) dentro del dominio válido de la definición (específicamente en el intervalo \( [t_p,t_{m-p}] \)), la suma de todas las funciones base de grado \( p \) es idénticamente igual a uno:
+
+\begin{equation}
+  \label{eq:part-unity}
+  \sum_{i}B_i^p(x) = 1 \qc \forall x \in [t_p, t_{m-p}].
+\end{equation}
+
+Esta propiedad garantiza que el espacio generado por los B-splines es capaz de reproducir exactamente funciones constantes (y por extensión, asegura la completitud del espacio de aproximación). Físicamente, esto implica una invariancia afín: el sistema de coordenadas puede trasladarse o rotarse sin alterar la representación intrínseca de la función aproximada, lo cual es esencial para la estabilidad de las soluciones en problemas físicos.
+
+\subsection{Soporte compacto}
+
+Desde el punto de vista de la eficiencia computacional en métodos variacionales, como el método de elementos finitos, el soporte compacto es la característica más determinante de los B-splines. A diferencia de otras bases polinómicas globales (como en los métodos espectrales) donde una función base es no nula en todo el dominio, un B-spline \( B_i^p(x) \) es estrictamente cero fuera del intervalo local:
+
+\[ \text{supp}(B_i^p) = [t_i, t_{i+p+1}). \]
+
+Esto significa que la función base solo vive sobre \( p+1 \) intervalos de nodos consecutivos. Esta localidad tiene una consecuencia directa crítica sobre la estructura de las matrices del sistema lineal resultante.
+
+En la formulación variacional, los elementos de estas matrices, \( M_{ij} \), se calculan mediante integrales que involucran el producto de dos funciones base (o sus derivadas), por ejemplo, \( \ev{B_i^p,B_j^p} \). Para que esta integral sea distinta de cero, los soportes de \( B_i^p \) y \( B_j^p \) deben tener una intersección no nula. Debido a la propiedad de soporte compacto, la intersección es vacía si los índices de las funciones difieren en más del grado del polinomio, es decir, si \( |i-j| > p \).
+
+Como resultado, la matriz del sistema deja de ser densa y se convierte en una matriz de banda (\textit{banded matrix}) con un ancho de banda dependiente de \( p \). Esta estructura dispersa (\textit{sparse}) reduce drásticamente el costo computacional del almacenamiento y resolución del sistema lineal, pasando de una complejidad cúbica \( \order{N^3} \) a una complejidad lineal \( \order{N} \) respecto al número de grados de libertad, permitiendo así el uso de mallas de alta resolución sin incurrir en costos prohibitivos. La estructura resultante de la matriz, donde los elementos no nulos se concentran alrededor de la diagonal principal, se ilustra a continuación:
+
+\begin{equation}
+\label{eq:banded-matrix}
+\mathbf{M} = 
+\begin{pmatrix}
+\times & \times & \times & 0 & 0 & \cdots & 0 \\
+\times & \times & \times & \times & 0 & \cdots & 0 \\
+\times & \times & \times & \times & \times & \ddots & \vdots \\
+0 & \times & \times & \times & \times & \times & 0 \\
+0 & 0 & \times & \times & \times & \times & \times \\
+\vdots & \vdots & \ddots & \times & \times & \times & \times \\
+0 & 0 & \cdots & 0 & \times & \times & \times
+\end{pmatrix}
+\end{equation}
+
+\subsection{Control local}
+
+Una consecuencia directa de la propiedad de soporte compacto es el control local de la curva aproximada. En la representación mediante B-splines, la función solución \( S(x) \) se expresa como una combinación lineal de la base:
+
+\begin{equation}
+  \label{eq:lin-comb-spline}
+  S(x) = \sum_ic_iB_i^p(x),
+\end{equation}
+
+donde los coeficientes \( c_i \) poseen una interpretación geométrica directa: actúan como puntos de control que "atraen" la curva hacia ellos. Esta es una diferencia fundamental respecto a las bases polinómicas globales (como la interpolación de Lagrange o bases ortogonales de Legendre), donde la alteración de un sólo coeficiente \( c_k \) induce oscilaciones que se propagan a lo largo de todo el dominio \( \Omega \).
+
+En el esquema B-spline, si se perturba un coeficiente \( c_k \), la modificación de la función \( S(x) \) queda estrictamente confinada al soporte de la función base asociada, es decir, al intervalo \( [t_k,t_{k+p+1}) \). Fuera de este subdominio, la función permanece inalterada.
+
+El control local permite ajustar los coeficientes para capturar la cúspide nuclear con alta precisión sin introducir oscilaciones espurias (fenómeno de Runge) en la región de valencia, dándole al método una robustez superior en comparación a bases globales. Este comportamiento se ilustra en la figura \cref{fig:control_local_fem}, donde se evidencia cómo la perturbación queda confinada estrictamente a la región de influencia de la función base activa.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figura_control_local_fem.pdf}
+    \caption{Ilustración de la propiedad de control local en B-splines. La modificación de un único punto del polígono de control (perturbación $\Delta c_k$) altera la curva solución $S(x)$ transformándola en $S'(x)$ exclusivamente dentro de la \textbf{Región de Influencia Local} (área sombreada). Esta región corresponde al soporte compacto de la función base asociada $B_k^p(x)$. Nótese que fuera de este intervalo, la curva original y la perturbada coinciden perfectamente, demostrando que el error no se propaga globalmente.}
+    \label{fig:control_local_fem}
+\end{figure}
+
+
+\section{Cuadratura de Gauss-Legendre}
+
+
+\section{Representación}
+
+Para resolver la ecuación de Schrödinger, se representa la función de onda radial \( P(r) \) como una expansion lineal de B-splines de orden \( k \).
+
+\[ P(r) \approx \sum_{i=1}^N c_iB_i^k(r) \]
+
+\begin{itemize}
+\item Se definen funciones base \( B_i^k(r) \) usando la fórmula de recursión de Cox-de Boor.
+\item Se utiliza un vector de nudos apretado, donde el primer y el último nudo se repiten \( k \) veces para asegurar que los splines alcancen la frontera.
+\end{itemize}
+
+\subsection{Malla Exponencial y Distribución de Nudos}
+
+Para resolver eficientemente la ecuación radial, es necesario adaptar la densidad de la base a la física del problema: alta resolución cerca del origen (debido a la singularidad del potencial) y menor resolución en la región asintótica. Esto se logra mapeando una variable uniforme $\xi \in [0,1]$ al dominio físico radial mediante la transformación exponencial:
+
+\begin{equation}
+\label{eq:exp-grid}
+    r(\xi) = R_{\text{max}} \frac{e^{\gamma \xi}-1}{e^{\gamma}-1},
+\end{equation}
+
+donde $\gamma$ es el parámetro de rigidez (usamos $\gamma=2.0$. La distribución resultante de puntos en el espacio físico se analiza a través del Jacobiano de la transformación:
+
+\begin{equation}
+    \frac{dr}{d\xi} \propto e^{\gamma \xi}
+\end{equation}
+
+Esta derivada indica que el tamaño físico del elemento, $h_i$, crece exponencialmente conforme nos alejamos del núcleo. Esto permite mantener un número de condición bajo en las matrices $\mathbf{S}$ y $\mathbf{T}$ sin sacrificar la precisión en la región nuclear, tal como se ilustra en la Figura \cref{fig:grid_comparison}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figura_comparacion_mallas.pdf}
+    \caption{\textbf{Comparación de distribuciones de nudos B-spline.} a) Distribución uniforme, ineficiente para orbitales atómicos. b) Distribución exponencial ($\gamma=2.5$), mostrando la alta densidad de bases requerida cerca del origen ($r \to 0$).}
+    \label{fig:grid_comparison}
+\end{figure}
+\section{Formulación de Galerkin}
+
+\subsection{La formulación fuerte}
+
+Empezamos con la ecuación de Schrödinger radial para un solo electrón en un potencial central:
+
+\[ - \frac{1}{2}\dv[2]{P}{r} + V_{\text{eff}}(r) P(r) = \epsilon P(r), \]
+
+donde \( V_{\text{eff}}(r) \) incluye la atracción nuclear, el término centrífugo \( \frac{l(l+1)}{2r^2} \), y cualquier potencial \( SCF \) de interés (Hartree/Intercambio).
+
+\subsection{Expansión en la base}
+
+Aproximamos la función de onda radial \( P(r) \) como una combinación lineal de B-splines \( B_j(r) \):
+
+\begin{equation}
+\label{eq:basis-exp}
+  P(r) \approx \sum_{j=1}^N c_jB_j(r),
+\end{equation}
+
+\begin{itemize}
+\item \( c_j \) son los coeficientes que necesitamos encontrar.
+\item \( N \) es la cantidad de splines.
+\end{itemize}
+
+\subsection{Método de residuos ponderados}
+
+Como la expansión en B-splines es una aproximación, al sustituirla en la ecuación de Schrödinger no se obtiene cero exactamente; se obtiene un residuo \( R(r) \). El objetivo es minimizar este residuo proyectando la ecuación sobre una función de peso (o prueba) \( w_i(r) \) y forzando a que la integral ponderada sea nula sobre el dominio \( [0,R_{\text{max}}] \). Existen diversas estrategias para seleccionar estas funciones de peso, lo que da lugar a diferentes formulaciones numéricas, como se resume en la Tabla \cref{tab:mwr-methods}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Comparación de Métodos de Residuos Ponderados (MWR) para la minimización del residuo $R$.}
+    \label{tab:mwr-methods}
+    \renewcommand{\arraystretch}{2.0} % Un poco más de aire para las integrales
+    \setlength{\tabcolsep}{8pt}       % Ajuste fino horizontal
+    
+    \begin{tabularx}{\textwidth}{ 
+        >{\RaggedRight\bfseries}m{2.5cm}  
+        >{\RaggedRight}m{3.5cm}           
+        >{\centering}m{3.5cm}             
+        >{\RaggedRight\arraybackslash}X   
+    }
+        \toprule
+        Método & Función Peso ($w_i$) & Condición & Interpretación \newline Geométrica \\
+        \midrule
+        
+        Galerkin & 
+        Funciones base \newline $w_i = B_i$ & 
+        $\displaystyle \int R \cdot B_i \, dr = 0$ & 
+        El \textbf{residuo} es ortogonal al espacio de las funciones base. Proyección óptima en términos de energía. \\
+        \cmidrule{1-4}
+        
+        Colocación \newline \textit{\footnotesize (Collocation)} & 
+        Delta de Dirac \newline $w_i = \delta(r - r_i)$ & 
+        $R(r_i) = 0$ & 
+        Fuerza a que el \textbf{residuo se anule} estrictamente en los nodos de control seleccionados. \\
+        \cmidrule{1-4}
+        
+        Mínimos Cuadrados \newline \textit{\footnotesize (Least \newline Squares)} & 
+        Derivada del \newline residuo \newline $w_i = \frac{\partial R}{\partial c_i}$ & 
+        $\displaystyle \int R \cdot \frac{\partial R}{\partial c_i} \, dr = 0$ & 
+        Minimiza la norma $L^2$ del \textbf{residuo global} ($\int R^2 dr$). Ideal para operadores no simétricos. \\
+        \cmidrule{1-4}
+        
+        Subdominio \newline \textit{\footnotesize (Finite \newline Volume)} & 
+        Función escalón \newline $w_i = \begin{cases} 1 & r \in \Omega_i \\ 0 & \text{resto} \end{cases}$ & 
+        $\displaystyle \int_{\Omega_i} R \, dr = 0$ & 
+        El \textbf{promedio integral} del residuo es cero dentro de cada volumen de control $\Omega_i$. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+En este trabajo utilizamos el método de Galerkin, donde las funciones de peso son idénticas a las funciones base (\( w_i = B_i \)). Como se menciona en la tabla, esto implica que el residuo es ortogonal al espacio generado por las funciones base.
+
+Esencialmente estamos buscando la mejor aproximación posible a la solución real dentro del espacio limitado generado por las funciones base, i.e. B-splines. Así, al forzar que el error residual sea ortogonal a cada una de estas funciones, aseguramos geométricamente que no quede ninguna componente del error "proyectada" dentro del subespacio que podemos controlar. Esto es análogo a minimizar la distancia entre un punto y un plano trazando una línea perpendicular: se elimina cualquier parte del error que pudiera haber sido corregida ajustando los coeficientes. De esta forma, garantizamos que la discrepancia restante sea puramente intrínseca a las limitaciones del tamaño de la base elegida y no a la calidad de nuestra proyección.
+
+\subsection{Forma débil}
+
+Multiplicamos la ecuación entera por una función base arbitraria \( B_i(r) \) e integramos sobre el dominio \( [0,R_{\text{max}}] \)
+
+\begin{equation}
+\label{eq:mwr1}
+  \int_{0}^{R_{\text{max}}} B_i(r) \qty[ -\frac{1}{2}\dv[2]{r} + V_{\text{eff}}(r) - \epsilon ] P(r) \dd{r} = 0.
+\end{equation}
+
+Al reacomodar términos se obtiene
+
+\[ \underbrace{\int_{0}^{R_{\text{max}}} B_i(r) \left( -\frac{1}{2} \frac{d^2}{dr^2} \right) P(r) \, dr}_{\text{Término Cinético}} + \underbrace{\int_{0}^{R_{\text{max}}} B_i(r) V_{\text{eff}}(r) P(r) \, dr}_{\text{Término Potencial}} = \epsilon \underbrace{\int_{0}^{R_{\text{max}}} B_i(r) P(r) \, dr}_{\text{Término Traslape}}. \]
+
+El término cinético presenta una segunda derivada que se puede trata mediante integración por partes. Esto no solo reduce el órden de derivación requerido para las funciones base, i.e. permite el uso de bases de menor continuidad, sino que también simetriza el operador, lo cual simplifica el álgebra lineal posterior.
+
+\begin{equation} \label{eq:k-ibp}
+  \int_{0}^{R_{\text{max}}} B_i(r) P''(r) \dd{r} = \underbrace{\eval{ B_i(r) P'(r) }_{0}^{R_{\text{max}}}}_{\text{Término de borde}} - \int_{0}^{R_{\text{max}}} B_i'(r) P'(r) \dd{r}.
+\end{equation}
+
+El término de borde se anula por las condiciones de frontera sobre la función de onda \( P(0) = P(R_{\text{max}})=0 \).
+
+\subsection{Ecuación matricial}
+
+Sustituimos la expansión (\cref{eq:basis-exp}) en las ecuaciones integrales. Ya que la integral es lineal, la sumatoria y los coeficientes se pueden factorizar.
+
+\begin{itemize}
+\item La integral cinética
+  \[ \frac{1}{2} \int \dv{B_i}{r} \qty(\sum_jc_j\dv{B_{j}}{r})\dd{r} = \sum_jc_j\underbrace{\qty[\frac{1}{2}\int \dv{B_i}{r}\dv{B_j}{r}\dd{r}]}_{T_{ij}}. \]
+\item La integral potencial
+  \[ \int B_i(r)V_{eff}(r) \qty(\sum_jc_jB_j(r)) \dd{r} = \sum_jc_j \underbrace{\qty[\int B_i(r)V_{\text{eff}}(r)B_j(r)\dd{r}]}_{V_{ij}}. \]
+\item La integral de traslape
+  \[ \epsilon \int B_i(r) \qty(\sum_jc_jB_j(r)) \dd{r} = \epsilon \sum_jc_j \underbrace{\qty[\int B_i(r)B_j(r)\dd{r}]}_{S_{ij}}. \]
+\end{itemize}
+
+Al reunir todos las términos para todo \( i = 1 \dots N \), obtenemos un sistema de ecuaciones lineales:
+
+\[ \sum_j (T_{ij} + V_{ij})c_j = \epsilon \sum_j S_{ij}c_j. \]
+
+Definimos el elemento de matriz Hamiltoniana como \( H_{ij} = T_{ij} + V_{ij} \) y el sistema de ecuaciones se convierte al problema de eigenvalores generalizado:
+
+\begin{equation}
+\label{eq:eigen}
+\bm{H}\bm{c} = \epsilon \bm{S}\bm{c}
+\end{equation}
+
+\subsection{Funciones de Potencial de Hartree-Fock $Y^k$}
+
+Siguiendo el formalismo estándar de Hartree-Fock descrito por \textcite{fischer1977}, la evaluación de la energía total del sistema y de los potenciales de intercambio requiere el cálculo de elementos de matriz de la interacción de Coulomb. Estos elementos se expresan habitualmente en términos de las integrales de Slater $F^k$ y $G^k$ (o en general $R^k$), las cuales se definen mediante una función auxiliar: el potencial radial escalado.
+
+Definimos la función de potencial de Hartree-Fock de orden $k$, denotada como $Y^k(a,b;r)$, asociada a la distribución de densidad de par $\rho_{ab}(r) = P_a(r)P_b(r)$, mediante la transformación integral:
+
+\begin{equation}
+\label{eq:Yk-def-integral}
+    Y^k(a,b;r) = r \int_0^{\infty} U^k(r,s) P_a(s)P_b(s) \dd{s},
+\end{equation}
+donde el núcleo del potencial efectivo $U^k(r,s)$ proviene de la expansión multipolar de la interacción:
+\begin{equation}
+    U^k(r,s) = \frac{(\min(r,s))^k}{(\max(r,s))^{k+1}}.
+\end{equation}
+
+Esta función $Y^k$ tiene una importancia central, ya que permite calcular las integrales de interacción directa ($F^k$) y de intercambio ($G^k$) como valores esperados radiales:
+\begin{equation}
+    F^k(nl, n'l') = \int_0^{\infty} P_{nl}(r) \frac{Y^k(n'l', n'l'; r)}{r} P_{nl}(r) \dd{r}.
+\end{equation}
+
+Explícitamente, separando las regiones de integración interna y externa, la Ecuación (\ref{eq:Yk-def-integral}) toma la forma:
+
+\begin{equation}
+\label{eq:Yk-explicit}
+Y^k(a,b;r) = r^{-k}\int_0^r s^k \rho_{ab}(s) \dd{s} + r^{k+1} \int_r^{\infty} s^{-(k+1)} \rho_{ab}(s)\dd{s}.
+\end{equation}
+
+Si bien esta forma integral es exacta, su evaluación numérica directa conlleva un costo computacional elevado ($O(N^2)$) y genera matrices densas que no aprovechan la estructura local de bases como los B-splines.
+
+\subsubsection{Formulación Diferencial: Ecuación de Poisson Generalizada}
+
+Para optimizar el tratamiento numérico dentro del esquema de Elementos Finitos (FEM), es conveniente transformar la definición integral (\ref{eq:Yk-explicit}) en una ecuación diferencial equivalente.
+
+Como se demuestra formalmente en el \textbf{Apéndice \cref{apendice:poisson}}, aplicando técnicas de diferenciación bajo el signo integral (Regla de Leibniz generalizada), la función $Y^k(a,b;r)$ satisface la siguiente ecuación diferencial de segundo orden, conocida como la ecuación de Poisson radial generalizada:
+
+\begin{equation}
+\label{eq:poisson-radial}
+    \left( -\frac{d^2}{dr^2} + \frac{k(k+1)}{r^2} \right) Y^k(a,b;r) = \frac{2k+1}{r} P_a(r)P_b(r).
+\end{equation}
+
+Esta transformación es fundamental para nuestro trabajo, ya que convierte un operador integral global en un operador diferencial local. Esto tiene tres ventajas decisivas para la implementación en B-splines:
+
+\begin{enumerate}
+    \item \textbf{Esparsidad:} Las matrices resultantes en el método de Galerkin son de banda estrecha, reduciendo el almacenamiento y el tiempo de cómputo a $O(N)$.
+    \item \textbf{Unificación del Solver:} Permite resolver tanto las funciones de onda $P(r)$ como los potenciales $Y^k(r)$ utilizando la misma arquitectura de solucionador diferencial.
+    \item \textbf{Condiciones de Frontera:} El problema queda bien planteado como un problema de valores de contorno con las condiciones Dirichlet derivadas del comportamiento asintótico de la integral:
+    \begin{equation}
+        Y^k(0) = 0, \quad \quad Y^k(\infty) = \text{cte} \quad (\text{para } k=0, a=b) \text{ o } 0.
+    \end{equation}
+\end{enumerate}
+
+El desarrollo detallado de la prueba de equivalencia entre la Ec. (\ref{eq:Yk-explicit}) y la Ec. (\ref{eq:poisson-radial}), así como la justificación de las condiciones de frontera, se encuentra en el Apéndice mencionado.
+
+\section{Interacción electrónica}
+
+En un sistéma atómico con \( N \) electrónes y un núcleo fijo de carga \( Z \), el Hamiltoniano no relativista (en unidades atómicas) está dado por:
+
+\begin{equation}
+  \label{eq:hamiltonian1}
+  H = \sum_i^N \qty(- \frac{1}{2}\nabla_i^2 - \frac{Z}{r_i}) + \sum_{i<j}^N \frac{1}{\abs{\bm{r}_i-\bm{r}_j}}.
+\end{equation}
+
+El término que presenta mayor dificultad computacional y teórica es la repulsión interelectrónica, representada por el operador de Coulomb \( V_{ij} = \abs{\bm{r}_i-\bm{r}_j}^{-1} \). Debido a que este operador acopla las coordenadas de los pares electrónicos, impide separar directamente las variables en la ecuación de Schrödinger. Para tratar este término en una geometría esférica, se utiliza la expansión de Laplace del potencial de Coulomb como armónicos esféricos.
+
+\subsection{Expansión multipolar del potencial de Coulomb}
+
+Consideremos dos electrones \( i \) y \( j \) con vectores de posición \( r_i \) y \( r_j \). De acuerdo con el teorema de adición de armónicos esféricos, la interacción recíproca puede expandirse como:
+
+\begin{equation}
+  \label{eq:laplace1}
+  \frac{1}{\abs{\bm{r}_i - \bm{r}_j}} = \sum_{k=0}^{\infty} \frac{4\pi}{2k+1} \frac{r_<^k}{r_>^{k+1}} \sum_{q = -k}^k Y_{kq}^{*}(\Omega_i) Y_{kq}(\Omega_j),
+\end{equation}
+
+donde:
+
+\begin{itemize}
+\item \( r_< = \text{mín}(r_i,r_j) \) y \( r_> = \text{máx}(r_i,r_j) \).
+\item \( \Omega_i = (\theta_i, \phi_i) \) denota las coordenadas angulares del electrón \( i \).
+\item \( Y_{kq} \) son los armónicos esféricos normalizados.
+\end{itemize}
+
+Esta expansión permite desacoplar la dependenncia radial de la angular. La parte angular se resuelve analíticamente mediante el álgebra de momento angular, mientras que la física de la interacción de apantallamiento queda contenida enteramente en la parte radial.
+
+\subsection{Potenciales radiales $Y^k$}
+
+En el formalismo de Hartree-Fock, la evaluación de la energía y de las ecuaciones de Fock requiere calcular la interacción electrostática entre pares de orbitales. Independientemente de si tratamos con la interacción directa o de intercambio, el término fundamental que describe la distribución espacial de los electrones es el producto de dos funciones de onda radiales:
+
+\begin{equation}
+\label{eq:pair-density}
+    \rho_{ab}(r) = P_a(r) P_b(r).
+\end{equation}
+
+Es crucial notar que esta cantidad $\rho_{ab}(r)$ posee una interpretación física profunda: representa la proyección radial de los elementos de la \textbf{matriz de densidad de una partícula}, $\gamma(\mathbf{r}, \mathbf{r}')$, en el espacio de configuraciones.
+
+\begin{itemize}
+\item Cuando $a = b$, $\rho_{aa}(r)$ corresponde a la densidad de carga electrónica clásica de la capa $a$.
+\item Cuando $a \neq b$, $\rho_{ab}(r)$ representa una \textit{densidad de transición} o de intercambio. Aunque no tiene un análogo en la electrostática clásica, matemáticamente actúa como una distribución de carga "virtual" que genera un campo de potencial efectivo.
+\end{itemize}
+
+El componente radial del potencial electrostático de orden multipolar $k$ generado por esta distribución $\rho_{ab}(s)$, actuando sobre un electrón en la posición $r$, se define formalmente mediante la integración sobre la coordenada $s$ de la distribución fuente:
+
+\begin{equation}
+ \label{eq:vk-integral}
+ v_k(a,b;r) = \int_0^{\infty} \frac{r_<^k}{r_>^{k+1}} P_a(s)P_b(s)\dd{s}.
+\end{equation}
+
+Para evaluar esta integral, es necesario dividir el intervalo de integración $[0,\infty)$ en dos regiones, dependiendo de la posición relativa de la variable de integración $s$ respecto al punto de observación $r$:
+
+\begin{itemize}
+\item \textbf{Región interior} ($s < r$): En este caso, $r_< = s$ y $r_> = r$. El integrando contribuye con un factor de $s^k/r^{k+1}$, representando el efecto de apantallamiento de la densidad interna.
+\item \textbf{Región exterior} ($s > r$): En este caso, $r_< = r$ y $r_> = s$. El integrando contribuye con un factor $r^k/s^{k+1}$, representando el potencial multipolar generado por la densidad externa.
+\end{itemize}
+
+Sustituyendo estas condiciones en la Ec. (\cref{eq:vk-integral}), obtenemos la expresión explícita:
+
+\begin{equation}
+ \label{eq:vk-integral2}
+ v_k(a, b; r) = \frac{1}{r^{k+1}} \int_0^r s^k P_a(s) P_b(s) \, ds + r^k \int_r^{\infty} \frac{1}{s^{k+1}} P_a(s) P_b(s) \, ds.
+\end{equation}
+
+Siguiendo el formalismo de Froese Fischer, resulta conveniente trabajar con una función de potencial escalada por $r$, lo cual simplifica la estructura de la ecuación radial de Schrödinger (eliminando singularidades y factores de $1/r$ en el término de potencial). Definimos así las funciones $Y^k$:
+
+\begin{equation}
+ \label{eq:yk-pot}
+ Y^k(a,b;r) \equiv r \cdot v_k(a,b;r).
+\end{equation}
+
+Al aplicar este factor $r$ a la ecuación (\cref{eq:vk-integral2}), obtenemos la forma integral definitiva que constituye el núcleo de nuestro tratamiento numérico:
+
+\begin{equation}
+\label{eq:Yk-final}
+ Y^k(a,b;r) = r^{-k}\int_0^r s^kP_a(s)P_b(s) \dd{s} + r^{k+1} \int_r^{\infty} s^{-(k+1)}P_a(s)P_b(s)\dd{s}.
+\end{equation}
+
+Esta función $Y^k(a,b;r)$ encapsula toda la información necesaria para construir tanto los operadores de Coulomb $J$ (donde $a=b$) como los operadores de Intercambio $K$ (donde $a \neq b$) para cualquier átomo multielectrónico bajo la aproximación de campo central
+
+Si bien la Ecuación (\cref{eq:Yk-final}) proporciona la definición formal y exacta del potencial, su evaluación numérica directa mediante cuadraturas presenta desventajas computacionales significativas. La naturaleza global del operador integral implica que el valor del potencial en un punto depende de la función en todo el dominio, lo que en una discretización conduce a matrices densas y operaciones de costo $O(N^2)$.
+
+Sin embargo, como se demuestra detalladamente en el Apéndice \cref{apendice:} mediante la aplicación de la regla de Leibniz, la función $Y^k(a,b;r)$ es solución de una ecuación diferencial de segundo orden con condiciones de frontera específicas. Esta ecuación, conocida como la \textit{Ecuación de Poisson Radial Generalizada}, toma la forma:
+
+\begin{equation}
+\label{eq:poisson-radial}
+    \left( -\frac{d^2}{dr^2} + \frac{k(k+1)}{r^2} \right) Y^k(a,b;r) = \frac{2k+1}{r} P_a(r)P_b(r).
+\end{equation}
+
+Para completar la definición del problema de valores de contorno, se imponen las condiciones asintóticas derivadas del comportamiento de la integral original:
+\begin{equation}
+    Y^k(a,b; 0) = 0, \quad \quad \lim_{r \to \infty} Y^k(a,b; r) = \text{cte} \quad (\text{o comportamiento asintótico } \propto r^{-(k+1)}).
+\end{equation}
+
+La transición del formalismo integral al diferencial (\cref{eq:poisson-radial}) ofrece ventajas decisivas para la implementación numérica, particularmente en el contexto del Método de Elementos Finitos (FEM) que empleamos en este trabajo:
+
+\begin{enumerate}
+    \item \textbf{Localidad y Esparsidad:} A diferencia del operador integral, el operador diferencial es local. Al proyectar esta ecuación sobre una base de B-splines (o cualquier base de soporte compacto), las matrices resultantes son de banda estrecha (dispersas). Esto reduce la complejidad computacional de la inversión matricial y el almacenamiento de memoria de $O(N^2)$ a $O(N)$.
+    
+    \item \textbf{Consistencia con el Solucionador:} Dado que las funciones de onda radiales $P(r)$ se obtienen resolviendo la ecuación de Schrödinger (una ecuación diferencial de segundo orden), tratar los potenciales $Y^k$ bajo el mismo esquema diferencial permite unificar la arquitectura del \textit{solver}. Tanto los orbitales como los potenciales se resuelven mediante el mismo mecanismo de Galerkin.
+    
+    \item \textbf{Tratamiento de Singularidades:} La Ecuación (\cref{eq:poisson-radial}) permite tratar de manera robusta el término centrífugo $k(k+1)/r^2$ y la singularidad de Coulomb $1/r$ en el origen mediante las propiedades de las funciones base, evitando las inestabilidades numéricas que suelen surgir al integrar numéricamente kernels singulares.
+\end{enumerate}
+
+En consecuencia, en este trabajo adoptamos la Ec. (\cref{eq:poisson-radial}) como la ecuación gobernante para determinar los potenciales de interacción, transformando el problema de Hartree-Fock en un sistema acoplado de ecuaciones diferenciales.
+
+\section{Discusión}
+
+\subsection{Equivalencia formal entre los métodos de Ritz y Galerkin}
+
+En los textos estándar de química cuántica se utiliza el principio variacional de Ritz, pero en este trabajo utilizamos el método de Galerkin para la discretización de las ecuaciones. En el contexto de operadores Hermitianos, como el Hamiltoniano atómico, esta elección no altera la física subyacente, dado que ambos enfoques convergen a la misma estructura algebraica.
+
+El método de Ritz parte de la búsqueda de puntos estacionarios del funcional de energía para una función de onda de prueba $|\tilde{\psi}\rangle$:
+
+\begin{equation}
+    E[\tilde{\psi}] = \frac{\langle \tilde{\psi} | \hat{H} | \tilde{\psi} \rangle}{\langle \tilde{\psi} | \tilde{\psi} \rangle}
+\end{equation}
+
+Al introducir una base finita $|\tilde{\psi}\rangle = \displaystyle\sum_{j} c_j |B_j\rangle$, la minimización con respecto a los coeficientes ($\pdv{E}{c_i^{*}} = 0$) conduce a la condición de que la proyección del operador desplazado sobre cada función base sea nula:
+
+\begin{equation}
+    \label{eq:ritz_condition}
+    \sum_{j} c_j \langle B_i | \hat{H} - E | B_j \rangle = 0
+\end{equation}
+
+Por otra parte, el método de Galerkin aborda el problema desde la teoría de residuos ponderados. Se define el vector residual $|R\rangle$ como la discrepancia generada al aplicar el operador a la aproximación:
+
+\begin{equation}
+    |R\rangle = (\hat{H} - E) |\tilde{\psi}\rangle
+\end{equation}
+
+La condición estricta de Galerkin impone que el residuo sea ortogonal al subespacio generado por las funciones base. Esto es, proyectar el residuo sobre cada bra \( \langle B_i| \):
+
+\begin{equation}
+    \langle B_i | R \rangle = 0
+\end{equation}
+
+Sustituyendo la expansión lineal de $|\tilde{\psi}\rangle$ en esta proyección, obtenemos:
+
+\begin{equation}
+  \mel{B_i}{(\hat{H} - E)}{\sum_jc_jB_j} = 0
+\end{equation}
+
+Aprovechando la linealidad del producto interno, factorizamos los coeficientes y la suma, recuperando una expresión idéntica a la Ec. (\cref{eq:ritz_condition}) derivada mediante Ritz:
+
+\begin{equation}
+    \sum_{j} c_j \left( \langle B_i | \hat{H} | B_j \rangle - E \langle B_i | B_j \rangle \right) = 0
+\end{equation}
+
+Esta identidad confirma que la proyección de Galerkin es matemáticamente equivalente a la variación de Ritz para este sistema. En consecuencia, ambos métodos conducen al mismo problema generalizado de valores propios:
+
+\begin{equation}
+    \mathbf{H}\mathbf{c} = E \mathbf{S}\mathbf{c}
+\end{equation}
+
+donde $\mathbf{H}$ y $\mathbf{S}$ son las matrices Hamiltoniana y de traslape respectivamente, validando así el uso de Galerkin como una herramienta rigurosa y directa para la implementación numérica con B-splines.
+
+
+\printbibliography[heading=bibintoc, title={Referencias Bibliográficas}]
+
+% --- APÉNDICE ---
+\appendix
+
+\chapter{Expansión de Laplace para un potencial}
+
+\chapter{Unidades atómicas}
+
+Para obtener la forma adimensional del Hamiltoniano, partimos de la ecuación de Schrödinger independiente del tiempo en el Sistema Internacional (SI) para un sistema de $N$ electrones y un núcleo de carga $Z$:
+
+\begin{equation}
+    \hat{H}_{\text{SI}} \Psi = E \Psi
+\end{equation}
+
+El operador Hamiltoniano en unidades del SI está dado por:
+
+\begin{equation}
+    \hat{H}_{\text{SI}} = \sum_{i=1}^N \qty( -\frac{\hbar^2}{2m_e} \nabla_i^2 - \frac{Ze^2}{4\pi\epsilon_0 r_i} ) + \sum_{i<j}^N \frac{e^2}{4\pi\epsilon_0 \abs{\bm{r}_i - \bm{r}_j}}
+\end{equation}
+
+Para adimensionalizar la ecuación, realizamos un cambio de escala en las coordenadas espaciales utilizando el \textbf{radio de Bohr} ($a_0$) como unidad natural de longitud:
+
+\begin{equation}
+    \bm{r}_i = a_0 \bm{r}'_i \quad \text{donde} \quad a_0 = \frac{4\pi\epsilon_0 \hbar^2}{m_e e^2}
+\end{equation}
+
+Esto transforma el operador Laplaciano según la regla de la cadena ($\nabla_i = \frac{1}{a_0}\nabla'_i$):
+
+\begin{equation}
+    \nabla_i^2 = \frac{1}{a_0^2} \nabla'^2_i
+\end{equation}
+
+Sustituyendo estas expresiones en el Hamiltoniano original:
+
+\begin{equation}
+    \hat{H} = \sum_{i=1}^N \qty( -\frac{\hbar^2}{2m_e a_0^2} \nabla'^2_i - \frac{Ze^2}{4\pi\epsilon_0 a_0 r'_i} ) + \sum_{i<j}^N \frac{e^2}{4\pi\epsilon_0 a_0 \abs{\bm{r}'_i - \bm{r}'_j}}
+\end{equation}
+
+Identificamos la unidad atómica de energía, el \textbf{Hartree} ($E_h$), definido como:
+
+\begin{equation}
+    E_h = \frac{\hbar^2}{m_e a_0^2} = \frac{e^2}{4\pi\epsilon_0 a_0}
+\end{equation}
+
+Factorizando $E_h$ en la expresión del Hamiltoniano:
+
+\begin{equation}
+    \hat{H} = E_h \left[ \sum_{i=1}^N \qty( -\frac{1}{2} \nabla'^2_i - \frac{Z}{r'_i} ) + \sum_{i<j}^N \frac{1}{\abs{\bm{r}'_i - \bm{r}'_j}} \right]
+\end{equation}
+
+Al dividir la ecuación de Schrödinger por $E_h$, la energía y el Hamiltoniano quedan expresados en unidades atómicas (a.u.). Eliminando las primas ($'$) por convención para simplificar la notación, obtenemos finalmente el Hamiltoniano adimensional:
+
+\begin{equation}
+  \label{eq:hamiltonian1}
+  H = \sum_i^N \qty(- \frac{1}{2}\nabla_i^2 - \frac{Z}{r_i}) + \sum_{i<j}^N \frac{1}{\abs{\bm{r}_i-\bm{r}_j}}
+\end{equation}
+
+\chapter{Ecuación de Poisson radial generalizada}
+\label{apendice:poisson}
+
+En este capítulo se desarrolla la ecuación diferencial que satisface el potencial de Hartree-Fock, \( Y^k(r) \), a partir de su definición integral. Para esta derivación es necesario emplear una generalización para diferenciar integrales paramétricas.
+
+\section{Diferenciación bajo el signo integral}
+
+Para fundamentar la demostración del teorema principal de esta sección, enunciamos primero dos resultados clásicos del cálculo integral que servirán como herramientas auxiliares. Estos teoremas se presentan sin demostración, asumiendo su validez en el contexto de las funciones continuas tratadas en este trabajo.
+
+\begin{theorem}[Teorema del valor medio para integrales]\label{thm:valor-medio}
+  Si \( f \) es una función continua en un intervalo cerrado \( [a,b] \), entonces existe al menos un punto \( c \in [a,b] \) tal que:
+  \[
+  \int_{a}^{b} f(x) \dd{x} = f(c)(b-a).
+  \]
+\end{theorem}
+
+\begin{theorem}[Regla de Leibniz con límites constantes]\label{thm:leibniz-constante}
+  Sea \( f(s,r) \) una función continua sobre un rectángulo \( R = [a,b] \times [c,d] \) tal que la derivada parcial \( \pdv{f}{r} \) existe y es continua. Entonces:
+  \[
+  \dv{r} \int_{a}^{b} f(s,r) \dd{s} = \int_{a}^{b} \pdv{f}{r}(s,r) \dd{s}.
+  \]
+\end{theorem}
+
+A continuación, generalizamos estos conceptos para el caso donde los límites de integración son funciones de la variable de diferenciación.
+
+\begin{theorem}[Regla general de Leibniz]\label{thm:leibniz-general}
+
+  Considérese una función \( f(s,r) \) definida y continua sobre un rectángulo \( R = [a,b]\times [c,d] \subset \mathbb{R}^2 \). Supongamos que se cumplen las siguientes condiciones:
+
+  \begin{enumerate}
+  \item\label{item:1} La derivada parcial \( \pdv{f}{r} \) existe y es continua en el dominio de interés.
+  \item\label{item:2} Las funciones de los límites \( \alpha, \beta : [c,d] \to [a,b] \) son diferenciables en su intervalo de definición.
+  \end{enumerate}
+
+  En tal caso, la función paramétrica \( F:[c,d] \to \mathbb{R} \) dada por
+
+  \[ F(r) = \int_{\alpha(r)}^{\beta(r)} f(s,r) \dd{s} \]
+
+  es diferenciable para todo \( r \in (c,d) \), y su derivada está dada por:
+
+  \begin{equation}
+    \label{eq:leibniz-int}
+   \dv{F}{r} = \int_{\alpha(r)}^{\beta(r)} \pdv{f}{r}(s,r) \dd{s} + f(\beta(r),r)\beta'(r) - f(\alpha(r),r)\alpha'(r).
+  \end{equation}
+
+\end{theorem}
+
+\begin{proof}
+
+  Sea \( r_0 \in (c,d) \). Para determinar la derivada de \( F \) en \( r_0 \), consideramos el cociente incremental:
+
+  \[ \frac{F(r) - F(r_0)}{r-r_0} = \frac{1}{r-r_0} \qty(\int_{\alpha(r)}^{\beta(r)} f(s,r) \dd{s} - \int_{\alpha(r_0)}^{\beta(r_0)} f(s,r_0) \dd{s} ). \]
+
+  Mediante la aditividad del dominio respecto a los puntos \( \alpha(r_0) \) y \( \beta(r_0) \), podemos descomponer la primera integral de la siguiente manera:
+  
+  \[ \int_{\alpha(r)}^{\beta(r)} f(s,r) \dd{s} = \int_{\alpha(r)}^{\alpha(r_0)}f(s,r) \dd{s} + \int_{\alpha(r_0)}^{\beta(r_0)} f(s,r)\dd{s} + \int_{\beta(r_0)}^{\beta(r)} f(s,r)\dd{s}. \]
+
+  Al sustituir esta expresión en el cociente anterior y agrupar términos, obtenemos tres componentes que analizaremos por separado:
+
+  \[
+  \begin{aligned}
+  \frac{F(r) - F(r_0)}{r - r_0} &= \underbrace{\frac{1}{r - r_0} \int_{\alpha(r)}^{\alpha(r_0)} f(s,r) \dd{s}}_{I_1} \\
+  &\quad + \underbrace{\int_{\alpha(r_0)}^{\beta(r_0)} \frac{f(s,r) - f(s,r_0)}{r - r_0} \dd{s}}_{I_2} \\
+  &\quad + \underbrace{\frac{1}{r - r_0} \int_{\beta(r_0)}^{\beta(r)} f(s,r) \dd{s}}_{I_3}.
+  \end{aligned}
+  \]
+
+  A continuación, calculamos el límite de cada término cuando \( r \to r_0 \):
+
+  \textbf{1. Términos de borde (\( I_1 \) y \( I_3 \)):} De acuerdo con el teorema del valor medio para integrales (\cref{thm:valor-medio}), existe un valor \( \bar{s}_1 \) entre \( \alpha(r) \) y \( \alpha(r_0) \) tal que:
+
+  \[ I_1 = \frac{\alpha(r_0) - \alpha(r)}{r-r_0} f(\bar{s}_1,r) = - \frac{\alpha(r) - \alpha(r_0)}{r-r_0}f(\bar{s}_1,r). \]
+
+  Cuando \( r \to r_0 \), sabemos que \( \bar{s}_1 \to \alpha(r_0) \). Por la definición de derivada y la continuidad de \( f \), obtenemos:
+
+  \[ \lim_{r\to r_0} I_{1} = - f(\alpha(r_0), r_0) \alpha'(r_0). \]
+
+  De forma análoga para \( I_3 \), existe \( \bar{s}_2 \) entre \( \beta(r_0) \) y \( \beta(r) \), lo que resulta en:
+
+  \[ \lim_{r\to r_0} I_3 = f(\beta(r_0),r_0)\beta'(r_0). \]
+
+  \textbf{2. Término integral (\( I_2 \)):} Dado que \( \pdv{f}{r} \) es continua en el rectángulo compacto \( R \), por la regla de Leibniz para límites constantes (\cref{thm:leibniz-constante}) es posible intercambiar el límite y la integral:
+
+  \[ \lim_{r \to r_0} I_2 = \int_{\alpha(r_0)}^{\beta(r_0)} \lim_{r\to r_0} \frac{f(s,r) - f(s,r_0)}{r-r_0} \dd{s} = \int_{\alpha(r_0)}^{\beta(r_0)} \pdv{f}{r}(s,r_0) \dd{s}. \]
+
+  Finalmente, sumando los tres límites resultantes, concluimos que \( F \) es derivable en \( r_0 \) y su derivada es:
+
+  \[ F'(r_0) = \int_{\alpha(r_0)}^{\beta(r_0)} \pdv{f}{r}(s,r_0) \dd{s} + f(\beta(r_0),r_0) \beta'(r_0) - f(\alpha(r_0), r_0) \alpha'(r_0). \]
+
+  Como \( r_0 \) representa un punto arbitrario del intervalo \( (c,d) \), la igualdad se sostiene para todo el dominio. Esto establece la validez de la \cref{eq:leibniz-int}.
+
+\end{proof}
+
+\section{Derivadas del Potencial $Y^k$}
+
+Partimos de la definición integral escalada del potencial radial (el potencial radial es \( v_k \) en mi construccion original y \( Y^k = rv_k \) es la forma escalada? entonces deberia de cambiar el nombre de mis secciones para ser claro?) (\cref{eq:Yk-final}):
+
+\begin{equation}
+    Y^k(r) = r^{-k} \mathcal{I}_{\text{int}}(r) + r^{k+1} \mathcal{I}_{\text{ext}}(r),
+\end{equation}
+
+donde definimos las integrales auxiliares como:
+
+\begin{align}
+    \mathcal{I}_{\text{int}}(r) &= \int_{0}^{r} s^k \rho_{ab}(s) \, ds, \\
+    \mathcal{I}_{\text{ext}}(r) &= \int_{r}^{\infty} s^{-(k+1)} \rho_{ab}(s) \, ds.
+\end{align}
+
+Aplicamos la regla de Leibniz (\cref{thm:leibniz-general}) para encontrar las derivadas de estas integrales auxiliares:
+
+\begin{itemize}
+    \item Para $\mathcal{I}_{\text{int}}(r)$: $a(r)=0$, $b(r)=r$.
+    \begin{equation}
+        \frac{d}{dr}\mathcal{I}_{\text{int}} = (r^k \rho_{ab}(r)) \cdot (1) - (0) \cdot (0) = r^k \rho_{ab}(r).
+    \end{equation}
+    
+    \item Para $\mathcal{I}_{\text{ext}}(r)$: $a(r)=r$, $b(r)=\infty$.
+    \begin{equation}
+        \frac{d}{dr}\mathcal{I}_{\text{ext}} = (0) \cdot (0) - (r^{-(k+1)} \rho_{ab}(r)) \cdot (1) = -r^{-(k+1)} \rho_{ab}(r).
+    \end{equation}
+\end{itemize}
+
+Donde utilizamos utilizamos que los integrandos no son funciones de la variable \( r \), es decir, en ambos casos se tiene
+
+\[ \int_0^{} \]
+
+Ahora, derivamos $Y^k(r)$ utilizando la regla del producto y sustituyendo los resultados anteriores:
+
+\begin{align*}
+    \frac{dY^k}{dr} &= \frac{d}{dr}\left( r^{-k} \mathcal{I}_{\text{int}} \right) + \frac{d}{dr}\left( r^{k+1} \mathcal{I}_{\text{ext}} \right) \\
+    &= \left[ -k r^{-k-1} \mathcal{I}_{\text{int}} + r^{-k} \left( \frac{d\mathcal{I}_{\text{int}}}{dr} \right) \right] + \left[ (k+1) r^k \mathcal{I}_{\text{ext}} + r^{k+1} \left( \frac{d\mathcal{I}_{\text{ext}}}{dr} \right) \right] \\
+    &= -k r^{-k-1} \mathcal{I}_{\text{int}} + r^{-k} (r^k \rho_{ab}) + (k+1) r^k \mathcal{I}_{\text{ext}} + r^{k+1} (-r^{-(k+1)} \rho_{ab}) \\
+    &= -k r^{-k-1} \mathcal{I}_{\text{int}} + \rho_{ab}(r) + (k+1) r^k \mathcal{I}_{\text{ext}} - \rho_{ab}(r).
+\end{align*}
+
+Observamos que los términos de fuente $\rho_{ab}(r)$ se cancelan exactamente, lo que confirma la continuidad del campo. La primera derivada resultante es:
+
+\begin{equation}
+\label{eq:Yk-prime-app}
+    \frac{dY^k}{dr} = -k r^{-k-1} \mathcal{I}_{\text{int}}(r) + (k+1) r^k \mathcal{I}_{\text{ext}}(r).
+\end{equation}
+
+\subsubsection{Segunda Derivada y Ecuación de Poisson}
+
+Diferenciamos la Ec. (\cref{eq:Yk-prime-app}) nuevamente respecto a $r$:
+
+\begin{align*}
+    \frac{d^2Y^k}{dr^2} &= \frac{d}{dr}\left( -k r^{-k-1} \mathcal{I}_{\text{int}} \right) + \frac{d}{dr}\left( (k+1) r^k \mathcal{I}_{\text{ext}} \right) \\
+    &= \left[ k(k+1) r^{-k-2} \mathcal{I}_{\text{int}} - k r^{-k-1} \left( \frac{d\mathcal{I}_{\text{int}}}{dr} \right) \right] \\
+    &\quad + \left[ k(k+1) r^{k-1} \mathcal{I}_{\text{ext}} + (k+1) r^k \left( \frac{d\mathcal{I}_{\text{ext}}}{dr} \right) \right].
+\end{align*}
+
+Sustituimos nuevamente las derivadas de las integrales auxiliares ($\mathcal{I}'_{\text{int}} = r^k \rho_{ab}$ y $\mathcal{I}'_{\text{ext}} = -r^{-(k+1)} \rho_{ab}$):
+
+\begin{align*}
+    \frac{d^2Y^k}{dr^2} &= k(k+1) r^{-k-2} \mathcal{I}_{\text{int}} - k r^{-k-1} (r^k \rho_{ab}) \\
+    &\quad + k(k+1) r^{k-1} \mathcal{I}_{\text{ext}} + (k+1) r^k (-r^{-(k+1)} \rho_{ab}).
+\end{align*}
+
+Factorizamos el término común $\frac{k(k+1)}{r^2}$ en los términos que contienen integrales y agrupamos los términos que contienen $\rho_{ab}$:
+
+\begin{align*}
+    \frac{d^2Y^k}{dr^2} &= \frac{k(k+1)}{r^2} \left( \underbrace{r^{-k} \mathcal{I}_{\text{int}} + r^{k+1} \mathcal{I}_{\text{ext}}}_{Y^k(r)} \right) - \frac{k}{r} \rho_{ab} - \frac{k+1}{r} \rho_{ab} \\
+    &= \frac{k(k+1)}{r^2} Y^k(r) - \frac{2k+1}{r} \rho_{ab}(r).
+\end{align*}
+
+Finalmente, recuperamos la ecuación diferencial de segundo orden utilizada en el método de Galerkin:
+
+\begin{equation}
+    \frac{d^2 Y^k}{dr^2} = \frac{k(k+1)}{r^2} Y^k(r) - \frac{2k+1}{r} P_a(r)P_b(r).
+\end{equation}
+
+\subsubsection{Análisis de las Condiciones de Frontera}
+
+Para que la ecuación diferencial de segundo orden derivada anteriormente tenga una solución única, es necesario especificar las condiciones de frontera en los límites del dominio radial, es decir, en $r \to 0$ y $r \to \infty$. Estas condiciones emergen naturalmente del comportamiento asintótico de la definición integral Ec. (\cref{eq:Yk-final}).
+
+\paragraph{Comportamiento en el origen ($r \to 0$)}
+
+Consideremos el comportamiento de los dos términos de $Y^k(r)$ cuando $r$ es pequeño. Sabemos que las funciones de onda radiales $P(r)$ se comportan cerca del origen como $r^{l+1}$, por lo que la densidad de par se comporta como $\rho_{ab}(r) \sim r^{l_a + l_b + 2}$.
+
+Analizamos el primer término (contribución interna):
+\begin{equation}
+    \lim_{r \to 0} \left[ r^{-k} \int_0^r s^k \rho_{ab}(s) \, ds \right].
+\end{equation}
+Dado que el intervalo de integración tiende a cero, la integral se anula más rápido que la singularidad $r^{-k}$ (asumiendo $k$ dentro de los límites físicos permitidos por los momentos angulares $l_a, l_b$). Específicamente, el integrando es de orden $s^{k + l_a + l_b + 2}$, por lo que la integral escala como $r^{k + l_a + l_b + 3}$. El término completo se comporta como $r^{l_a + l_b + 3}$, que tiende a 0.
+
+Analizamos el segundo término (contribución externa):
+\begin{equation}
+    \lim_{r \to 0} \left[ r^{k+1} \int_r^{\infty} s^{-(k+1)} \rho_{ab}(s) \, ds \right].
+\end{equation}
+La integral converge a un valor finito constante (el momento multipolar total del átomo). El factor $r^{k+1}$ domina, llevando el término a 0 (dado que $k \geq 0$).
+
+Por lo tanto, la condición de frontera Dirichlet en el origen es estricta:
+\begin{equation}
+\label{eq:bc-origin}
+    Y^k(a,b; 0) = 0.
+\end{equation}
+
+\paragraph{Comportamiento asintótico ($r \to \infty$)}
+
+Cuando $r$ es muy grande (fuera de la extensión espacial de la nube electrónica), la densidad $\rho_{ab}(r)$ decae exponencialmente a cero. Esto tiene dos consecuencias sobre las integrales auxiliares:
+
+1.  $\mathcal{I}_{\text{ext}}(r) = \int_r^\infty s^{-(k+1)}\rho_{ab}(s) ds \to 0$ rápidamente.
+2.  $\mathcal{I}_{\text{int}}(r) = \int_0^r s^k \rho_{ab}(s) ds$ converge a una constante $M_k$, que representa el momento multipolar eléctrico de orden $k$ de la distribución de carga.
+
+Sustituyendo esto en la ecuación de $Y^k$:
+\begin{equation}
+    Y^k(r \to \infty) \approx r^{-k} M_k + r^{k+1} (0) = \frac{M_k}{r^k}.
+\end{equation}
+
+Esta relación nos proporciona la condición de frontera adecuada para un dominio computacional truncado en un radio finito $R_{\text{max}}$ suficientemente grande. Dependiendo del valor de $k$:
+
+\begin{itemize}
+    \item \textbf{Caso $k=0$ (Monopolo):} Si $a=b$ (densidad de carga del orbital), $M_0 = \int_0^\infty P_a^2 ds = 1$ (por normalización). Entonces $Y^0(r) \to 1$. Esto representa el apantallamiento total de la carga nuclear vista desde el infinito.
+    \item \textbf{Caso $k > 0$:} El potencial decae a cero.
+\end{itemize}
+
+En resumen, para resolver la Ec. (\cref{eq:poisson-radial}) numéricamente, imponemos:
+\begin{equation}
+\label{eq:bc-final}
+    Y^k(0) = 0 \quad \text{y} \quad Y^k(R_{\text{max}}) = \frac{1}{R_{\text{max}}^k} \int_0^{R_{\text{max}}} s^k P_a(s) P_b(s) \, ds.
+\end{equation}
+En la práctica, para $k \neq 0$, es común aproximar la condición exterior simplemente como $Y^k(R_{\text{max}}) = 0$ si $R_{\text{max}}$ es suficientemente grande, aunque la forma (\cref{eq:bc-final}) es la más rigurosa.
+
+\end{document}

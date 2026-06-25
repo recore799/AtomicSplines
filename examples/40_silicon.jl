@@ -12,9 +12,9 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
     
     N_elems = 100
     Z = 14.0
-    basis = generate_basis(R_max, N_elems, Val(7), γ=2.5)
-    ws = init_scf_workspace(basis, Z)
+    ws = cached_init_scf_workspace(R_max, N_elems, Val(7), Z; γ=2.5, calc_R_matrices=true)
 
+    basis = ws.basis
     n = basis.num_splines
     active_s = 2:(n-1)  
     active_p = 3:(n-1)  
@@ -196,13 +196,19 @@ function solve_silicon_rohf(R_max; verbose::Bool=true)
             end
             @printf("Energía final HF-t (^3P): %.6f Ha\n", E_total)
 
+            dense_grid = exp.(range(log(1e-8), log(R_max), length=10000))
+            V_eff = compute_effective_central_potential(ws, orbitals, dense_grid, Z)
+            P_3p = evaluate_orbital(ws.basis, orbitals[5].coeffs, dense_grid)
+
             filename = "silicon_rohf_results_R$(R_max).jld2"
             jldsave(filename;
                 orbitals = orbitals,
                 E_total = E_total,
                 R_max = R_max,
-                R_grid = ws.R,
+                R_grid = dense_grid,
                 V_nuclear = ws.V,
+                V_eff = V_eff,
+                P_3p = P_3p,
                 num_splines = n,
                 active_s = active_s,
                 active_p = active_p

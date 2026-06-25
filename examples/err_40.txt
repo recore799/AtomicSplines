@@ -1,0 +1,22 @@
+  Activating project at `~/Projects/AtomicSplines`
+ERROR: LoadError: BoundsError: attempt to access 0×0 Matrix{Float64} at index [1, 1]
+Stacktrace:
+ [1] checkbounds
+   @ ./abstractarray.jl:699 [inlined]
+ [2] getindex
+   @ ./array.jl:928 [inlined]
+ [3] assemble_geometry(basis::BSplineBasis{7}, Z::Float64; calc_R_matrices::Bool)
+   @ AtomicSplines ~/Projects/AtomicSplines/src/integrals.jl:131
+ [4] assemble_geometry
+   @ ~/Projects/AtomicSplines/src/integrals.jl:79 [inlined]
+ [5] init_scf_workspace(basis::BSplineBasis{7}, Z::Float64; calc_R_matrices::Bool)
+   @ AtomicSplines ~/Projects/AtomicSplines/src/integrals.jl:4
+ [6] init_scf_workspace
+   @ ~/Projects/AtomicSplines/src/integrals.jl:1 [inlined]
+ [7] solve_silicon_rohf(R_max::Float64; verbose::Bool)
+   @ Main ~/Projects/AtomicSplines/examples/40_silicon.jl:16
+ [8] solve_silicon_rohf(R_max::Float64)
+   @ Main ~/Projects/AtomicSplines/examples/40_silicon.jl:10
+ [9] top-level scope
+   @ ~/Projects/AtomicSplines/examples/40_silicon.jl:219
+in expression starting at /Users/chacho/Projects/AtomicSplines/examples/40_silicon.jl:219

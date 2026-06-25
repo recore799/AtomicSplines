@@ -16,28 +16,6 @@ const term_1S = LSTerm(0, 0)
 # Parent Configuration State for p^1
 const parent_2P = LSTerm(1, 1)
 
-function get_p2_parent_amplitudes(target_term::LSTerm)
-    return [(parent_2P, 1.0)]
-end
-
-function get_p2_F2_coefficient(term::LSTerm)
-    if term == term_1S
-        return 10.0 / 25.0
-    elseif term == term_1D
-        return 1.0 / 25.0
-    elseif term == term_3P
-        return -5.0 / 25.0
-    else
-        error("Unknown p^2 term")
-    end
-end
-
-"""
-    compute_zeta(dense_grid::Vector{Float64}, V_eff::Vector{Float64}, P_nl::Vector{Float64})
-
-Computes the radial spin-orbit parameter using second-order finite differences 
-and trapezoidal quadrature.
-"""
 function compute_zeta(dense_grid::Vector{Float64}, V_eff::Vector{Float64}, P_nl::Vector{Float64})
     N = length(dense_grid)
     dV_dr = zeros(Float64, N)
@@ -70,15 +48,24 @@ function compute_zeta(dense_grid::Vector{Float64}, V_eff::Vector{Float64}, P_nl:
     return (alpha^2 / 2.0) * zeta_val
 end
 
-"""
-    compute_p2_SO_reduced_matrix_element(bra_term::LSTerm, ket_term::LSTerm)
+function get_p2_parent_amplitudes(target_term::LSTerm)
+    return [(parent_2P, 1.0)]
+end
 
-Computes the exact many-body reduced matrix element for two equivalent p-electrons.
-"""
+function get_p2_F2_coefficient(term::LSTerm)
+    if term == term_1S
+        return 10.0 / 25.0
+    elseif term == term_1D
+        return 1.0 / 25.0
+    elseif term == term_3P
+        return -5.0 / 25.0
+    else
+        error("Unknown p^2 term")
+    end
+end
+
 function compute_p2_SO_reduced_matrix_element(bra_term::LSTerm, ket_term::LSTerm)
-    # The number of equivalent electrons is strictly 2 for C, Si, Ge
     N = 2 
-    
     l = 1
     s = HalfInt(1/2)
     
@@ -122,11 +109,6 @@ function compute_p2_SO_reduced_matrix_element(bra_term::LSTerm, ket_term::LSTerm
     return N * total_reduced_element * dim_factor * single_e_product
 end
 
-"""
-    assemble_and_diagonalize_J_block(J_target::Int, terms::Vector{LSTerm}, E_avg::Float64, F2::Float64, zeta::Float64)
-
-Constructs the Hamiltonian for a specific integer J-manifold and returns eigenvalues and eigenvectors.
-"""
 function assemble_and_diagonalize_J_block(J_target::Int, terms::Vector{LSTerm}, E_avg::Float64, F2::Float64, zeta::Float64)
     N = length(terms)
     H_matrix = zeros(Float64, N, N)
@@ -149,7 +131,6 @@ function assemble_and_diagonalize_J_block(J_target::Int, terms::Vector{LSTerm}, 
             H_SO = zeta * phase * six_j * reduced_matrix_elem
 
             if i == j
-                # Utilize exact F2 coefficients for p^2
                 c2_coeff = get_p2_F2_coefficient(bra)
                 H_elec = E_avg + (c2_coeff * F2)
                 H_matrix[i, i] = H_elec + H_SO
@@ -164,23 +145,51 @@ function assemble_and_diagonalize_J_block(J_target::Int, terms::Vector{LSTerm}, 
     return eigen_decomp.values, eigen_decomp.vectors
 end
 
-"""
-    format_fine_structure_report(element::String, E_avg::Float64, F2::Float64, zeta::Float64)
+function execute_silicon_spin_orbit()
+    filepath = "silicon_rohf_results_R30.0.jld2"
+    println("Loading SCF Configuration Average data from: $filepath")
+    
+    archive = jldopen(filepath, "r")
+    E_total   = archive["E_total"]
+    R_grid    = archive["R_grid"]
+    V_eff     = archive["V_eff"]
+    P_3p      = archive["P_3p"]
+    Z = 14.0
+    close(archive)
+    
+    # Extract Exact F2 parameter calculated in the HF-t state from 41_silicon.jl
+    F2_val = 0.165948
+    
+    # Compute the theoretical Zeta(3p) directly from the V_eff potential
+    zeta_computed_ha = compute_zeta(R_grid, V_eff, P_3p)
+    ha_to_cm = 219474.6313702
+    zeta_computed_cm = zeta_computed_ha * ha_to_cm
+    
+    # Optional override for exact Froese Fischer value if needed:
+    # zeta_np = 149.0 / ha_to_cm # uncomment and change to exact FF value if desired
+    zeta_np = zeta_computed_ha
+    zeta_cm = zeta_np * ha_to_cm
+    
+    println("\n==================================================")
+    println(" Fine Structure Resolution: Silicon 3p² System")
+    println("==================================================")
+    @printf("  Term-Dependent Energy (³P)   : %.6f Ha\n", E_total)
+    @printf("  Slater F²(3p,3p) Integral    : %.6f Ha\n", F2_val)
+    @printf("  Calculated ζ(3p)             : %.3f cm^-1 (%.8f Ha)\n", zeta_cm, zeta_np)
+    println("==================================================")
 
-Executes the solver for the integer J-manifolds associated with a p^2 system.
-"""
-function format_fine_structure_report(element::String, E_avg::Float64, F2::Float64, zeta::Float64)
-    # Define the interacting states within each allowed J-manifold for p^2
     terms_J0 = [term_3P, term_1S]
     terms_J1 = [term_3P]
     terms_J2 = [term_3P, term_1D]
     
-    println("==================================================")
-    println(" Fine Structure Resolution: $element np² System")
-    println("==================================================")
+    # The term-dependent SCF gives us the ^3P energy, not the Configuration Average energy!
+    # Because E_total in silicon_rohf_results_R30.0.jld2 is the E(³P) energy, we need to shift it
+    # to be the E_avg, or we just adjust the F2 coefficients relative to ³P instead of relative to E_avg.
+    # In the matrix elements:
+    # E(³P) = E_avg - (5/25)*F2  => E_avg = E(³P) + (5/25)*F2
+    E_avg = E_total + (5.0 / 25.0) * F2_val
     
-    # Process J = 0 Manifold (³P_0 and ¹S_0 mix)
-    energies_0, vectors_0 = assemble_and_diagonalize_J_block(0, terms_J0, E_avg, F2, zeta)
+    energies_0, vectors_0 = assemble_and_diagonalize_J_block(0, terms_J0, E_avg, F2_val, zeta_np)
     println("\n[ J = 0 Manifold ]")
     println("--------------------------------------------------")
     @printf("%-15s | %-20s\n", "Energy (a.u.)", "State Composition (%)")
@@ -191,14 +200,12 @@ function format_fine_structure_report(element::String, E_avg::Float64, F2::Float
         @printf("%.6f        | %5.1f%% ³P, %5.1f%% ¹S\n", energies_0[k], pct_3P, pct_1S)
     end
     
-    # Process J = 1 Manifold (Only ³P_1 allowed)
-    energies_1, _ = assemble_and_diagonalize_J_block(1, terms_J1, E_avg, F2, zeta)
+    energies_1, _ = assemble_and_diagonalize_J_block(1, terms_J1, E_avg, F2_val, zeta_np)
     println("\n[ J = 1 Manifold ]")
     println("--------------------------------------------------")
     @printf("%.6f        | 100.0%% ³P\n", energies_1[1])
 
-    # Process J = 2 Manifold (³P_2 and ¹D_2 mix)
-    energies_2, vectors_2 = assemble_and_diagonalize_J_block(2, terms_J2, E_avg, F2, zeta)
+    energies_2, vectors_2 = assemble_and_diagonalize_J_block(2, terms_J2, E_avg, F2_val, zeta_np)
     println("\n[ J = 2 Manifold ]")
     println("--------------------------------------------------")
     for k in 1:2
@@ -209,49 +216,17 @@ function format_fine_structure_report(element::String, E_avg::Float64, F2::Float
     
     println("==================================================")
     
-    # Optional post-processing analytical fraction evaluation for exact state splitting
-    exact_splitting_factor = 2.0 / 3.0
-    approx_splitting = (energies_2[1] - energies_0[1]) * exact_splitting_factor
-    @printf("Rigorous Splitting Evaluation (J=2 - J=0) * 2/3: %.8f Ha\n", approx_splitting)
+    E_3P_0 = energies_0[1] * ha_to_cm
+    E_3P_1 = energies_1[1] * ha_to_cm
+    E_3P_2 = energies_2[1] * ha_to_cm
+    
+    split_1_0 = E_3P_1 - E_3P_0
+    split_2_1 = E_3P_2 - E_3P_1
+    
+    println("\n--- Theoretical Splitting of the ³P Multiplet ---")
+    @printf("  ³P_1 - ³P_0 : %7.3f cm^-1 (Expected ~%.3f cm^-1)\n", split_1_0, zeta_cm / 2.0)
+    @printf("  ³P_2 - ³P_1 : %7.3f cm^-1 (Expected ~%.3f cm^-1)\n", split_2_1, zeta_cm)
     println("==================================================")
 end
 
-"""
-    execute_np2_fine_structure(element::String, filepath::String, F2_val::Float64)
-
-Main execution block for generalized p^2 elements.
-"""
-function execute_np2_fine_structure(element::String, filepath::String, F2_val::Float64, is_term_dependent::Bool=true)
-    println("Loading SCF data from: $filepath")
-    
-    # Establish the principal quantum number mapped to the element
-    element_n_map = Dict("C" => 2, "Si" => 3, "Ge" => 4)
-    if !haskey(element_n_map, element)
-        error("Element not supported in this mapping. Please use C, Si, or Ge.")
-    end
-    n_val = element_n_map[element]
-    orbital_key = "P_$(n_val)p"
-    
-    archive = jldopen(filepath, "r")
-    E_total   = archive["E_total"]
-    R_grid    = archive["R_grid"]
-    V_eff     = archive["V_eff"]
-    P_np      = archive[orbital_key]
-    close(archive)
-    
-    zeta_np = compute_zeta(R_grid, V_eff, P_np)
-    @printf("Calculated Radial Spin-Orbit Parameter (ζ_%dp): %.8f Ha\n", n_val, zeta_np)
-    
-    # If the SCF was term-dependent ^3P, shift the base energy to the Configuration Average
-    E_avg = is_term_dependent ? (E_total + (5.0 / 25.0) * F2_val) : E_total
-    
-    format_fine_structure_report(element, E_avg, F2_val, zeta_np)
-end
-
-# Example Execution
-# Carbon was optimized as HF-av
-execute_np2_fine_structure("C", "carbon_rohf_results_R30.0.jld2", 0.243302, false)
-# Silicon and Germanium were optimized as HF-t (^3P)
-execute_np2_fine_structure("Si", "silicon_rohf_results_R30.0.jld2", 0.165948, true)
-execute_np2_fine_structure("Ge", "germanium_rohf_results_R30.0.jld2", 0.162724, true)
-
+execute_silicon_spin_orbit()

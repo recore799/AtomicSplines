@@ -4,37 +4,44 @@
 \input{config/preamble}
 
 % Metadata
-\title{\textbf{B-splines Hartree-Fock}}
+\title{\textbf{Cálculo Ab-initio de la Estructura Fina en la Secuencia np² mediante B-splines}}
 \author{Rafael Obed Egurrola Corella}
 \date{\today}
 
 \begin{document}
 
-\frontmatter % Roman numerals for pages (i, ii, iii)
+\frontmatter
 \maketitle
-% \tableofcontents
-% \listoffigures
+\tableofcontents
+\listoffigures
 
-\mainmatter % Arabic numerals (1, 2, 3)
-% Import Chapters
-% \include{chapters/01_introduccion}
-% \include{chapters/02_teoria_bsplines}
-% \include{chapters/03_metodo_hartree_fock}
-% \include{chapters/04_resultados}
+\mainmatter
+% Capítulo 1: Introducción
+\include{chapters/introduccion}
 
-% \include{chapters/imp_splines}
-% \include{chapters/validation}
+% Capítulo 2: Marco Teórico
 \include{chapters/marco-teorico}
 
+% Capítulo 3: Método Numérico
+\include{chapters/metodo}
+
+% Capítulo 4: Resultados
+\include{chapters/resultados}
+
+% Capítulo 5: Discusión
+\include{chapters/discusion}
+
+% Capítulo 6: Conclusiones
+\include{chapters/conclusiones}
+
 \appendix
-% \include{appendices/atomic_units}
+% Apéndice A: Formalismo Avanzado de Tensores
+\include{appendices/apendice_tensores}
+
+% Apéndice B: Teoría e Implementación de B-splines
+\include{appendices/apendice_splines}
 
 \backmatter
 \printbibliography[heading=bibintoc]
 
 \end{document}
-
-%%% Local Variables:
-%%% mode: LaTeX
-%%% TeX-master: t
-%%% End:

@@ -1,6 +1,6 @@
 # 1. Configuración del Entorno
 using Pkg
-Pkg.activate(joinpath(@__DIR__, ".."))
+Pkg.activate(joinpath(@__DIR__, "..", ".."))
 
 using AtomicSplines
 using LinearAlgebra
@@ -58,7 +58,7 @@ println("   > Ensamblando vector de carga F (Integración manual)...")
 
 n = basis.num_splines
 F = zeros(n)
-k = basis.order
+k = ORDER
 
 # Buffers pre-asignados (API V2)
 vals = zeros(Float64, k)
@@ -82,7 +82,7 @@ for i in 1:(length(basis.knots)-1)
         # Llamada al Kernel de bajo nivel (solo valores)
         # Nota: Usamos la función interna eval_bspline_kernel! que ya conoces
         AtomicSplines.eval_bspline_kernel!(vals, derivs, Val(true), Val(false), 
-                                           i, k, x, basis.knots)
+                                           i, x, basis.knots, Val(ORDER))
 
         # "Scatter" a los índices globales
         for local_idx in 1:k

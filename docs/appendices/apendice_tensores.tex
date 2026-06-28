@@ -1,0 +1,90 @@
+\chapter{Formalismo Avanzado de Tensores}
+\label{ap:tensores}
+
+\section{Expansión de Laplace}
+
+El operador interelectrónico \( \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} \) depende de la distancia relativa entre ambos electrones. Para poder evaluar las integrales de dos cuerpos, es fundamental desacoplar las coordenadas de ambos electrones. Para ello, expandimos la función de Green del operador Laplaciano en una serie de polinomios de Legendre:
+
+\begin{equation}
+  \label{eq:laplace}
+  \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} = \sum_{k=0}^{\infty} \frac{r_{<}^k}{r_{>}^{k+1}} P_k(\cos\omega_{ij}),
+\end{equation}
+
+donde \( r_{<} = \min(r_i, r_j) \) y \( r_{>} = \max(r_i, r_j) \), mientras que \( \omega_{ij} \) representa el ángulo entre los vectores de posición \( \bm{r}_i \) y \( \bm{r}_j \). Aplicando el teorema de adición para armónicos esféricos, desacoplamos la expresión angular:
+
+\begin{equation}
+  \label{eq:laplace-harm}
+  \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} = \sum_{k=0}^{\infty} \sum_{q=-k}^k \frac{4\pi}{2k+1} \frac{r_{<}^k}{r_{>}^{k+1}} Y_{kq}^{*}(\Omega_i) Y_{kq}(\Omega_j).
+\end{equation}
+
+Para simplificar y sistematizar este tratamiento matemático, introducimos los operadores tensoriales esféricos normalizados de orden \( k \), definidos por:
+
+\begin{equation}
+  C_q^{(k)}(\theta, \phi) = \sqrt{\frac{4\pi}{2k+1}} Y_k^q(\theta, \phi).
+\end{equation}
+
+De este modo, la expansión de Laplace se puede reescribir de forma sumamente compacta y elegante como un producto escalar de tensores esféricos desacoplados:
+
+\begin{equation}
+  \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} = \sum_{k=0}^{\infty} \frac{r_{<}^k}{r_{>}^{k+1}} \qty( C^{(k)}(i) \cdot C^{(k)}(j) ),
+\end{equation}
+
+donde el producto tensorial escalar se define como:
+
+\begin{equation}
+  \qty( C^{(k)}(1) \cdot C^{(k)}(2) ) = \sum_{q=-k}^k (-1)^q C_{-q}^{(k)}(1) C_q^{(k)}(2).
+\end{equation}
+
+\section{Integración de dos Cuerpos y Coeficientes Angulares}
+
+Al evaluar la repulsión Coulombiana sobre orbitales espaciales factorizados de la forma \( \ket{a} = \frac{P_a(r)}{r} Y_{l_a m_a}(\Omega) \), podemos sustituir la expansión de Laplace para separar las componentes radiales y angulares del integrando:
+
+\begin{equation}
+  \mel{ab}{\frac{1}{r_{12}}}{cd} = \sum_{k=0}^{\infty} \sum_{q=-k}^k \mel{ab}{\frac{r_{<}^k}{r_{>}^{k+1}} (-1)^q C_{-q}^{(k)}(1) C_q^{(k)}(2)}{cd}.
+\end{equation}
+
+Esto nos permite factorizar la integral de dos cuerpos en un término puramente radial y un factor geométrico angular:
+
+\begin{equation}
+  \mel{ab}{\frac{1}{r_{12}}}{cd} = \sum_{k=0}^{\infty} R^k(abcd) c_k(a,b,c,d).
+\end{equation}
+
+La contribución radial define a las llamadas \textbf{Integrales de Slater} de orden \( k \):
+
+\begin{equation}
+  \label{eq:slater-integral}
+  R^k(abcd) = \int_0^\infty \int_0^\infty P_a(r_1) P_b(r_2) \frac{r_{<}^k}{r_{>}^{k+1}} P_c(r_1) P_d(r_2) \dd{r_1} \dd{r_2}.
+\end{equation}
+
+Por su parte, la contribución angular se describe a través de los coeficientes angulares de Slater:
+
+\begin{equation}
+  c_k(a,b,c,d) = \sum_{q=-k}^k (-1)^q \mel{l_a m_{l_a}}{C_{-q}^{(k)}}{l_c m_{l_c}} \mel{l_b m_{l_b}}{C_q^{(k)}}{l_d m_{l_d}}.
+\end{equation}
+
+Dado que los operadores \( C_{q}^{(k)} \) son operadores tensoriales irreducibles bajo el grupo de rotaciones, podemos aplicar el Teorema de Wigner-Eckart para evaluar de forma exacta sus elementos de matriz angular:
+
+\begin{equation}
+  \mel{lm}{C_{q}^{(k)}}{l'm'} = (-1)^{l-m} \begin{pmatrix} l & k & l' \\ -m & q & m' \end{pmatrix} \mel{l}{\|C^{(k)}\|}{l'},
+\end{equation}
+
+donde los coeficientes con matrices de \( 3 \times 3 \) representan los símbolos \( 3-j \) de Wigner, y los elementos de matriz reducidos están dados analíticamente por:
+
+\begin{equation}
+  \mel{l}{\|C^{(k)}\|}{l'} = (-1)^l \sqrt{(2l+1)(2l'+1)} \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}.
+\end{equation}
+
+Uniendo estas expresiones, obtenemos la fórmula explícita para evaluar los coeficientes geométricos \( c_k(a,b,c,d) \):
+
+\begin{align}
+  c_k(a,b,c,d) = \sum_{q=-k}^k & (-1)^{q + l_a - m_{l_a} + l_b - m_{l_b}} \nonumber \\
+  & \times \begin{pmatrix} l_a & k & l_c \\ -m_{l_a} & -q & m_{l_c} \end{pmatrix} \begin{pmatrix} l_b & k & l_d \\ -m_{l_b} & q & m_{l_d} \end{pmatrix} \mel{l_a}{\|C^{(k)}\|}{l_c}\mel{l_b}{\|C^{(k)}\|}{l_d}.
+\end{align}
+
+Las propiedades intrínsecas de los símbolos \( 3-j \) de Wigner imponen estrictas reglas de selección geométricas que truncan de forma severa la sumatoria infinita sobre el orden multipolar \( k \):
+
+\begin{itemize}
+\item \textbf{Regla de paridad:} Los coeficientes \( \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix} \) son nulos a menos que la suma \( l + k + l' \) sea un número entero par. Esto restringe los multipolos permitidos a valores de \( k \) con la misma paridad que la diferencia de momentos angulares.
+\item \textbf{Condición triangular:} Los símbolos son no nulos únicamente si se cumplen las condiciones algebraicas \( \abs{l_a - l_c} \le k \le l_a + l_c \) y \( \abs{l_b - l_d} \le k \le l_b + l_d \).
+\item \textbf{Conservación de la proyección:} Se requiere que \( q = m_{l_a} - m_{l_c} \) y \( -q = m_{l_b} - m_{l_d} \), lo que implica de forma directa la conservación de la proyección del momento angular total: \( m_{l_a} + m_{l_b} = m_{l_c} + m_{l_d} \).
+\end{itemize}

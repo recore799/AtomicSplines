@@ -85,7 +85,7 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices::
     R  = zeros(Float64, n, n)   
     
     R2 = calc_R_matrices ? zeros(Float64, n, n) : zeros(Float64, 0, 0)
-    R_inv2 = calc_R_matrices ? zeros(Float64, n, n) : zeros(Float64, 0, 0)
+    R_inv2 = zeros(Float64, n, n)
     R_inv3 = calc_R_matrices ? zeros(Float64, n, n) : zeros(Float64, 0, 0)
 
     tensors = Vector{Array{Float64, 3}}(undef, length(basis.knots) - 1)

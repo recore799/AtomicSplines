@@ -1,0 +1,85 @@
+\chapter{Método Numérico}
+\label{ch:metodo}
+
+\section{La Ecuación de Poisson y el Método de B-splines}
+
+La evaluación numérica directa de las integrales de Slater a través de cuadraturas dobles en dos dimensiones resulta computacionalmente ineficiente y propensa a inestabilidades en mallas discretas finitas. Un enfoque alternativo consiste en explotar el hecho de que el potencial radial multipolar \( y^k(b,d;r) \) satisface una ecuación diferencial ordinaria de segundo orden lineal: la ecuación de Poisson unidimensional radial asociada a la función de Green multipolar:
+
+\begin{equation}
+  \label{eq:poisson-radial}
+  \qty( -\frac{\dd^2}{\dd{r}^2} + \frac{k(k+1)}{r^2} ) y^k(b, d; r) = \frac{2k+1}{r} P_b(r) P_d(r).
+\end{equation}
+
+Esta ecuación diferencial ordinaria requiere la especificación de dos condiciones de frontera físicamente consistentes:
+\begin{itemize}
+\item \textbf{Regularidad en el origen (\(r \to 0\)):} Debido a la barrera centrífuga del operador radial, exigimos que el potencial radial satisfaga \( y^k(b,d;0) = 0 \). Específicamente, cerca del origen la solución se comporta de forma asintótica como \( y^k(r) \sim r^{k+1} \).
+\item \textbf{Condición asintótica de Robin (\(r \to R_{max}\)):} En el límite exterior de confinamiento del sistema, el potencial radial decae como \( y^k(r) \sim r^{-k} \). Esto impone una condición de contorno de tipo Robin sobre el extremo exterior \( R_{max} \):
+  \begin{equation}
+    \label{eq:robin}
+    \left. \frac{\dd{y^k}}{\dd{r}} + \frac{k}{r} y^k \right|_{r=R_{max}} = 0.
+  \end{equation}
+\end{itemize}
+
+Para resolver este problema diferencial de contorno con precisión de frontera excepcional, proyectamos la ecuación en una base débil de B-splines. Multiplicando \eqref{eq:poisson-radial} por una función de prueba \( B_i(r) \) e integrando por partes el término de la segunda derivada radial, obtenemos la formulación débil (método de Galerkin):
+
+\begin{equation}
+  \int_0^{R_{max}} \frac{\dd{B_i}}{\dd{r}} \frac{\dd{y^k}}{\dd{r}} \dd{r} - \eval{ B_i(r) \frac{\dd{y^k}}{\dd{r}} }_0^{R_{max}} + k(k+1) \int_0^{R_{max}} B_i(r) \frac{1}{r^2} y^k(r) \dd{r} = (2k+1) \int_0^{R_{max}} B_i(r) \frac{P_b(r) P_d(r)}{r} \dd{r}.
+\end{equation}
+
+Al sustituir la condición de Robin \eqref{eq:robin} en la frontera \( R_{max} \), el término de frontera en el contorno exterior se transforma directamente en:
+
+\begin{equation}
+  - B_i(R_{max}) \frac{\dd{y^k(R_{max})}}{\dd{r}} = \frac{k}{R_{max}} B_i(R_{max}) y^k(R_{max}).
+\end{equation}
+
+En la representación discretizada donde el potencial radial se expande como una combinación lineal de splines \( y^k(r) = \sum_j y_j B_j(r) \), esta formulación débil se traduce en un sistema algebraico lineal de la forma \( \bm{A}_k \bm{y} = \bm{b} \), donde la matriz del operador radial \( \bm{A}_k \) está dada analíticamente por:
+
+\begin{equation}
+  \bm{A}_k = 2 \bm{T} + k(k+1) \bm{R}^{-2},
+\end{equation}
+
+siendo \( T_{ij} = \frac{1}{2} \int_0^{R_{max}} \frac{\dd{B_i}}{\dd{r}} \frac{\dd{B_j}}{\dd{r}} \dd{r} \) la matriz del operador de energía cinética esférica, y \( R^{-2}_{ij} = \int_0^{R_{max}} B_i(r) \frac{1}{r^2} B_j(r) \dd{r} \) la matriz de dispersión inversa cuadrática. La incorporación analítica de la condición de frontera de Robin se logra sumando directamente la contribución de contorno \( \frac{k}{R_{max}} \) al último elemento diagonal de la matriz del sistema \( A_{nn} \). 
+
+Para garantizar el comportamiento regular asintótico \( r^{k+1} \) cerca del origen sin inestabilidades artificiales, truncamos los primeros \( k+1 \) splines de la base, definiendo el dominio algebraico activo a partir del índice \( k+2 \). Este enfoque débil e incondicionalmente simétrico permite obtener de manera exacta y ultra-eficiente el potencial radial por medio de una descomposición de Cholesky del operador acoplado, evitando por completo la evaluación de cuadraturas bidimensionales costosas. Detalles pormenorizados sobre la teoría de B-splines y la implementación computacional eficiente se exponen en el \textbf{Apéndice \ref{ap:splines}}.
+
+\section{Operadores de Coulomb e Intercambio y ROHF}
+
+Una vez resuelta la ecuación de Poisson para todos los pares de orbitales atómicos, podemos definir formalmente los operadores unidimensionales efectivos de Coulomb (\( \hat{J} \)) e Intercambio (\( \hat{K} \)) que actúan de forma radial sobre una función de onda radial \( P_a(r) \):
+
+\begin{equation}
+  J_b(r) P_a(r) = \sum_k c_k(a,b,a,b) \frac{1}{r} y^k(b,b; r) P_a(r),
+\end{equation}
+
+\begin{equation}
+  K_b(r) P_a(r) = \sum_k c'_k(a,b,b,a) \frac{1}{r} y^k(a,b; r) P_b(r),
+\end{equation}
+
+donde \( c'_k(a,b,b,a) \) denota el coeficiente geométrico específico para el intercambio cuántico esférico. Al promediar e incorporar estos operadores de campo medio sobre todas las capas ocupadas en el sistema, construimos el \textbf{Operador de Fock} radial general:
+
+\begin{equation}
+  \hat{f} = \hat{h} + \sum_b \qty( \hat{J}_b - \hat{K}_b ).
+\end{equation}
+
+Aplicando el método de Galerkin para proyectar este operador diferencial integro-operador radial sobre la base finita ortonormal de B-splines, recuperamos de forma robusta las ecuaciones de autovalores generalizadas de Roothaan:
+
+\begin{equation}
+  \bm{F}\bm{c} = \epsilon\bm{S}\bm{c}.
+\end{equation}
+
+Para sistemas de capa abierta como el átomo de Carbono en su estado basal promedio (\( 1s^2 2s^2 2p^2 \)), el método de Hartree-Fock restringido de capa abierta (ROHF) introduce operadores de Fock diferenciados e independientes para cada bloque simétrico angular para asegurar la consistencia variacional y la ortogonalidad estricta entre capas:
+
+\begin{itemize}
+\item \textbf{El Bloque Fock de la Capa Cerrada (\(F_s\)):}
+  Tanto el orbital \( 1s \) como el \( 2s \) comparten una simetría común y experimentan el mismo potencial central esférico proveniente del core cerrado y la contribución de promedio esférico total del orbital activo de valencia \( 2p \):
+  \begin{equation}
+    F_s = H_{core} + J_{core} + J_{2p}^{spherical} - K_{core}^{(s)} - K_{2p\to s},
+  \end{equation}
+  donde la diagonalización del operador acoplado \( F_s \) sobre la base activa de splines radiales para simetría \( s \) asegura automáticamente la ortogonalidad mutua estricta entre las funciones radiales \( P_{1s} \) y \( P_{2s} \).
+  
+\item \textbf{El Bloque Fock de la Capa Abierta (\(F_p\)):}
+  El electrón activo de valencia \( 2p \) experimenta el campo medio generado por el core cerrado, pero únicamente interactúa con \( w-1 = 1.0 \) electrones equivalentes en su propia capa abierta para evitar la auto-interacción artificial (promedio de configuración de Cowan). De este modo, su operador efectivo se escribe como:
+  \begin{equation}
+    F_p = H_{core}^{(p)} + J_{core} + J_{2p}^{intra} - K_{core}^{(p)} - K_{2p}^{intra},
+  \end{equation}
+  donde el potencial Coulombiano radial de la capa abierta \( J_{2p}^{intra} \) se escala exactamente por \( 1.0 \) en el monopolo fundamental \( k=0 \), y el término de intercambio cuántico intracapa \( K_{2p}^{intra} \) actúa selectivamente modulando la componente geométrica del multipolo angular cuadrangular \( k=2 \) mediante un factor de peso exacto de \( \frac{5}{25} \), reflejando con rigor físico absoluto la auto-interacción y correlación de espín restringida de la configuración abierta del Carbono.
+\end{itemize}

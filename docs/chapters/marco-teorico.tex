@@ -1,4 +1,5 @@
 \chapter{Marco Teórico}
+\label{ch:marco-teorico}
 
 \section{Elementos de matriz del Hamiltoniano}
 
@@ -118,107 +119,19 @@ donde \( P_{n_a l_a}(r) \) es la función radial reducida y \( Y_{l_a}^{m_{l_a}}
 \int_0^\infty P_{n_a l_a}(r) P_{n_b l_b}(r) \dd{r} = \delta_{n_a n_b} \delta_{l_a l_b}.
 \end{equation}
 
-\section{Expansión de Laplace}
-
-El operador interelectrónico \( \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} \) depende de la distancia relativa entre ambos electrones. Para poder evaluar las integrales de dos cuerpos, es fundamental desacoplar las coordenadas de ambos electrones. Para ello, expandimos la función de Green del operador Laplaciano en una serie de polinomios de Legendre:
-
-\begin{equation}
-  \label{eq:laplace}
-  \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} = \sum_{k=0}^{\infty} \frac{r_{<}^k}{r_{>}^{k+1}} P_k(\cos\omega_{ij}),
-\end{equation}
-
-donde \( r_{<} = \min(r_i, r_j) \) y \( r_{>} = \max(r_i, r_j) \), mientras que \( \omega_{ij} \) representa el ángulo entre los vectores de posición \( \bm{r}_i \) y \( \bm{r}_j \). Aplicando el teorema de adición para armónicos esféricos, desacoplamos la expresión angular:
-
-\begin{equation}
-  \label{eq:laplace-harm}
-  \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} = \sum_{k=0}^{\infty} \sum_{q=-k}^k \frac{4\pi}{2k+1} \frac{r_{<}^k}{r_{>}^{k+1}} Y_{kq}^{*}(\Omega_i) Y_{kq}(\Omega_j).
-\end{equation}
-
-Para simplificar y sistematizar este tratamiento matemático, introducimos los operadores tensoriales esféricos normalizados de orden \( k \), definidos por:
-
-\begin{equation}
-  C_q^{(k)}(\theta, \phi) = \sqrt{\frac{4\pi}{2k+1}} Y_k^q(\theta, \phi).
-\end{equation}
-
-De este modo, la expansión de Laplace se puede reescribir de forma sumamente compacta y elegante como un producto escalar de tensores esféricos desacoplados:
-
-\begin{equation}
-  \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} = \sum_{k=0}^{\infty} \frac{r_{<}^k}{r_{>}^{k+1}} \qty( C^{(k)}(i) \cdot C^{(k)}(j) ),
-\end{equation}
-
-donde el producto tensorial escalar se define como:
-
-\begin{equation}
-  \qty( C^{(k)}(1) \cdot C^{(k)}(2) ) = \sum_{q=-k}^k (-1)^q C_{-q}^{(k)}(1) C_q^{(k)}(2).
-\end{equation}
-
-\section{Integración de dos Cuerpos y Coeficientes Angulares}
-
-Al evaluar la repulsión Coulombiana sobre orbitales espaciales factorizados de la forma \( \ket{a} = \frac{P_a(r)}{r} Y_{l_a m_a}(\Omega) \), podemos sustituir la expansión de Laplace para separar las componentes radiales y angulares del integrando:
-
-\begin{equation}
-  \mel{ab}{\frac{1}{r_{12}}}{cd} = \sum_{k=0}^{\infty} \sum_{q=-k}^k \mel{ab}{\frac{r_{<}^k}{r_{>}^{k+1}} (-1)^q C_{-q}^{(k)}(1) C_q^{(k)}(2)}{cd}.
-\end{equation}
-
-Esto nos permite factorizar la integral de dos cuerpos en un término puramente radial y un factor geométrico angular:
-
-\begin{equation}
-  \mel{ab}{\frac{1}{r_{12}}}{cd} = \sum_{k=0}^{\infty} R^k(abcd) c_k(a,b,c,d).
-\end{equation}
-
-La contribución radial define a las llamadas \textbf{Integrales de Slater} de orden \( k \):
-
-\begin{equation}
-  \label{eq:slater-integral}
-  R^k(abcd) = \int_0^\infty \int_0^\infty P_a(r_1) P_b(r_2) \frac{r_{<}^k}{r_{>}^{k+1}} P_c(r_1) P_d(r_2) \dd{r_1} \dd{r_2}.
-\end{equation}
-
-Por su parte, la contribución angular se describe a través de los coeficientes angulares de Slater:
-
-\begin{equation}
-  c_k(a,b,c,d) = \sum_{q=-k}^k (-1)^q \mel{l_a m_{l_a}}{C_{-q}^{(k)}}{l_c m_{l_c}} \mel{l_b m_{l_b}}{C_q^{(k)}}{l_d m_{l_d}}.
-\end{equation}
-
-Dado que los operadores \( C_{q}^{(k)} \) son operadores tensoriales irreducibles bajo el grupo de rotaciones, podemos aplicar el Teorema de Wigner-Eckart para evaluar de forma exacta sus elementos de matriz angular:
-
-\begin{equation}
-  \mel{lm}{C_{q}^{(k)}}{l'm'} = (-1)^{l-m} \begin{pmatrix} l & k & l' \\ -m & q & m' \end{pmatrix} \mel{l}{\|C^{(k)}\|}{l'},
-\end{equation}
-
-donde los coeficientes con matrices de \( 3 \times 3 \) representan los símbolos \( 3-j \) de Wigner, y los elementos de matriz reducidos están dados analíticamente por:
-
-\begin{equation}
-  \mel{l}{\|C^{(k)}\|}{l'} = (-1)^l \sqrt{(2l+1)(2l'+1)} \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}.
-\end{equation}
-
-Uniendo estas expresiones, obtenemos la fórmula explícita para evaluar los coeficientes geométricos \( c_k(a,b,c,d) \):
-
-\begin{align}
-  c_k(a,b,c,d) = \sum_{q=-k}^k & (-1)^{q + l_a - m_{l_a} + l_b - m_{l_b}} \nonumber \\
-  & \times \begin{pmatrix} l_a & k & l_c \\ -m_{l_a} & -q & m_{l_c} \end{pmatrix} \begin{pmatrix} l_b & k & l_d \\ -m_{l_b} & q & m_{l_d} \end{pmatrix} \mel{l_a}{\|C^{(k)}\|}{l_c}\mel{l_b}{\|C^{(k)}\|}{l_d}.
-\end{align}
-
-Las propiedades intrínsecas de los símbolos \( 3-j \) de Wigner imponen estrictas reglas de selección geométricas que truncan de forma severa la sumatoria infinita sobre el orden multipolar \( k \):
-
-\begin{itemize}
-\item \textbf{Regla de paridad:} Los coeficientes \( \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix} \) son nulos a menos que la suma \( l + k + l' \) sea un número entero par. Esto restringe los multipolos permitidos a valores de \( k \) con la misma paridad que la diferencia de momentos angulares.
-\item \textbf{Condición triangular:} Los símbolos son no nulos únicamente si se cumplen las condiciones algebraicas \( \abs{l_a - l_c} \le k \le l_a + l_c \) y \( \abs{l_b - l_d} \le k \le l_b + l_d \).
-\item \textbf{Conservación de la proyección:} Se requiere que \( q = m_{l_a} - m_{l_c} \) y \( -q = m_{l_b} - m_{l_d} \), lo que implica de forma directa la conservación de la proyección del momento angular total: \( m_{l_a} + m_{l_b} = m_{l_c} + m_{l_d} \).
-\end{itemize}
-
 \section{De la Energía al Operador: Integración Parcial}
 
-La integral de Slater \( R^k(abcd) \) es una cantidad escalar global que representa una contribución energética. Sin embargo, para construir el método de campo medio de Hartree-Fock, requerimos formular ecuaciones de autovalores de un solo electrón. Esto nos obliga a transformar los términos de interacción de muchos cuerpos en operadores locales eficaces de una sola partícula.
+Para una derivación rigurosa de las expansiones multipolares utilizando el formalismo de operadores tensoriales esféricos y el teorema de Wigner-Eckart, el lector puede referirse al \textbf{Apéndice \ref{ap:tensores}}. 
+Una vez que factorizamos la repulsión interelectrónica en contribuciones puramente angulares (coeficientes geométricos) y puramente radiales (integrales de Slater), es posible construir ecuaciones de autovalores de una sola partícula.
 
-Para lograrlo, realizamos una integración parcial sobre la coordenada del segundo electrón (\( r_2 \)), proyectando su densidad radial de solapamiento. De esta forma, aislamos la dependencia radial y definimos el \textbf{Potencial Radial Multipolar} de orden \( k \):
+Para lograrlo, realizamos una integración parcial sobre la coordenada de un electrón, proyectando su densidad radial. Aislamos la dependencia radial y definimos el \textbf{Potencial Radial Multipolar} de orden \( k \):
 
 \begin{equation}
   y^k(b, d; r_1) = r_1 \int_0^\infty \frac{r_{<}^k}{r_{>}^{k+1}} P_b(r_2) P_d(r_2) \dd{r_2}.
 \end{equation}
 
-Desde una perspectiva física, el término \( \frac{y^k(b,d;r_1)}{r_1} \) representa el potencial electrostático eficaz experimentado por un electrón en la posición radial \( r_1 \), el cual es generado por la distribución de carga multipolar esférica proveniente de los orbitales radiales \( b \) y \( d \). 
-
-Al introducir este potencial central efectivo, la integral doble de Slater se reduce elegantemente a una integración unidimensional simple sobre la coordenada libre \( r_1 \):
+Físicamente, \( \frac{y^k(b,d;r_1)}{r_1} \) representa el potencial electrostático eficaz generado por la distribución multipolar proveniente de los orbitales radiales \( b \) y \( d \). 
+La integral doble de Slater se reduce a una integración simple sobre la coordenada libre \( r_1 \):
 
 \begin{equation}
   R^k(abcd) = \int_0^\infty P_a(r_1) \qty[ \frac{y^k(b,d; r_1)}{r_1} ] P_c(r_1) \dd{r_1}.
@@ -239,93 +152,3 @@ Esta formulación simplifica los dos tipos fundamentales de interacciones electr
     R^k(abba) = \int_0^\infty P_a(r_1) \qty[ \frac{y^k(a,b; r_1)}{r_1} ] P_b(r_1) \dd{r_1}.
   \end{equation}
 \end{itemize}
-
-\section{La Ecuación de Poisson y el Método de B-splines}
-
-La evaluación numérica directa de las integrales de Slater a través de cuadraturas dobles en dos dimensiones resulta computacionalmente ineficiente y propensa a inestabilidades en mallas discretas finitas. Un enfoque alternativo consiste en explotar el hecho de que el potencial radial multipolar \( y^k(b,d;r) \) satisface una ecuación diferencial ordinaria de segundo orden lineal: la ecuación de Poisson unidimensional radial asociada a la función de Green multipolar:
-
-\begin{equation}
-  \label{eq:poisson-radial}
-  \qty( -\frac{\dd^2}{\dd{r}^2} + \frac{k(k+1)}{r^2} ) y^k(b, d; r) = \frac{2k+1}{r} P_b(r) P_d(r).
-\end{equation}
-
-Esta ecuación diferencial ordinaria requiere la especificación de dos condiciones de frontera físicamente consistentes:
-\begin{itemize}
-\item \textbf{Regularidad en el origen (\(r \to 0\)):} Debido a la barrera centrífuga del operador radial, exigimos que el potencial radial satisfaga \( y^k(b,d;0) = 0 \). Específicamente, cerca del origen la solución se comporta de forma asintótica como \( y^k(r) \sim r^{k+1} \).
-\item \textbf{Condición asintótica de Robin (\(r \to R_{max}\)):} En el límite exterior de confinamiento del sistema, el potencial radial decae como \( y^k(r) \sim r^{-k} \). Esto impone una condición de contorno de tipo Robin sobre el extremo exterior \( R_{max} \):
-  \begin{equation}
-    \label{eq:robin}
-    \left. \frac{\dd{y^k}}{\dd{r}} + \frac{k}{r} y^k \right|_{r=R_{max}} = 0.
-  \end{equation}
-\end{itemize}
-
-Para resolver este problema diferencial de contorno con precisión de frontera excepcional, proyectamos la ecuación en una base débil de B-splines. Multiplicando \eqref{eq:poisson-radial} por una función de prueba \( B_i(r) \) e integrando por partes el término de la segunda derivada radial, obtenemos la formulación débil:
-
-\begin{equation}
-  \int_0^{R_{max}} \frac{\dd{B_i}}{\dd{r}} \frac{\dd{y^k}}{\dd{r}} \dd{r} - \eval{ B_i(r) \frac{\dd{y^k}}{\dd{r}} }_0^{R_{max}} + k(k+1) \int_0^{R_{max}} B_i(r) \frac{1}{r^2} y^k(r) \dd{r} = (2k+1) \int_0^{R_{max}} B_i(r) \frac{P_b(r) P_d(r)}{r} \dd{r}.
-\end{equation}
-
-Al sustituir la condición de Robin \eqref{eq:robin} en la frontera \( R_{max} \), el término de frontera en el contorno exterior se transforma directamente en:
-
-\begin{equation}
-  - B_i(R_{max}) \frac{\dd{y^k(R_{max})}}{\dd{r}} = \frac{k}{R_{max}} B_i(R_{max}) y^k(R_{max}).
-\end{equation}
-
-En la representación discretizada donde el potencial radial se expande como una combinación lineal de splines \( y^k(r) = \sum_j y_j B_j(r) \), esta formulación débil se traduce en un sistema algebraico lineal de la forma \( \bm{A}_k \bm{y} = \bm{b} \), donde la matriz del operador radial \( \bm{A}_k \) está dada analíticamente por:
-
-\begin{equation}
-  \bm{A}_k = 2 \bm{T} + k(k+1) \bm{R}^{-2},
-\end{equation}
-
-siendo \( T_{ij} = \frac{1}{2} \int_0^{R_{max}} \frac{\dd{B_i}}{\dd{r}} \frac{\dd{B_j}}{\dd{r}} \dd{r} \) la matriz del operador de energía cinética esférica, y \( R^{-2}_{ij} = \int_0^{R_{max}} B_i(r) \frac{1}{r^2} B_j(r) \dd{r} \) la matriz de dispersión inversa cuadrática. La incorporación analítica de la condición de frontera de Robin se logra sumando directamente la contribución de contorno \( \frac{k}{R_{max}} \) al último elemento diagonal de la matriz del sistema \( A_{nn} \). 
-
-Para garantizar el comportamiento regular asintótico \( r^{k+1} \) cerca del origen sin inestabilidades artificiales, truncamos los primeros \( k+1 \) splines de la base, definiendo el dominio algebraico activo a partir del índice \( k+2 \). Este enfoque débil e incondicionalmente simétrico permite obtener de manera exacta y ultra-eficiente el potencial radial por medio de una descomposición de Cholesky del operador acoplado, evitando por completo la evaluación de cuadraturas bidimensionales costosas.
-
-\section{Operadores de Coulomb e Intercambio y ROHF}
-
-Una vez resuelta la ecuación de Poisson para todos los pares de orbitales atómicos, podemos definir formalmente los operadores unidimensionales efectivos de Coulomb (\( \hat{J} \)) e Intercambio (\( \hat{K} \)) que actúan de forma radial sobre una función de onda radial \( P_a(r) \):
-
-\begin{equation}
-  J_b(r) P_a(r) = \sum_k c_k(a,b,a,b) \frac{1}{r} y^k(b,b; r) P_a(r),
-\end{equation}
-
-\begin{equation}
-  K_b(r) P_a(r) = \sum_k c'_k(a,b,b,a) \frac{1}{r} y^k(a,b; r) P_b(r),
-\end{equation}
-
-donde \( c'_k(a,b,b,a) \) denota el coeficiente geométrico específico para el intercambio cuántico esférico. Al promediar e incorporar estos operadores de campo medio sobre todas las capas ocupadas en el sistema, construimos el \textbf{Operador de Fock} radial general:
-
-\begin{equation}
-  \hat{f} = \hat{h} + \sum_b \qty( \hat{J}_b - \hat{K}_b ).
-\end{equation}
-
-Aplicando el método de Galerkin para proyectar este operador diferencial integro-operador radial sobre la base finita ortonormal de B-splines, recuperamos de forma robusta las ecuaciones de autovalores generalizadas de Roothaan:
-
-\begin{equation}
-  \bm{F}\bm{c} = \epsilon\bm{S}\bm{c}.
-\end{equation}
-
-Para sistemas de capa abierta como el átomo de Carbono en su estado basal promedio (\( 1s^2 2s^2 2p^2 \)), el método de Hartree-Fock restringido de capa abierta (ROHF) introduce operadores de Fock diferenciados e independientes para cada bloque simétrico angular para asegurar la consistencia variacional y la ortogonalidad estricta entre capas:
-
-\begin{itemize}
-\item \textbf{El Bloque Fock de la Capa Cerrada (\(F_s\)):}
-  Tanto el orbital \( 1s \) como el \( 2s \) comparten una simetría común y experimentan el mismo potencial central esférico proveniente del core cerrado y la contribución de promedio esférico total del orbital activo de valencia \( 2p \):
-  \begin{equation}
-    F_s = H_{core} + J_{core} + J_{2p}^{spherical} - K_{core}^{(s)} - K_{2p\to s},
-  \end{equation}
-  donde la diagonalización del operador acoplado \( F_s \) sobre la base activa de splines radiales para simetría \( s \) asegura automáticamente la ortogonalidad mutua estricta entre las funciones radiales \( P_{1s} \) y \( P_{2s} \).
-  
-\item \textbf{El Bloque Fock de la Capa Abierta (\(F_p\)):}
-  El electrón activo de valencia \( 2p \) experimenta el campo medio generado por el core cerrado, pero únicamente interactúa con \( w-1 = 1.0 \) electrones equivalentes en su propia capa abierta para evitar la auto-interacción artificial (promedio de configuración de Cowan). De este modo, su operador efectivo se escribe como:
-  \begin{equation}
-    F_p = H_{core}^{(p)} + J_{core} + J_{2p}^{intra} - K_{core}^{(p)} - K_{2p}^{intra},
-  \end{equation}
-  donde el potencial Coulombiano radial de la capa abierta \( J_{2p}^{intra} \) se escala exactamente por \( 1.0 \) en el monopolo fundamental \( k=0 \), y el término de intercambio cuántico intracapa \( K_{2p}^{intra} \) actúa selectivamente modulando la componente geométrica del multipolo angular cuadrangular \( k=2 \) mediante un factor de peso exacto de \( \frac{5}{25} \), reflejando con rigor físico absoluto la auto-interacción y correlación de espín restringida de la configuración abierta del Carbono.
-\end{itemize}
-
-Hasta aqui
-
-%%% Local Variables:
-%%% mode: LaTeX
-%%% TeX-master: "../main"
-%%% End:

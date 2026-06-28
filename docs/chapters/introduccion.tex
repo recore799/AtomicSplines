@@ -1,0 +1,27 @@
+\chapter{Introducción}
+\label{ch:introduccion}
+
+\section{Motivación}
+
+La resolución analítica de la ecuación de Schrödinger está estrictamente limitada a sistemas de un solo electrón (como el átomo de hidrógeno o iones hidrogenoides). Para sistemas multielectrónicos, la interacción repulsiva interelectrónica acopla las ecuaciones de movimiento, imposibilitando una solución exacta de forma cerrada. Esta intrincada correlación dinámica ha motivado el desarrollo histórico de la química cuántica computacional y la física atómica teórica, cuyo pilar fundamental es el método de Campo Autoconsistente de Hartree-Fock (HF).
+
+El método de Hartree-Fock busca la mejor aproximación uniconfiguracional a la función de onda exacta utilizando un determinante de Slater, reduciendo el problema de muchos cuerpos a un sistema de ecuaciones integro-diferenciales no lineales. Tradicionalmente, para resolver estas ecuaciones, los orbitales atómicos se expanden en conjuntos de bases analíticas, como los orbitales de tipo Slater (STO) o funciones Gaussianas (GTO). Si bien estas bases globales son eficientes, sufren de limitaciones críticas: la sobrecompletitud, que genera problemas de dependencia lineal, y una representación deficiente en las regiones muy cercanas al núcleo y en las colas asintóticas de la función de onda.
+
+\section{Planteamiento del Problema}
+
+En contraste con las funciones globales, el uso de B-splines (polinomios a trozos finitos) introduce un marco numérico de alta precisión libre de dependencias lineales. Esta base finita proporciona un soporte riguroso para la representación de orbitales con una precisión casi ilimitada, al mismo tiempo que discretiza el continuo atómico, permitiendo estudios profundos sobre fenómenos de fotoionización y correlación electrónica (Johnson, 2007). 
+
+El objetivo principal de esta tesis es desarrollar, implementar e iterar un solucionador numérico \textit{ab-initio} robusto fundamentado en B-splines para sistemas atómicos multielectrónicos. En particular, nos enfocamos en el método Restricted Open-Shell Hartree-Fock (ROHF) para estudiar con extrema fidelidad la secuencia homóloga $np^2$, conformada por el Carbono ($2p^2$), Silicio ($3p^2$) y Germanio ($4p^2$). 
+
+A medida que descendemos por el grupo 14 de la tabla periódica, el aumento en la carga nuclear $Z$ y el efecto de apantallamiento de las capas internas cerradas provocan un rápido incremento en las fuerzas relativistas efectivas experimentadas por los electrones de valencia. El reto es demostrar que nuestra base de B-splines no solo obtiene energías autoconsistentes exactas a nivel no-relativista, sino que permite calcular con precisión el parámetro de acoplamiento espín-órbita radial ($\zeta_{np}$) y evaluar la matriz del Hamiltoniano de Breit-Pauli. Este análisis culminará demostrando el desglose de la aproximación tradicional del acoplamiento Russell-Saunders ($LS$) en el Germanio, revelando una transición hacia un régimen de acoplamiento intermedio.
+
+\section{Estructura del Documento}
+
+Este trabajo se ha estructurado de la siguiente manera:
+En el \textbf{Capítulo 2}, se presenta el marco teórico subyacente, introduciendo la mecánica del determinante de Slater, las integrales de repulsión de Coulomb y el ensamble del Hamiltoniano de muchos cuerpos.
+El \textbf{Capítulo 3} describe el método numérico, detallando la fundamentación teórica de los B-splines y la formulación matricial de las ecuaciones de Hartree-Fock (método de Galerkin).
+El \textbf{Capítulo 4} expone la validación numérica de la implementación (convergencia virial, colapso de potenciales y energías de correlación espín-órbita). 
+El \textbf{Capítulo 5} discute el contraste físico a lo largo de la secuencia $np^2$ y la transición al acoplamiento intermedio.
+Por último, el \textbf{Capítulo 6} sintetiza las conclusiones principales derivadas de esta investigación.
+
+Para facilitar la legibilidad del texto principal a nivel licenciatura, las demostraciones formales de álgebra tensorial esférica y los pormenores algorítmicos complejos de los B-splines se han confinado a los \textbf{Apéndices A y B}, respectivamente.

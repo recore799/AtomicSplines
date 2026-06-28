@@ -4,7 +4,7 @@
 
 * Resumen de la Situación Actual
 
-El objetivo primordial ha cambiado de buscar la "novedad científica" a la *finalización y titulación oportuna*. Habiendo sido aceptado ya en los cursos propedéuticos del Cinvestav, el enfoque pragmático es terminar el manuscrito para su defensa a mediados de agosto. Con el apoyo de herramientas LLM, una ventana de 6 a 8 semanas es más que suficiente para estructurar, refinar y ensamblar el texto final, considerando que el desarrollo computacional está esencialmente concluido.
+El objetivo primordial ha cambiado de buscar la "novedad científica" a la *finalización y titulación oportuna*. Habiendo sido aceptado ya en los cursos propedéuticos del Cinvestav, el enfoque pragmático es terminar el manuscrito para su defensa a mediados de agosto.
 
 * Estado del Desarrollo Numérico y Resultados (Finalizado)
 
@@ -28,7 +28,7 @@ El motor ab-initio basado en B-splines y el solucionador de estructura fina est�
 
 * Revisión de la Retroalimentación del Asesor
 
-La respuesta del asesor contiene consejos académicos estándar (posiblemente estructurados vía LLM) que resultan redundantes respecto al bosquejo original, pero que dictan la ruta administrativa para la aprobación del documento. 
+La respuesta del asesor contiene consejos académicos estándar que resultan redundantes respecto al bosquejo original, pero que dictan la ruta administrativa para la aprobación del documento. 
 
 ** Observaciones del Asesor y nuestra Respuesta Estratégica:
    1. *Reestructuración del formato:* Pide Introducción, Marco Teórico, Métodos, Resultados, Discusión y Conclusiones.

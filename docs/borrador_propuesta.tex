@@ -1,0 +1,446 @@
+\documentclass[12pt,a4paper]{book}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,mexico]{babel}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{cite}
+\usepackage{hyperref}
+
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{longtable}
+
+\usepackage{caption}
+\usepackage{siunitx}
+
+
+
+\title{\textbf{Propuesta de Tesis:} \\ 
+Estructura Electrónica de la secuencia homóloga \( np^2 \)}
+\author{Rafael}
+\date{\today}
+
+\begin{document}
+
+\frontmatter % Roman numerals for pages (i, ii, iii)
+\maketitle
+\tableofcontents
+
+\mainmatter % Arabic numerals (1, 2, 3)
+\chapter{Resultados ROHF}
+
+El objetivo de este capítulo es presentar los resultados obtenidos mediante nuestro motor numérico para la secuencia homóloga $np^{2}$, que comprende los átomos de Carbono ($Z=6$), Silicio ($Z=14$) y Germanio ($Z=32$). Para llevar a cabo este estudio computacional, inicialmente evaluamos el álgebra de Racah correspondiente a la subcapa abierta $np^{2}$ para optimizar la configuración electrónica específicamente al estado fundamental $^{3}P$. Este paso nos sirve para validar que la física es correcta al poder comparar nuestros resultados directamente con los valores reportados por Froese Fischer.
+
+Posteriormente a esta validación del estado base, realizamos los cálculos del promedio de configuraciones. Este procedimiento establece el potencial de campo medio necesario para llevar a cabo cálculos de estructura fina, los cuales se encuentran en desarrollo y serán presentados próximamente.
+
+El interés de abordar esta secuencia en este orden radica en que, al transitar del carbono al germanio, la simetría angular del sistema se mantiene estrictamente invariante. Puesto que la subcapa de valencia siempre posee la geometría $np^{2}$, el álgebra de Racah solo necesita evaluarse una única vez. Esta invarianza nos permite aislar el problema y enfocar todo el análisis analítico y computacional en la resolución de la física radial. Dicha física radial incrementa su complejidad drásticamente conforme aumenta el número de capas electrónicas cerradas, culminando en el germanio. En este último sistema, la densidad electrónica y el apantallamiento imponen un reto numérico tan severo que resultó indispensable implementar la técnica de \textit{level shifting} para lograr hacer converger las iteraciones del campo autoconsistente (SCF).
+
+A continuación, se presentan los resultados numéricos obtenidos para cada uno de los sistemas atómicos en la secuencia. Con el fin de sistematizar el análisis físico, la información de cada átomo se ha estructurado en una serie de cuatro tablas, en las cuales:
+
+\begin{itemize}
+    \item \textbf{La primera tabla} expone el balance energético global y el cociente del virial ($-V/T$). Esta evaluación es un criterio fundamental para confirmar la convergencia iterativa del campo autoconsistente (SCF) y validar que la extensión de la base de B-splines es la adecuada para contener el pozo de potencial del sistema.
+    \item \textbf{La segunda y tercera tabla} reportan los valores esperados de los momentos radiales $\langle r \rangle$, $\langle r^2 \rangle$, $\langle 1/r \rangle$ y $\langle 1/r^3 \rangle$. El cómputo de estos observables es crucial para diagnosticar la precisión de la función de onda radial en diferentes regímenes espaciales. Específicamente, los momentos positivos ($\langle r \rangle$, $\langle r^2 \rangle$) ponderan el comportamiento asintótico y la difusividad de la capa de valencia, propiedades vinculadas a la polarizabilidad. Por otro lado, los momentos inversos ($\langle 1/r \rangle$, $\langle 1/r^3 \rangle$) amplifican el comportamiento de la función de onda en las proximidades del núcleo, una región de extrema importancia para el cálculo de interacciones magnéticas y correcciones relativistas de estructura fina.
+    \item \textbf{La cuarta tabla} detalla las integrales directas de Slater $F^0(np,np)$ y $F^2(np,np)$. Estos parámetros radían directamente del álgebra de Racah y cuantifican la repulsión coulómbica interelectrónica intrínseca de la subcapa abierta. Su determinación precisa es indispensable para evaluar el desdoblamiento energético de los distintos términos espectroscópicos dentro de la aproximación de acoplamiento $LS$.
+    \item Todos los valores numéricos aquí tabulados se comparan directamente con los resultados de referencia publicados por Charlotte Froese Fischer en su obra \textit{The Hartree-Fock Method for Atoms: A Numerical Approach}, lo cual establece un estándar de validación absoluto para nuestro motor computacional.
+\end{itemize}
+
+\section{Estudio del Carbono}
+
+El átomo de carbono ($Z=6$) inicia la secuencia con la fenomenología multielectrónica más fundamental dentro de un régimen computacional accesible. Este sistema constituye un laboratorio numérico que nos permite explorar la geometría de la capa abierta. En esta configuración, la considerable proximidad radial y el traslape espacial entre la subcapa cerrada $2s^2$ y la capa de valencia abierta $2p^2$ inducen interacciones de intercambio, dominando la dinámica electrónica del sistema.
+
+Para lograr que el ciclo del campo autoconsistente (SCF) converja hacia la optimización del estado fundamental espectroscópico, evaluamos de manera analítica el álgebra de Racah sobre la subcapa de valencia. Este procedimiento nos permite aislar el término espectroscópico deseado calculando los coeficientes angulares de Slater-Condon \( f_k \) y \( g_k \), producto directo de la integración de la repulsión coulómbica interelectrónica sobre los armónicos esféricos. Gracias a las simetrías del espacio de Hilbert (el grupo de rotaciones SO(3)), estos tensores se reducen siempre a fracciones racionales exactas. En el caso particular de la configuración \( np^2 \) acoplada al término de menor energía \( ^3P \), la interacción queda completamente descrita por un coeficiente multipolar \( f_0=1 \) acoplado a la integral \( F^0 \), y un coeficiente cuadrupolar \( f_2=-\displaystyle\frac{5}{25} \) acoplado a la integral \( F^2 \). La inyección de este último coeficiente negativo en el funcional de energia rompe la degeneración intrínseca de la subcapa, marcando un contraste físico y algorítmico frente al coeficiente \( f_2 = -\displaystyle\frac{2}{25} \) que se emplea en el cálculo de un promedio de configuraciones para los sistemas con valencia \( np^2 \).
+
+
+\begin{table}[htbp]
+    \centering
+    \caption{Evaluación de los parámetros energéticos y verificación del teorema del virial para el Carbono ($Z=6$) en el estado fundamental $^{3}P$, comparando nuestros resultados frente a la literatura de referencia.}
+    \label{tab:resultados_energia}
+    \begin{tabular}{
+        l
+        S[table-format=-4.8]
+        S[table-format=-4.8]
+        S[table-format=1.2e-1]
+    }
+        \toprule
+        {\textbf{Propiedad}} & {\textbf{Valor Calculado}} & {\textbf{Referencia}} & {$\Delta$} \\
+        \midrule
+        Energía Total $E$ & -37.68861896 & -37.688619 & 4e-8 \\
+        Energía Cinética $T$ & 37.68861896 & 37.688619 & 4e-8 \\
+        Potencial Total $V$ & -75.37723793 & -75.377238 & 7e-3 \\
+        Cociente Virial $-V/T$ & 2.0 & 1.999999998 & 2e-9 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+
+\begin{table}[htbp]
+    \centering
+    \caption{Valores esperados de los momentos radiales directos $\langle r \rangle$ y $\langle r^2 \rangle$ para la geometría orbital del Carbono en su estado fundamental. Los parámetros espaciales están expresados en radios de Bohr ($a_0^k$, donde $k=1,2$). Las columnas contrastan el Valor Calculado (V.C.) por nuestro motor numérico frente a los resultados de referencia de Froese Fischer (F.F.), reportando la diferencia absoluta ($\Delta$).}
+    \label{tab:radial_direct}
+    \begin{tabular}{
+      l
+      S[table-format=1.6]
+      S[table-format=1.6]
+      S[table-format=1.2e-1]
+      S[table-format=1.6]
+      S[table-format=1.6]
+      S[table-format=1.2e-1]}
+      \toprule
+        \multirow{2}{*}{\textbf{Orbital}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle r \rangle$}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle r^2 \rangle$}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} 
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} \\
+        \midrule
+        1s & 0.268443 & 0.268443 & 0 & 0.097199 & 0.097199 & 0 \\
+        2s & 1.589344 & 1.589344 & 0 & 3.052065 & 3.052065 & 1e-6 \\
+        2p & 1.714494 & 1.714494 & 0 & 3.746799 & 3.746801 & 2e-6 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+    \centering
+\caption{Valores esperados de los momentos radiales inversos $\langle 1/r \rangle$ y $\langle 1/r^3 \rangle$ para todos los orbitales ocupados del átomo de Carbono en su estado fundamental. Los parámetros espaciales están expresados en unidades atómicas inversas ($a_0^{-k}$, donde $k=1,3$). Las columnas contrastan el Valor Calculado (V.C.) por nuestro motor numérico frente a los resultados de referencia de Froese Fischer (F.F.), reportando la diferencia absoluta ($\Delta$).}
+        \label{tab:radial_direct}
+    \begin{tabular}{
+      l
+      S[table-format=1.6]
+      S[table-format=1.6]
+      S[table-format=1.2e-1]
+      S[table-format=6.6]
+      S[table-format=6.6]
+      S[table-format=1.2e-1]}
+        \toprule
+        \multirow{2}{*}{\textbf{Orbital}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle \frac{1}{r} \rangle$}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle \frac{1}{r^3} \rangle$}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} 
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} \\
+      \midrule
+      1s & 5.664439 & 5.66444 & 1e6 & 4595.347199 & & \\
+      2s & 0.896798 & 0.89680 & 2e5 & 207.318451 & &  \\
+      2p & 0.783503 & 0.78350 & 3e6 & 1.691811 & 1.69181 & 0 \\
+      \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+    \centering
+    \caption{Integrales de Slater de repulsión electrostática evaluadas para la subcapa de valencia $2p^2$. Expresadas en Hartrees ($E_h$).}
+    \label{tab:slater_integrals}
+    \begin{tabular}{l S[table-format=1.8] S[table-format=1.8] S[table-format=1.2e-1]}
+        \toprule
+        \textbf{Interacción Multipolo} & {\textbf{Valor Calculado}} & {\textbf{Froese Fischer}} & {\textbf{$\Delta$}} \\
+        \midrule
+        Monopolo $F^0(2p, 2p)$   & 0.53860369 & 0.53860360 & 9e-8 \\
+        Cuadrupolo $F^2(2p, 2p)$ & 0.24330175 & 0.24330170 & 5e-8 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\newpage
+
+\section{Estudio del Silicio}
+
+Al transitar en la secuencia homóloga hacia el átomo de silicio ($Z=14$), el sistema hereda de manera intacta la simetría angular de la subcapa de valencia. Puesto que la geometría orbital np2 es estrictamente invariante respecto al carbono, el álgebra de Racah y los coeficientes racionales de Slater-Condon previamente derivados se mantienen idénticos para la optimización del estado fundamental 3P. Esta invarianza analítica resulta sumamente ventajosa, ya que nos permite aislar la dimensionalidad del problema y enfocar el esfuerzo algorítmico exclusivamente en la resolución de la física radial.
+
+El silicio incrementa su complejidad al incorporar una capa principal adicional sobre un núcleo cerrado topológicamente equivalente al neón. La adaptación del motor numérico debe ahora acomodar el apantallamiento introducido por las subcapas internas $3s^2$ y $3p^2$. La malla de B-splines enfrenta el reto de resolver simultáneamente la contracción del pozo de potencial profundo cerca del origen y la mayor difusividad de los electrones de valencia. A pesar de este ensanchamiento del dominio espacial, el ciclo iterativo del campo autoconsistente logra acomodar las interacciones electrostáticas sin requerir alteraciones en la arquitectura de convergencia fundamental.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Evaluación de los parámetros energéticos y verificación del teorema del virial para el Silicio ($Z=14$) en el estado fundamental $^{3}P$, comparando nuestros resultados frente a la literatura de referencia.}
+    \label{tab:resultados_energia}
+    \begin{tabular}{
+        l
+        S[table-format=-4.8]
+        S[table-format=-4.8]
+        S[table-format=1.2e-1]
+    }
+        \toprule
+        {\textbf{Propiedad}} & {\textbf{Valor Calculado}} & {\textbf{Referencia}} & {$\Delta$} \\
+        \midrule
+        Energía Total $E$ & -288.85435715 & -288.85436 & 2.85e-6 \\
+        Energía Cinética $T$ & 288.85878586 & 288.85437 & 4.41e-3 \\
+        Potencial Total $V$ & -577.71314302 & -577.70873 & 4.41e-3 \\
+        Cociente Virial $-V/T$ & 1.99998467 & 1.999999965 & 1.53e-5 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Valores esperados de los momentos radiales directos $\langle r \rangle$ y $\langle r^2 \rangle$ para la geometría orbital del Silicio en su estado fundamental. Los parámetros espaciales están expresados en radios de Bohr ($a_0^k$, donde $k=1,2$). Las columnas contrastan el Valor Calculado (V.C.) por nuestro motor numérico frente a los resultados de referencia de Froese Fischer (F.F.), reportando la diferencia absoluta ($\Delta$).}
+    \label{tab:radial_direct}
+    \begin{tabular}{
+      l
+      S[table-format=1.6]
+      S[table-format=1.6]
+      S[table-format=1.2e-1]
+      S[table-format=1.6]
+      S[table-format=1.6]
+      S[table-format=1.2e-1]}
+      \toprule
+        \multirow{2}{*}{\textbf{Orbital}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle r \rangle$}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle r^2 \rangle$}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} 
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} \\
+        \midrule
+      1s & 0.111431 & 0.111431 & 0 & 0.016701 & 0.016701 & 0 \\
+      2s & 0.562946 & 0.562941 & 5.00e-6 & 0.377257 & 0.377263 & 6.00e-6 \\
+      2p & 0.535329 & 0.535408 & 7.90e-5 & 0.359524 & 0.359682 & 1.58e-4 \\
+      3s & 2.207136 & 2.207087 & 4.90e-5 & 5.676508 & 5.676266 & 2.42e-4 \\
+      3p & 2.752381 & 2.752211 & 1.70e-4 & 8.981593 & 8.980904 & 6.89e-4 \\
+      \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+\caption{Valores esperados de los momentos radiales inversos $\langle 1/r \rangle$ y $\langle 1/r^3 \rangle$ para todos los orbitales ocupados del átomo de Germanio en su estado fundamental. Los parámetros espaciales están expresados en unidades atómicas inversas ($a_0^{-k}$, donde $k=1,3$). Las columnas contrastan el Valor Calculado (V.C.) por nuestro motor numérico frente a los resultados de referencia de Froese Fischer (F.F.), reportando la diferencia absoluta ($\Delta$).}
+        \label{tab:radial_direct}
+    \begin{tabular}{
+      l
+      S[table-format=1.6]
+      S[table-format=1.6]
+      S[table-format=1.2e-1]
+      S[table-format=6.6]
+      S[table-format=6.6]
+      S[table-format=1.2e-1]}
+        \toprule
+        \multirow{2}{*}{\textbf{Orbital}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle \frac{1}{r} \rangle$}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle \frac{1}{r^3} \rangle$}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} 
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} \\
+        \midrule
+      1s & 13.581143 & 13.58115 & 7.00e-6 & 53086.579214 & &  \\
+      2s & 2.590376 & 2.59040 & 2.40e-5 & 3726.737146 & &  \\
+      2p & 2.456558 & 2.45638 & 1.78e-4 & 47.273235 & 47.26726 & 5.98e-3 \\
+      3s & 0.603211 & 0.60323 & 1.90e-5 & 244.357534 &  &  \\
+      3p & 0.477812 & 0.47803 & 2.18e-4 & 2.047231 & 2.05423 & 7.00e-3 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+    \centering
+    \caption{Integrales de Slater de repulsión electrostática evaluadas para la subcapa de valencia $4p^2$. Expresadas en Hartrees ($E_h$).}
+    \label{tab:slater_integrals}
+    \begin{tabular}{l S[table-format=1.8] S[table-format=1.8] S[table-format=1.2e-1]}
+        \toprule
+        \textbf{Interacción Multipolo} & {\textbf{Valor Calculado}} & {\textbf{Froese Fischer}} & {\textbf{$\Delta$}} \\
+        \midrule
+        Monopolo $F^0(3p, 3p)$   & 0.31650266 & 0.32971786 & 1.32e-2 \\
+        Cuadrupolo $F^2(3p, 3p)$ & 0.16272437 & 0.16593265 & 3.2e-3 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\newpage
+
+\section{Estudio del Germanio}
+El germanio ($Z=32$) representa el sistema de mayor envergadura y el desafío computacional supremo de esta sección. Al igual que en los elementos predecesores, la valencia $4p^{2}$ conserva la simetría angular invariante, permitiendo reciclar la estructura multipolar exacta. No obstante, es en este sistema donde la física radial alcanza su régimen más severo. La arquitectura interna del átomo ahora incluye, además de las capas correspondientes al argón y la subcapa $4s^2$, la masiva inclusión de la subcapa fuertemente poblada $3d^{10}$.
+
+Esta extrema acumulación de densidad electrónica y el profundo apantallamiento del núcleo exponen al cálculo numérico al colapso variacional. Para evitar que las funciones de onda de los orbitales exteriores colapsen hacia estados espurios del núcleo profundo, resulta imperativo imponer una condición de ortogonalidad estricta entre todos los estados ocupados a lo largo del ciclo del campo autoconsistente (SCF). En nuestra implementación, esta restricción geométrica se garantiza mediante la implementación continua del procedimiento de ortogonalización de Gram-Schmidt. Sin embargo, forzar esta limpieza analítica en cada iteración altera abruptamente el subespacio iterativo, produciendo "tirones" discontinuos en la topología de la solución.
+
+Estas alteraciones constantes para mantener la ortogonalidad inducen fluctuaciones y oscilaciones de alta amplitud en la matriz de densidad. Debido a la naturaleza no suave de estas correcciones, el sistema jamás logra ingresar a un régimen de convergencia cuadrática asintótica. En consecuencia, la aceleración mediante algoritmos de inversión directa en el subespacio iterativo basados en conmutadores (C-DIIS) resulta inoperante, ya que la matriz de error no exhibe el comportamiento lineal local continuo que requiere el método para extrapolar el mínimo de energía. Para lograr domar el pozo de potencial y forzar la estabilización iterativa frente a las perturbaciones introducidas por la ortogonalización, resultó estrictamente necesario implementar la técnica de \textit{level shifting}. Al introducir un desplazamiento artificial que separa energéticamente el espectro de los orbitales ocupados de los virtuales, logramos amortiguar las oscilaciones de la matriz de Fock, permitiendo que el motor numérico converja finalmente de manera robusta al estado base del sistema.
+
+% =======================================================
+% INSERTAR AQUÍ LAS TABLAS DEL GERMANIO (Z=32)
+% =======================================================
+
+\begin{table}[htbp]
+    \centering
+    \caption{Evaluación de los parámetros energéticos y verificación del teorema del virial para el Germanio ($Z=32$) en el estado fundamental $^{3}P$, comparando nuestros resultados frente a la literatura de referencia.}
+    \label{tab:resultados_energia}
+    \begin{tabular}{
+        l
+        S[table-format=-4.8]
+        S[table-format=-4.8]
+        S[table-format=1.2e-1]
+    }
+        \toprule
+        {\textbf{Propiedad}} & {\textbf{Valor Calculado}} & {\textbf{Referencia}} & {$\Delta$} \\
+        \midrule
+        Energía Total $E$ & -2075.35973 & -2075.3597 & 3e-5 \\
+        Energía Cinética $T$ & 2075.36256 & 2075.3597 & 2.86e-3 \\
+        Potencial Total $V$ & -4150.72230 & -4150.7195 & 2.8e-3 \\
+        Cociente Virial $-V/T$ & 1.99999864 & 2.00000005 & 1.41e-6 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+
+\begin{table}[htbp]
+    \centering
+    \caption{Valores esperados de los momentos radiales directos $\langle r \rangle$ y $\langle r^2 \rangle$ para la geometría orbital del Germanio en su estado fundamental. Los parámetros espaciales están expresados en radios de Bohr ($a_0^k$, donde $k=1,2$). Las columnas contrastan el Valor Calculado (V.C.) por nuestro motor numérico frente a los resultados de referencia de Froese Fischer (F.F.), reportando la diferencia absoluta ($\Delta$).}
+    \label{tab:radial_direct}
+    \begin{tabular}{
+      l
+      S[table-format=1.6]
+      S[table-format=1.6]
+      S[table-format=1.2e-1]
+      S[table-format=1.6]
+      S[table-format=1.6]
+      S[table-format=1.2e-1]}
+        \toprule
+        \multirow{2}{*}{\textbf{Orbital}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle r \rangle$}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle r^2 \rangle$}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} 
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} \\
+        \midrule
+        1s & 0.047837 & 0.047837 & 0      & 0.003066 & 0.003066 & 0 \\
+        2s & 0.213048 & 0.213048 & 0      & 0.053468 & 0.053468 & 0 \\
+        2p & 0.185185 & 0.185185 & 0      & 0.041948 & 0.041948 & 0 \\
+        3s & 0.632247 & 0.632246 & 1e-6   & 0.460063 & 0.460062 & 1e-6 \\
+        3p & 0.650851 & 0.650884 & 3.3e-5 & 0.497352 & 0.497423 & 7.1e-5 \\
+        3d & 0.721238 & 0.721234 & 4e-6   & 0.657094 & 0.657085 & 6e-6 \\
+        4s & 2.225830 & 2.225815 & 1.5e-5 & 5.731160 & 5.731085 & 7e-5 \\
+        4p & 2.866969 & 2.866920 & 4.9e-5 & 9.656988 & 9.656820 & 1.68e-4 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+    \centering
+\caption{Valores esperados de los momentos radiales inversos $\langle 1/r \rangle$ y $\langle 1/r^3 \rangle$ para todos los orbitales ocupados del átomo de Germanio en su estado fundamental. Los parámetros espaciales están expresados en unidades atómicas inversas ($a_0^{-k}$, donde $k=1,3$). Las columnas contrastan el Valor Calculado (V.C.) por nuestro motor numérico frente a los resultados de referencia de Froese Fischer (F.F.), reportando la diferencia absoluta ($\Delta$).}
+        \label{tab:radial_direct}
+    \begin{tabular}{
+      l
+      S[table-format=1.6]
+      S[table-format=1.6]
+      S[table-format=1.2e-1]
+      S[table-format=6.6]
+      S[table-format=6.6]
+      S[table-format=1.2e-1]}
+        \toprule
+        \multirow{2}{*}{\textbf{Orbital}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle \frac{1}{r} \rangle$}} & 
+        \multicolumn{3}{c}{\textbf{Momento $\langle \frac{1}{r^3} \rangle$}} \\
+        \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} 
+        & {\textbf{V.C.}} & {\textbf{F.F.}} & {\textbf{$\Delta$}} \\
+        \midrule
+        1s & 31.507381 & 31.50738 & 1e-6      & 681706.726262 & & \\
+        2s & 6.950514  & 6.95051  & 4e-6      & 65293.600826  & & \\
+        2p & 6.890253  & 6.89025  & 3e-6      & 936.394026    & 936.39224 & 1.78e-3 \\
+        3s & 2.232784  & 2.23279  & 6e-6      & 9685.474457   & & \\
+        3p & 2.103878  & 2.10381  & 6.8e-5    & 123.731284    & 123.72378 & 7.5e-3 \\
+        3d & 1.793319  & 1.79333  & 1.1e-5    & 14.105934     & 14.10610  & 1.66e-4 \\
+        4s & 0.578887  & 0.57889  & 3e-6      & 636.598592    & & \\
+        4p & 0.445440  & 0.44552  & 8e-5      & 4.793285      & 4.80120   & 7.91e-3 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\begin{table}[htbp]
+    \centering
+    \caption{Integrales de Slater de repulsión electrostática evaluadas para la subcapa de valencia $4p^2$. Expresadas en Hartrees ($E_h$).}
+    \label{tab:slater_integrals}
+    \begin{tabular}{l S[table-format=1.8] S[table-format=1.8] S[table-format=1.2e-1]}
+        \toprule
+        \textbf{Interacción Multipolo} & {\textbf{Valor Calculado}} & {\textbf{Froese Fischer}} & {\textbf{$\Delta$}} \\
+        \midrule
+        Monopolo $F^0(4p, 4p)$   & 0.31650266 & 0.31650656 & 3.9e-6 \\
+        Cuadrupolo $F^2(4p, 4p)$ & 0.16272437 & 0.16271717 & 7.2e-6 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+
+\chapter{Propuesta de estructura para el manuscrito}
+
+\section*{Resumen}
+Esta investigación detalla el desarrollo de un motor numérico \textit{ab-initio} basado en el método de Galerkin con polinomios B-splines para resolver la ecuación íntegro-diferencial del límite de Hartree-Fock. La arquitectura numérica se aplica al estudio riguroso de la estructura fina en la secuencia homóloga $np^2$ (Carbono, Silicio y Germanio). Al prescindir de las aproximaciones perturbativas de campo débil tradicionales en favor de un acoplamiento intermedio exacto, este trabajo mapea la transición física fundamental desde el límite de acoplamiento $LS$ puro en el Carbono ($Z=6$) hasta la severa mezcla de los estados singlete y triplete en el Germanio ($Z=32$). Este colapso espectroscópico es impulsado por el violento escalamiento relativista de la interacción espín-órbita en la capa de valencia frente a un núcleo fuertemente apantallado. La metodología destaca por la transición de bases físicas a bases matemáticas rigurosas, el uso de álgebra de tensores irreducibles para la evaluación analítica del Hamiltoniano de Breit-Pauli, y la estabilización de la convergencia autoconsistente en la presencia de capas profundas mediante la técnica de \textit{Level Shifting}.
+
+\section{Introducción y Justificación}
+
+\subsection{El problema multielectrónico y la transición a bases matemáticas}
+El tratamiento computacional de la ecuación de Schrödinger multielectrónica ha dependido históricamente de bases analíticas globales, como los orbitales de tipo Gaussiano (GTOs), optimizadas para el cálculo molecular rápido. Sin embargo, para capturar la física atómica fundamental con precisión absoluta—particularmente la condición de cúspide de Kato en el origen y el decaimiento exponencial correcto en la región asintótica—es imperativo transitar hacia bases matemáticas formales. El uso de polinomios locales, o B-splines, garantiza que no existan preconcepciones impuestas sobre la topología de la función de onda, permitiendo una extracción exacta de los potenciales de campo medio.
+
+\subsection{La secuencia homóloga $np^2$ y el escalamiento relativista}
+El estudio de la interacción espín-órbita requiere un laboratorio físico donde la geometría del momento angular permanezca estática mientras los parámetros radiales varían drásticamente. La secuencia $np^2$ ofrece este escenario ideal. Al descender en la tabla periódica, la interacción electrostática de valencia compite contra un parámetro radial de espín-órbita ($\zeta_{np}$) que experimenta un escalamiento agudo dependiente de la carga nuclear $Z$. El Germanio ($4p^2$) surge como la extensión natural y clímax de esta secuencia, exigiendo un tratamiento matricial sin aproximaciones debido a la magnitud de los efectos relativistas frente a su subcapa cerrada $3d^{10}$.
+
+\subsection{Objetivo General}
+Desarrollar una arquitectura numérica unificada que permita extraer funciones de onda puras bajo la aproximación de electrones independientes, para posteriormente utilizarlas en la evaluación y diagonalización exacta de las matrices $J$ del Hamiltoniano multielectrónico, evidenciando analíticamente la ruptura de la regla de intervalos de Landé.
+
+
+
+
+\section{El Hamiltoniano de Muchos Cuerpos y Teoría de Operadores Tensoriales}
+
+\subsection{Aproximación de electrones independientes}
+Derivación del formalismo multielectrónico partiendo del principio de antisimetría. Se establece el determinante de Slater y se utiliza la expansión de Laplace para definir analíticamente las integrales de uno y dos cuerpos que componen el Hamiltoniano electrostático.
+
+\subsection{Teoría de operadores tensoriales irreducibles}
+Introducción al álgebra tensorial y al teorema de Wigner-Eckart. Se define a los armónicos esféricos $Y_l^m(\theta, \phi)$ como tensores irreducibles, facilitando la evaluación de las integrales angulares mediante el uso de símbolos $3j$ de Wigner y justificando analíticamente las reglas de selección de paridad subyacentes a los coeficientes de Slater.
+
+\subsection{El Hamiltoniano de Breit-Pauli y acoplamiento espín-órbita}
+Formulación del operador de espín-órbita $V^{(11)}$ como un producto tensorial doble en los espacios de posición y de espín. Se establece la estructura matemática que permite a este operador mezclar los estados de la base $| \gamma L S J M \rangle$.
+
+\subsection{Electrones equivalentes y la estructura $np^2$}
+Implementación del principio de exclusión de Pauli en subcapas degeneradas mediante los Coeficientes de Parentesco Fraccional (CFPs). Se aíslan los multipletes permitidos para la configuración $p^2$ ($^3P$, $^1D$, $^1S$) y se construyen teóricamente las matrices de acoplamiento intermedio para los casos $J=0, 1, 2$, demostrando la mezcla analítica inducida por el acoplamiento espín-órbita.
+
+\section{Arquitectura Numérica y ROHF en Base de B-splines}
+
+\subsection{B-splines de soporte compacto}
+Definición de las propiedades intrínsecas de la base, enfatizando su partición de la unidad y suavidad polinomial, características que otorgan una descripcion completa en el espacio de Hilbert discretizado.
+
+\subsection{El método de Galerkin y la ecuación de Poisson}
+Transformación del problema integro-diferencial en un problema generalizado de valores propios. Se detalla el mapeo de los potenciales de intercambio y Coulomb a la ecuación de Poisson, la cual se puede resolver en la misma geometría de B-splines.
+
+\subsection{Mallas radiales y condiciones de frontera}
+Diseño de la partición del espacio real mediante una secuencia de nodos exponencial y la imposición analítica de las condiciones de frontera de Dirichlet para confinar el sistema cuántico físicamente.
+
+\subsection{Ecuaciones de Hartree-Fock de Capa Abierta Restringida (ROHF)}
+Formulación de las ecuaciones iterativas para el Promedio de Configuraciones. Se integran los multiplicadores derivados del álgebra tensorial para el intercambio cuadrupolar característico de la subcapa $p^2$.
+
+\subsection{Dinámica de convergencia y el método de Level Shift}
+Análisis del proceso de convergencia autoconsistente frente al reto impuesto por núcleos pesados. Se documenta la inestabilidad del algoritmo tradicional (C-DIIS) al interactuar con la dificultad de forzar la ortogonalidad entre las numerosas capas del Germanio, justificando la implementación del formalismo de \textit{Level Shift}. Esta técnica estabiliza la matriz de densidad aislando espectralmente el subespacio ocupado del subespacio virtual, garantizando una convergencia monótona.
+
+\section{Resultados Radiales: Extracción de Potenciales y Funciones de Onda}
+
+\subsection{Energías y funciones de onda en el límite de campo medio}
+Presentación del espectro para C, Si y Ge, validadas contra límites de alta precisión en la literatura. Se exponen gráficamente las funciones de onda radiales $P_{nl}(r)$ para evidenciar la conservación de la estructura de nodos.
+
+\subsection{Evolución del potencial efectivo}
+Análisis comparativo de la función $V_{\text{eff}}(r)$. La superposición gráfica de las tres especies ilustra la severa contracción del pozo de potencial experimentada por los electrones de valencia como respuesta directa al incremento de la carga nuclear efectiva.
+
+\subsection{Evaluación de integrales de estructura fina}
+Extracción paramétrica de la integral de repulsión electrostática $F^2(np, np)$ frente al parámetro de espín-órbita $\zeta_{np}$. Se expone cuantitativamente cómo, al descender hacia el Germanio, la magnitud de $\zeta_{4p}$ asciende dramáticamente hasta competir en escala con la repulsión coulómbica de valencia.
+
+\section{Resultados Angulares y la Transición a Acoplamiento Intermedio}
+
+\subsection{Ensamblaje y diagonalización del Hamiltoniano}
+Sustitución de las integrales radiales calculadas en las matrices algebraicas desarrolladas teóricamente. Se ejecuta la diagonalización numérica de $J$ para extraer los niveles de energía físicos absolutos sin recurrir a la teoría de perturbaciones.
+
+\subsection{Análisis del colapso del acoplamiento $LS$}
+Discusión física profunda estructurada a través de la secuencia homóloga:
+\begin{itemize}
+    \item \textbf{El límite puro (Carbono):} Verificación de la pureza de los números cuánticos $LS$ y la obediencia estricta a la regla de intervalos de Landé.
+    \item \textbf{La fractura inicial (Silicio):} Observación de las primeras desviaciones medibles de la regla de intervalos, originadas por la injerencia de los elementos fuera de la diagonal.
+    \item \textbf{El régimen de mezcla fuerte (Germanio):} El análisis crítico de la matriz diagonalizada, demostrando que los eigenvectores de $J=0$ y $J=2$ son composiciones altamente mezcladas de los términos de singlete y triplete. Se discute la pérdida de significado físico de las etiquetas espectroscópicas tradicionales frente al peso dominante de la relatividad escalar.
+\end{itemize}
+
+\section{Conclusiones}
+Se consolida el éxito de transitar desde una formulación estricta de electrones independientes sobre una base polinomial hacia la captura analítica de la fenomenología relativista. El uso de la técnica de \textit{Level Shifting} demostró ser esencial para acceder al campo fuerte del Germanio, validando la solidez de la arquitectura numérica. Finalmente, la evaluación exacta del álgebra de Racah permitió observar innegablemente la superioridad del modelo de acoplamiento intermedio matricial frente a aproximaciones de campo débil, trazando de manera ininterrumpida el colapso del esquema $LS$ en el espacio multielectrónico.
+
+\end{document}

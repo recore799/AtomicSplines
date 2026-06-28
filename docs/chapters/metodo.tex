@@ -1,9 +1,47 @@
 \chapter{Método Numérico}
 \label{ch:metodo}
 
-\section{La Ecuación de Poisson y el Método de B-splines}
+\section{El Ciclo del Campo Autoconsistente (SCF)}
 
-La evaluación numérica directa de las integrales de Slater a través de cuadraturas dobles en dos dimensiones resulta computacionalmente ineficiente y propensa a inestabilidades en mallas discretas finitas. Un enfoque alternativo consiste en explotar el hecho de que el potencial radial multipolar \( y^k(b,d;r) \) satisface una ecuación diferencial ordinaria de segundo orden lineal: la ecuación de Poisson unidimensional radial asociada a la función de Green multipolar:
+Como se demostró al cierre del marco teórico, el problema de muchos cuerpos en mecánica cuántica sufre de un acoplamiento cíclico estricto: es imposible deducir los orbitales electrónicos de un átomo sin conocer el potencial electrostático que ellos mismos generan, y es imposible construir dicho potencial sin disponer de los orbitales. 
+
+Para romper esta recursión infinita y resolver numéricamente el límite de Hartree-Fock, implementamos el algoritmo de Campo Autoconsistente (SCF, por sus siglas en inglés: \textit{Self-Consistent Field}). Si proyectamos las funciones de onda radiales incógnitas $P_a(r)$ sobre un conjunto base finito de dimensión $N$, las ecuaciones íntegro-diferenciales de campo medio se transforman en las ecuaciones algebraicas matriciales generalizadas de Roothaan-Hall:
+
+\begin{equation}
+  \bm{F}\bm{c} = \epsilon\bm{S}\bm{c},
+\end{equation}
+
+donde $\bm{c}$ es el vector columna que contiene los coeficientes de expansión del orbital, $\bm{S}$ es la matriz de traslape (\textit{overlap}) de las funciones base, y $\bm{F}$ es la Matriz de Fock. La matriz de Fock es el análogo discreto del Hamiltoniano efectivo, y su construcción depende explícitamente de la matriz de densidad $\bm{P}$, la cual se forma a partir de los vectores $\bm{c}$ de los estados ocupados.
+
+La transición desde la ecuación diferencial analítica de Hartree-Fock hacia la formulación matricial de Roothaan-Hall se logra aplicando el mismo método de Galerkin que utilizaremos más adelante para la ecuación de Poisson. Al expandir las funciones radiales incógnitas en una base finita $P_a(r) = \sum_j c_j B_j(r)$ y proyectar el operador diferencial de Fock sobre una función de prueba $B_i(r)$, construimos los elementos matriciales exactos:
+
+\begin{equation}
+  F_{ij} = \int_0^{R_{\text{max}}} B_i(r) \hat{f} B_j(r) \dd{r} \quad \text{y} \quad S_{ij} = \int_0^{R_{\text{max}}} B_i(r) B_j(r) \dd{r}.
+\end{equation}
+
+Notablemente, al integrar por partes el operador de energía cinética oculto dentro de $\hat{f}$, se rebaja el requerimiento de continuidad de la base, evitando evaluar derivadas segundas.
+
+El algoritmo procede metodológicamente de la siguiente manera:
+
+\begin{enumerate}
+    \item \textbf{El Ansatz Inicial:} El ciclo exige un "punto de partida" o \textit{ansatz}. Dado que no poseemos las soluciones verdaderas, inyectamos en el sistema un conjunto de funciones de onda iniciales. Comúnmente, utilizamos los orbitales analíticos del átomo de hidrógeno (sometidos a una carga nuclear efectiva $Z_{\text{eff}}$) ya que capturan cualitativamente la estructura de nodos esperada. A partir de ellas, calculamos una densidad electrónica inicial.
+    \item \textbf{Construcción del Operador de Fock:} Se asume de manera efímera que estos orbitales "adivinados" son los reales. Evaluamos las integrales de Slater para construir las componentes de repulsión de Coulomb y de Intercambio interelectrónica. Al sumar la influencia del núcleo, ensamblamos la matriz global $\bm{F}$. 
+    \item \textbf{Diagonalización:} Resolvemos el problema de autovalores generalizado $\bm{F}\bm{c} = \epsilon\bm{S}\bm{c}$ mediante la diagonalización de la matriz de Fock. La solución arroja un \textit{nuevo} conjunto de vectores $\bm{c}$ óptimos y energías propias $\epsilon$.
+    \item \textbf{Criterio de Autoconsistencia:} Se comparan los orbitales de salida con los de entrada. Si las funciones o las energías propias difieren numéricamente más allá de una tolerancia crítica, descartamos los orbitales viejos, adoptamos los nuevos para construir una nueva matriz de densidad, y regresamos al paso 2. El ciclo culmina cuando la topología de la función de onda que ingresa produce un campo idéntico al que la formó. 
+\end{enumerate}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=1.0\textwidth]{scf}
+  \caption{Diagrama de flujo representativo del ciclo iterativo del Campo Autoconsistente (SCF). El proceso comienza con la construcción de un campo medio inicial (ansatz hidrogenoide) y evoluciona cíclicamente a través de la formación de los operadores de Coulomb e Intercambio, y la diagonalización de la matriz de Fock. El ciclo concluye cuando las energías y las densidades de la función de onda alcanzan un estado de equilibrio definido por una tolerancia numérica estricta.}
+  \label{fig:scf-cycle}
+\end{figure}
+
+\section{B-splines y el Obstáculo de la Ecuación de Poisson}
+
+El algoritmo SCF delineado impone un desafío monumental en ciencia computacional. Evaluar la integral doble espacial de las interacciones de Slater (ver Ec. \ref{eq:slater_k}) durante decenas o cientos de iteraciones por cada capa electrónica es computacionalmente intratable para mallas densas y extensas, siendo el cuello de botella tradicional de los solucionadores atómicos ab-initio.
+
+Un enfoque revolucionario para sortear la cuadratura bidimensional consiste en reconocer que el potencial radial multipolar $y^k(b,d;r) = r \int_0^\infty \frac{r_{<}^k}{r_{>}^{k+1}} P_b(s) P_d(s) \dd{s}$ satisface una ecuación diferencial ordinaria de segundo orden lineal: la ecuación de Poisson unidimensional radial asociada a la función de Green multipolar:
 
 \begin{equation}
   \label{eq:poisson-radial}
@@ -12,74 +50,91 @@ La evaluación numérica directa de las integrales de Slater a través de cuadra
 
 Esta ecuación diferencial ordinaria requiere la especificación de dos condiciones de frontera físicamente consistentes:
 \begin{itemize}
-\item \textbf{Regularidad en el origen (\(r \to 0\)):} Debido a la barrera centrífuga del operador radial, exigimos que el potencial radial satisfaga \( y^k(b,d;0) = 0 \). Específicamente, cerca del origen la solución se comporta de forma asintótica como \( y^k(r) \sim r^{k+1} \).
-\item \textbf{Condición asintótica de Robin (\(r \to R_{max}\)):} En el límite exterior de confinamiento del sistema, el potencial radial decae como \( y^k(r) \sim r^{-k} \). Esto impone una condición de contorno de tipo Robin sobre el extremo exterior \( R_{max} \):
+\item \textbf{Regularidad en el origen (\(r \to 0\)):} Debido a la barrera centrífuga del operador radial, exigimos que el potencial radial satisfaga \( y^k(b,d;0) = 0 \). Asintóticamente, \( y^k(r) \sim r^{k+1} \).
+\item \textbf{Condición asintótica de Robin (\(r \to R_{\text{max}}\)):} En el límite exterior, el potencial decae como \( y^k(r) \sim r^{-k} \). Esto impone una condición sobre la derivada en \( R_{\text{max}} \):
   \begin{equation}
     \label{eq:robin}
-    \left. \frac{\dd{y^k}}{\dd{r}} + \frac{k}{r} y^k \right|_{r=R_{max}} = 0.
+    \left. \frac{\dd{y^k}}{\dd{r}} + \frac{k}{r} y^k \right|_{r=R_{\text{max}}} = 0.
   \end{equation}
 \end{itemize}
 
-Para resolver este problema diferencial de contorno con precisión de frontera excepcional, proyectamos la ecuación en una base débil de B-splines. Multiplicando \eqref{eq:poisson-radial} por una función de prueba \( B_i(r) \) e integrando por partes el término de la segunda derivada radial, obtenemos la formulación débil (método de Galerkin):
+Para resolver este problema con una fidelidad paramétrica robusta, proyectamos la ecuación en una base débil de funciones localizadas: los \textbf{polinomios B-splines} (ver detalles constructivos en el \textbf{Apéndice \ref{ap:splines}}). 
+Multiplicando \eqref{eq:poisson-radial} por una función de prueba \( B_i(r) \) e integrando por partes el término de la segunda derivada radial, obtenemos la formulación débil (método de Galerkin):
 
 \begin{equation}
-  \int_0^{R_{max}} \frac{\dd{B_i}}{\dd{r}} \frac{\dd{y^k}}{\dd{r}} \dd{r} - \eval{ B_i(r) \frac{\dd{y^k}}{\dd{r}} }_0^{R_{max}} + k(k+1) \int_0^{R_{max}} B_i(r) \frac{1}{r^2} y^k(r) \dd{r} = (2k+1) \int_0^{R_{max}} B_i(r) \frac{P_b(r) P_d(r)}{r} \dd{r}.
+  \int_0^{R_{\text{max}}} \frac{\dd{B_i}}{\dd{r}} \frac{\dd{y^k}}{\dd{r}} \dd{r} - \eval{ B_i(r) \frac{\dd{y^k}}{\dd{r}} }_0^{R_{\text{max}}} + k(k+1) \int_0^{R_{\text{max}}} B_i(r) \frac{1}{r^2} y^k(r) \dd{r} = (2k+1) \int_0^{R_{\text{max}}} B_i(r) \frac{P_b(r) P_d(r)}{r} \dd{r}.
 \end{equation}
 
-Al sustituir la condición de Robin \eqref{eq:robin} en la frontera \( R_{max} \), el término de frontera en el contorno exterior se transforma directamente en:
+Al sustituir la condición de Robin \eqref{eq:robin}, el término de contorno exterior se transforma algebraicamente en:
 
 \begin{equation}
-  - B_i(R_{max}) \frac{\dd{y^k(R_{max})}}{\dd{r}} = \frac{k}{R_{max}} B_i(R_{max}) y^k(R_{max}).
+  - B_i(R_{\text{max}}) \frac{\dd{y^k(R_{\text{max}})}}{\dd{r}} = \frac{k}{R_{\text{max}}} B_i(R_{\text{max}}) y^k(R_{\text{max}}).
 \end{equation}
 
-En la representación discretizada donde el potencial radial se expande como una combinación lineal de splines \( y^k(r) = \sum_j y_j B_j(r) \), esta formulación débil se traduce en un sistema algebraico lineal de la forma \( \bm{A}_k \bm{y} = \bm{b} \), donde la matriz del operador radial \( \bm{A}_k \) está dada analíticamente por:
+En la representación discretizada donde el potencial radial se expande como \( y^k(r) = \sum_j y_j B_j(r) \), esta formulación débil se traduce en un sistema algebraico lineal de la forma \( \bm{A}_k \bm{y} = \bm{b} \), donde la matriz del operador radial \( \bm{A}_k \) está dada analíticamente por:
 
 \begin{equation}
   \bm{A}_k = 2 \bm{T} + k(k+1) \bm{R}^{-2},
 \end{equation}
 
-siendo \( T_{ij} = \frac{1}{2} \int_0^{R_{max}} \frac{\dd{B_i}}{\dd{r}} \frac{\dd{B_j}}{\dd{r}} \dd{r} \) la matriz del operador de energía cinética esférica, y \( R^{-2}_{ij} = \int_0^{R_{max}} B_i(r) \frac{1}{r^2} B_j(r) \dd{r} \) la matriz de dispersión inversa cuadrática. La incorporación analítica de la condición de frontera de Robin se logra sumando directamente la contribución de contorno \( \frac{k}{R_{max}} \) al último elemento diagonal de la matriz del sistema \( A_{nn} \). 
+siendo \( T_{ij} = \frac{1}{2} \int_0^{R_{\text{max}}} \frac{\dd{B_i}}{\dd{r}} \frac{\dd{B_j}}{\dd{r}} \dd{r} \) la matriz del operador de energía cinética y \( R^{-2}_{ij} = \int_0^{R_{\text{max}}} B_i(r) \frac{1}{r^2} B_j(r) \dd{r} \) la dispersión inversa cuadrática. La incorporación analítica de la condición de Robin se logra sumando el escalar de contorno \( \frac{k}{R_{\text{max}}} \) al último elemento diagonal \( A_{nn} \). 
 
-Para garantizar el comportamiento regular asintótico \( r^{k+1} \) cerca del origen sin inestabilidades artificiales, truncamos los primeros \( k+1 \) splines de la base, definiendo el dominio algebraico activo a partir del índice \( k+2 \). Este enfoque débil e incondicionalmente simétrico permite obtener de manera exacta y ultra-eficiente el potencial radial por medio de una descomposición de Cholesky del operador acoplado, evitando por completo la evaluación de cuadraturas bidimensionales costosas. Detalles pormenorizados sobre la teoría de B-splines y la implementación computacional eficiente se exponen en el \textbf{Apéndice \ref{ap:splines}}.
+Este enfoque incondicionalmente simétrico permite obtener de manera exacta y ultra-eficiente el potencial radial por medio de una descomposición de Cholesky del operador acoplado, la cual se factoriza \textbf{una sola vez} fuera del ciclo SCF, desintegrando por completo el cuello de botella de las cuadraturas bidimensionales recurrentes.
 
 \section{Operadores de Coulomb e Intercambio y ROHF}
 
-Una vez resuelta la ecuación de Poisson para todos los pares de orbitales atómicos, podemos definir formalmente los operadores unidimensionales efectivos de Coulomb (\( \hat{J} \)) e Intercambio (\( \hat{K} \)) que actúan de forma radial sobre una función de onda radial \( P_a(r) \):
+Una vez resuelta algebraicamente la ecuación de Poisson para todos los pares de orbitales, podemos construir explícitamente los operadores efectivos unidimensionales de Coulomb (\( \hat{J} \)) e Intercambio (\( \hat{K} \)) que actúan sobre un estado radial \( P_a(r) \):
 
 \begin{equation}
   J_b(r) P_a(r) = \sum_k c_k(a,b,a,b) \frac{1}{r} y^k(b,b; r) P_a(r),
 \end{equation}
 
 \begin{equation}
-  K_b(r) P_a(r) = \sum_k c'_k(a,b,b,a) \frac{1}{r} y^k(a,b; r) P_b(r),
+  K_b(r) P_a(r) = \sum_k c'_k(a,b,b,a) \frac{1}{r} y^k(a,b; r) P_b(r).
 \end{equation}
 
-donde \( c'_k(a,b,b,a) \) denota el coeficiente geométrico específico para el intercambio cuántico esférico. Al promediar e incorporar estos operadores de campo medio sobre todas las capas ocupadas en el sistema, construimos el \textbf{Operador de Fock} radial general:
+Al sumar estos operadores sobre todas las capas ocupadas, obtenemos el \textbf{Operador de Fock radial} global:
 
 \begin{equation}
   \hat{f} = \hat{h} + \sum_b \qty( \hat{J}_b - \hat{K}_b ).
 \end{equation}
 
-Aplicando el método de Galerkin para proyectar este operador diferencial integro-operador radial sobre la base finita ortonormal de B-splines, recuperamos de forma robusta las ecuaciones de autovalores generalizadas de Roothaan:
+\subsection{El Teorema de Unsöld y el Fracaso del RHF}
+
+El algoritmo clásico Hartree-Fock Restringido (RHF) está cimentado implícitamente sobre el \textbf{Teorema de Unsöld}. Este teorema mecánico-cuántico establece que la suma de las densidades de probabilidad angulares de una subcapa completamente llena es exactamente igual a una constante:
 
 \begin{equation}
-  \bm{F}\bm{c} = \epsilon\bm{S}\bm{c}.
+  \sum_{m_l = -l}^{l} \abs{Y_l^{m_l}(\theta, \phi)}^2 = \frac{2l+1}{4\pi}.
 \end{equation}
 
-Para sistemas de capa abierta como el átomo de Carbono en su estado basal promedio (\( 1s^2 2s^2 2p^2 \)), el método de Hartree-Fock restringido de capa abierta (ROHF) introduce operadores de Fock diferenciados e independientes para cada bloque simétrico angular para asegurar la consistencia variacional y la ortogonalidad estricta entre capas:
+Físicamente, esto garantiza que los átomos con capas cerradas (como los gases nobles) posean una densidad electrónica con \textbf{simetría esférica perfecta}. El método RHF explota esta topología asumiendo que el campo central repulsivo no tiene dependencias angulares, permitiendo integrar sobre todas las orientaciones sólidas y acoplando perfectamente a los electrones en pares de espín antiparalelo.
+
+Sin embargo, nuestro ensamble físico se centra en la configuración de valencia $np^2$ (como el Carbono), la cual posee una capa abierta: un subnivel incompleto con densidad direccional que carece de los $6$ electrones necesarios para la clausura esférica. Al carecer de la protección geométrica del teorema de Unsöld, el potencial ya no es isotrópico. Someter esta configuración al RHF tradicional induciría interacciones falsas, obligando a los electrones de valencia solitarios a auto-repelerse e intercambiarse con ellos mismos en un campo erróneamente forzado a ser esférico.
+
+Para prevenir este desastre físico, el algoritmo avanza hacia las ecuaciones \textbf{ROHF} (\textit{Restricted Open-Shell Hartree-Fock}). ROHF rectifica la pérdida de simetría esférica mediante un promedio termodinámico de configuraciones y fracturando el Operador de Fock atómico en múltiples bloques adaptados a la topología de cada capa. 
+
+Bajo la aproximación de campo central promediado para un átomo tipo Carbono ($1s^2 2s^2 2p^2$), ROHF desacopla el sistema en:
 
 \begin{itemize}
 \item \textbf{El Bloque Fock de la Capa Cerrada (\(F_s\)):}
-  Tanto el orbital \( 1s \) como el \( 2s \) comparten una simetría común y experimentan el mismo potencial central esférico proveniente del core cerrado y la contribución de promedio esférico total del orbital activo de valencia \( 2p \):
+  Orbitales llenos como el $1s$ y $2s$ interactúan convencionalmente con el núcleo y su propia repulsión cruzada, y además sufren la interacción promedio del electrón activo $2p$:
   \begin{equation}
-    F_s = H_{core} + J_{core} + J_{2p}^{spherical} - K_{core}^{(s)} - K_{2p\to s},
+    F_s = H_{core} + J_{core} + J_{2p}^{\text{spherical}} - K_{core}^{(s)} - K_{2p\to s}.
   \end{equation}
-  donde la diagonalización del operador acoplado \( F_s \) sobre la base activa de splines radiales para simetría \( s \) asegura automáticamente la ortogonalidad mutua estricta entre las funciones radiales \( P_{1s} \) y \( P_{2s} \).
+  La diagonalización de \( F_s \) impone que si el sistema es autoconsistente, todas las densidades interiores se mantienen mutuamente ortogonales, evitando el colapso de Rydberg.
   
 \item \textbf{El Bloque Fock de la Capa Abierta (\(F_p\)):}
-  El electrón activo de valencia \( 2p \) experimenta el campo medio generado por el core cerrado, pero únicamente interactúa con \( w-1 = 1.0 \) electrones equivalentes en su propia capa abierta para evitar la auto-interacción artificial (promedio de configuración de Cowan). De este modo, su operador efectivo se escribe como:
+  La valencia \( 2p \) experimenta el campo repulsivo masivo de las capas internas (\textit{core}), pero al interaccionar consigo misma, debe hacerlo con un número fraccionario de electrones equivalentes para suprimir la auto-interacción:
   \begin{equation}
-    F_p = H_{core}^{(p)} + J_{core} + J_{2p}^{intra} - K_{core}^{(p)} - K_{2p}^{intra},
+    F_p = H_{core}^{(p)} + J_{core} + J_{2p}^{\text{intra}} - K_{core}^{(p)} - K_{2p}^{\text{intra}}.
   \end{equation}
-  donde el potencial Coulombiano radial de la capa abierta \( J_{2p}^{intra} \) se escala exactamente por \( 1.0 \) en el monopolo fundamental \( k=0 \), y el término de intercambio cuántico intracapa \( K_{2p}^{intra} \) actúa selectivamente modulando la componente geométrica del multipolo angular cuadrangular \( k=2 \) mediante un factor de peso exacto de \( \frac{5}{25} \), reflejando con rigor físico absoluto la auto-interacción y correlación de espín restringida de la configuración abierta del Carbono.
+  El rigor matemático detrás de este operador radica en los coeficientes geométricos de Racah. Para un estado triplete $^3P$, el término cruzado intracapa $K_{2p}^{\text{intra}}$ se escala por el coeficiente $f_2 = -5/25$ para acoplar la componente del multipolo $k=2$. Esta ponderación precisa rectifica analíticamente la física del hueco de Fermi, obligando a que la auto-repulsión del $2p$ colapse y solo sobreviva su repulsión magnética genuina restringida.
 \end{itemize}
+
+Bajo la reestructuración ROHF, el criterio de convergencia deja de evaluar la estabilidad de un único campo, para transmutar en un delicado equilibrio iterativo donde los tensores de Fock ortogonales ($F_s$ y $F_p$) se entrelazan hasta acoplarse simétricamente.
+
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: t
+%%% End:

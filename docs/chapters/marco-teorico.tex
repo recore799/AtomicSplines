@@ -1,154 +1,94 @@
 \chapter{Marco Teórico}
 \label{ch:marco-teorico}
 
-\section{Elementos de matriz del Hamiltoniano}
+\section{El Problema Multielectrónico y la Aproximación del Campo Medio}
 
-Encontrar la función de onda exacta en el inmenso espacio de Hilbert de \( N \) cuerpos es intratable. Por esto, restringimos el espacio de configuraciones a soluciones que se pueden expresar como un determinante de Slater para describir a un conjunto de partículas independientes que interactúan con un campo medio. A esta restricción se le conoce como la aproximación de Hartree-Fock uniconfiguracional.
+El objetivo fundamental de la física atómica computacional es resolver la ecuación de Schrödinger independiente del tiempo para un sistema de \( N \) electrones interactuando con un núcleo fijo de carga \( Z \). El Hamiltoniano no relativista en unidades atómicas está dado por:
 
-Una consecuencia de esta restricción artificial y puramente matemática es una manifestación parcial de la dinámica del espín emergente en las ecuaciones de campo medio a través del operador de intercambio, incluso sin interacciones de espín-órbita explícitas en el Hamiltoniano. Dicho efecto mecánico se conoce como correlación estática y se puede entender por medio del concepto de hueco de Fermi, en contraste a la correlación dinámica y los huecos de Coulomb que se pueden capturar por medio de los métodos post-Hartree-Fock y por la teoría de la funcional de la densidad (DFT).
+\begin{equation}
+  \label{eq:hamiltonian-mb}
+  \hat{H} = \sum_{i=1}^N \qty(-\frac{1}{2}\laplacian_i - \frac{Z}{r_i}) + \sum_{i<j}^N \frac{1}{\abs{\bm{r}_i-\bm{r}_j}}.
+\end{equation}
 
-El objetivo central de métodos como Hartree-Fock es evaluar la energía esperada del sistema:
+Encontrar la función de onda exacta \( \Psi(\bm{x}_1, \bm{x}_2, \dots, \bm{x}_N) \) en este inmenso espacio de Hilbert de \( 3N \) dimensiones espaciales es analítica y numéricamente intratable para \( N \geq 3 \). El obstáculo principal radica en el término de repulsión interelectrónica (el operador de dos cuerpos), el cual acopla todas las coordenadas de las partículas, impidiendo la separación de variables. 
+
+Para sortear esta barrera, introducimos la aproximación de campo medio o Hartree-Fock. En esta aproximación, se asume que cada electrón se mueve independientemente de los demás, sintiendo únicamente el potencial electrostático esférico promedio generado por el núcleo y la nube de carga del resto de los electrones. 
+
+\section{El Determinante de Slater y la Antisimetría}
+
+Debido a que los electrones son fermiones, la mecánica cuántica exige que la función de onda total del sistema sea estrictamente antisimétrica bajo el intercambio de cualquier par de partículas (Principio de exclusión de Pauli). Matemáticamente, la forma más sencilla de construir un estado antisimétrico a partir de orbitales de partículas individuales (espín-orbitales) es mediante un determinante, conocido como el \textbf{Determinante de Slater}:
+
+\begin{equation}
+  \Psi(\bm{x}_1, \bm{x}_2, \dots, \bm{x}_N) = \frac{1}{\sqrt{N!}}
+  \vmqty{
+    \phi_1(\bm{x}_1) & \phi_2(\bm{x}_1) & \cdots & \phi_N(\bm{x}_1) \\
+    \phi_1(\bm{x}_2) & \phi_2(\bm{x}_2) & \cdots & \phi_N(\bm{x}_2) \\
+    \vdots & \vdots & \ddots & \vdots \\
+    \phi_1(\bm{x}_N) & \phi_2(\bm{x}_N) & \cdots & \phi_N(\bm{x}_N)
+  }.
+\end{equation}
+
+El objetivo central del método de Hartree-Fock es evaluar el funcional de energía del sistema asumiendo que el estado es un único determinante de Slater:
 
 \begin{equation}
   \label{eq:energy-func}
   E = \ev{\hat{H}}{\Psi},
 \end{equation}
 
-donde el Hamiltoniano de muchos cuerpos, en unidades atómicas, se escribe como:
+y encontrar variacionalmente el conjunto de espín-orbitales \( \{ \phi_i \} \) que minimicen esta energía, manteniendo la condición de ortonormalidad \( \braket{\phi_i}{\phi_j} = \delta_{ij} \).
+
+\section{Suficiencia del Modelo de Dos Electrones}
+
+Al expandir el valor esperado de la energía \eqref{eq:energy-func} sobre el determinante de Slater de $N$ cuerpos, el problema parece, a primera vista, colosalmente complejo por sus expansiones factoriales. Sin embargo, observemos con detenimiento la estructura del Hamiltoniano atómico \eqref{eq:hamiltonian-mb}: está compuesto exclusivamente por operadores de \textbf{un cuerpo} (energía cinética y atracción nuclear) y operadores de \textbf{dos cuerpos} (repulsión coulómbica entre pares de electrones). 
+
+No existen operadores fundamentales de tres o más cuerpos en el Hamiltoniano electrostático. Esta profunda simplificación física dictamina que, sin importar si estamos resolviendo el litio ($Z=3$) o el oganesón ($Z=118$), el acoplamiento directo siempre ocurre exclusivamente entre pares de orbitales. Por lo tanto, aislar el comportamiento de un sistema de solo dos electrones es suficiente para derivar las reglas de interacción generales, las cuales posteriormente escalaremos como una sumatoria por pares para todo el átomo.
+
+Consideremos entonces un sistema abstracto de dos electrones descritos por los espín-orbitales \( \ket{a} \) y \( \ket{b} \). El determinante se reduce a una matriz de $2 \times 2$:
 
 \begin{equation}
-  \label{eq:hamiltonian-mb}
-  \hat{H} = \sum_{i=1}^N \hat{h}_i^{(l)} + \sum_{i<j}^N \frac{1}{\abs{\bm{r}_i-\bm{r}_j}}.
+  \ket{\Psi_{ab}} = \frac{1}{\sqrt{2}} [\phi_a(\bm{x}_1)\phi_b(\bm{x}_2) - \phi_b(\bm{x}_1)\phi_a(\bm{x}_2)].
 \end{equation}
 
-La expresión (\ref{eq:energy-func}) sugiere el uso de métodos variacionales para determinar, bajo constricciones de ortonormalidad, la función de onda que minimiza su valor. Al evaluar el funcional de la energía, se obtienen dos tipos de integrales:
+Al evaluar el operador perturbativo de repulsión \( \frac{1}{r_{12}} \), obtenemos:
+
+\begin{equation}
+  \ev{\frac{1}{r_{12}}}{\Psi_{ab}} = \frac{1}{2} \int \dd{\bm{x}_1} \dd{\bm{x}_2} \abs{\phi_a(\bm{x}_1)\phi_b(\bm{x}_2) - \phi_b(\bm{x}_1) \phi_a(\bm{x}_2) }^2 \frac{1}{r_{12}}.
+\end{equation}
+
+Al desarrollar el binomio al cuadrado, se revelan dos tipos cualitativamente distintos de interacciones electrónicas, producto directo de la imposición matemática de la antisimetría:
 
 \begin{itemize}
-\item Integrales de un cuerpo:
+\item \textbf{Interacción Directa (Integrales de Coulomb, \(J_{ab}\)):}
+  Provienen de los términos cuadrados perfectos. Reflejan la electrostática clásica: la repulsión de Coulomb entre la nube de densidad de carga del electrón $a$ y la nube de densidad del electrón $b$. 
   \begin{equation}
-    \label{eq:one-body}
-    h_{aa} = \ev{\hat{h}}{a} = \int \phi_a^{*}(\bm{x}) \qty(-\frac{1}{2}\laplacian - \frac{Z}{r})\phi_a(\bm{x}) \dd{\bm{x}}.
+  J_{ab} = \int \dd{\bm{r}_1} \dd{\bm{r}_2} \abs{\psi_a(\bm{r}_1)}^2 \frac{1}{r_{12}} \abs{\psi_b(\bm{r}_2)}^2.
   \end{equation}
-\item Integrales de dos cuerpos:
+
+\item \textbf{Interacción de Interferencia (Integrales de Intercambio, \(K_{ab}\)):}
+  Surgen exclusivamente del término cruzado del binomio. Es un efecto puramente cuántico sin equivalente clásico, generado por el solapamiento indistinguible de los estados. Este término aparece únicamente si ambos electrones poseen el mismo estado de espín, creando un "Hueco de Fermi": una repulsión topológica que mantiene alejados a los electrones con espines paralelos más allá de su repulsión de carga.
   \begin{equation}
-    \label{eq:two-body}
-    g_{abab} = \mel{ab}{\frac{1}{r_{12}}}{ab} \qc g_{abba} = \mel{ab}{\frac{1}{r_{12}}}{ba}.
+  K_{ab} = \delta_{\sigma_a \sigma_b} \int \dd{\bm{r}_1} \dd{\bm{r}_2} \psi_a^*(\bm{r}_1)\psi_b^*(\bm{r}_2)\frac{1}{r_{12}}\psi_b(\bm{r}_1)\psi_a(\bm{r}_2).
   \end{equation}
 \end{itemize}
 
-\subsection{El sistema de dos electrones}
-
-Consideremos un sistema de solo dos electrones descritos por los espín-orbitales \( \ket{a} \) y \( \ket{b} \). Debido a que los operadores en (\ref{eq:hamiltonian-mb}) son de uno o dos cuerpos, es suficiente con evaluar las interacciones en un sistema de dos electrones, ya que un tercer electrón no altera la interacción mutua entre los primeros dos. El estado del sistema está dado por un determinante de Slater de \( 2\times 2 \), es decir:
-
-\begin{align}
-\ket{\Psi} &= \frac{1}{\sqrt{2}} \vmqty{\phi_a(\bm{x}_1) & \phi_b(\bm{x}_1) \\ \phi_a(\bm{x}_2) & \phi_b(\bm{x}_2)} \nonumber \\
-&= \frac{1}{\sqrt{2}} [\phi_a(\bm{x}_1)\phi_b(\bm{x}_2) - \phi_b(\bm{x}_1)\phi_a(\bm{x}_2)].
-\end{align}
-
-Evaluemos el valor esperado del operador de repulsión de dos cuerpos \( \hat{V} = \frac{1}{r_{12}} \):
-
+Gracias a las Reglas de Slater-Condon, se demuestra formalmente que la energía total de repulsión para el determinante de $N$ cuerpos es simplemente la suma de las interacciones acopladas de los pares:
 \begin{equation}
-\ev{\frac{1}{r_{12}}}{\Psi} = \frac{1}{2} \int \dd{\bm{x}_1} \dd{\bm{x}_2} \abs{\phi_a(\bm{x}_1)\phi_b(\bm{x}_2) - \phi_b(\bm{x}_1) \phi_a(\bm{x}_2) }^2 \frac{1}{r_{12}}.
+  E_{ee} = \sum_{a=1}^N \sum_{b>a}^N \qty( J_{ab} - K_{ab} ).
 \end{equation}
 
-Al desarrollar el módulo al cuadrado, aparecen dos tipos distintos de integrales:
+\section{Expansión Multipolar y la Necesidad Iterativa}
 
-\begin{itemize}
-\item \textbf{Términos directos:}
-  \begin{equation}
-  \frac{1}{2} \int \dd{\bm{x}_1}\dd{\bm{x}_2} \qty[ \abs{\phi_a(\bm{x}_1)}^2 \abs{\phi_b(\bm{x}_2)}^2 + \abs{\phi_b(\bm{x}_1)}^2 \abs{\phi_a(\bm{x}_2)}^2 ]\frac{1}{r_{12}}.
-  \end{equation}
-  Dado que \( \bm{x}_1 \) y \( \bm{x}_2 \) son variables mudas de integración, ambos términos son idénticos y se suman, cancelando el factor de \( \frac{1}{2} \):
-  \begin{equation}
-  \int \dd{\bm{x}_1}\dd{\bm{x}_2} \abs{\phi_a(\bm{x}_1)}^2 \abs{\phi_b(\bm{x}_2)}^2 \frac{1}{r_{12}}.
-  \end{equation}
-\item \textbf{Términos de interferencia (cruzados):}
-  \begin{equation}
-  - \frac{1}{2} \int \dd{\bm{x}_1}\dd{\bm{x}_2} \qty[ \phi_a^{*}(\bm{x}_1)\phi_b^{*}(\bm{x}_2)\phi_b(\bm{x}_1)\phi_a(\bm{x}_2) + \qcc ]\frac{1}{r_{12}}.
-  \end{equation}
-\end{itemize}
+En un campo con simetría central (donde la base orbital $\phi_{a}$ se puede separar en una parte radial $P_a(r)$ y otra angular asociada a armónicos esféricos), el operador $\frac{1}{r_{12}}$ se puede descomponer mediante armónicos esféricos. Esto nos permite separar analíticamente la dependencia angular (geométrica) de la física radial. (Para detalles exhaustivos sobre tensores irreducibles, consúltese el \textbf{Apéndice \ref{ap:tensores}}). 
 
-Recordemos que cada espín-orbital se factoriza como \( \phi_a(\bm{x}) = \psi_a(\bm{r}) \chi_a(\sigma) \), donde \( \psi_a(\bm{r}) \) es la función espacial y \( \chi_a(\sigma) \) representa el estado de espín. Al separar las integrales espaciales de las sumas sobre las coordenadas de espín discretas, obtenemos:
-
-\begin{itemize}
-\item \textbf{Interacción de Coulomb (\(J_{ab}\)):}
-  \begin{equation}
-  J_{ab} = \underbrace{ \braket{\sigma_a}{\sigma_a} \braket{\sigma_b}{\sigma_b} }_{= 1} \int \dd{\bm{r}_1} \dd{\bm{r}_2} \abs{\psi_a(\bm{r}_1)}^2 \frac{1}{r_{12}} \abs{\psi_b(\bm{r}_2)}^2.
-  \end{equation}
-  Este término sobrevive siempre. Representa la repulsión electrostática clásica entre dos densidades de carga continuas.
-
-\item \textbf{Interacción de Intercambio (\(K_{ab}\)):}
-  \begin{equation}
-  K_{ab} = \underbrace{ \braket{\sigma_a}{\sigma_b} \braket{\sigma_b}{\sigma_a} }_{= \delta_{\sigma_a \sigma_b}} \int \dd{\bm{r}_1} \dd{\bm{r}_2} \psi_a^*(\bm{r}_1)\psi_b^*(\bm{r}_2)\frac{1}{r_{12}}\psi_b(\bm{r}_1)\psi_a(\bm{r}_2).
-  \end{equation}
-  Este término surge exclusivamente si ambos electrones poseen el mismo estado de espín (\( \delta_{\sigma_a \sigma_b} = 1 \)). Es una consecuencia puramente geométrica de la antisimetría exigida por el determinante de Slater y da origen al llamado hueco de Fermi, una zona de exclusión espacial alrededor de cada electrón que reduce eficazmente la repulsión electrostática entre partículas de espín paralelo.
-\end{itemize}
-
-En la notación de Dirac usual para integrales espaciales, estas contribuciones se escriben de manera compacta como:
-
-\begin{itemize}
-\item \textbf{Interacción de Coulomb (\(J_{ab}\)):}
-  \begin{equation}
-  \mel{ab}{\frac{1}{r_{12}}}{ab}
-  \end{equation}
-\item \textbf{Interacción de Intercambio (\(K_{ab}\)):}
-  \begin{equation}
-  \delta_{\sigma_a \sigma_b} \mel{ab}{\frac{1}{r_{12}}}{ba}.
-  \end{equation}
-\end{itemize}
-
-\section{La base de una partícula}
-
-Para sistemas esféricos como los átomos, el estado espacial de un electrón queda unívocamente definido por el conjunto de números cuánticos \( \ket{n_a l_a m_{l_a}} \), donde:
-
-\begin{itemize}
-\item \( n_a \): Número cuántico principal, que determina la energía y extensión radial.
-\item \( l_a \): Momento angular orbital.
-\item \( m_{l_a} \): Proyección magnética del momento angular.
-\end{itemize}
-
-Por la simetría esférica del Hamiltoniano, en la representación de coordenadas esféricas exigimos que estas funciones de onda formen una base ortonormal factorizada en componentes radiales y angulares:
+La repulsión interelectrónica se colapsa entonces en lo que definimos como \textbf{Integrales Radiales de Slater}, denotadas como $R^k(abcd)$. Estas integrales miden el acoplamiento radial real entre orbitales mediante potenciales esféricos efectivos de orden multipolar $k$:
 
 \begin{equation}
-\braket{\bm{r}}{n_a l_a m_{l_a}} = R_{n_a l_a}(r) Y_{l_a}^{m_{l_a}}(\theta, \phi) = \frac{P_{n_a l_a}(r)}{r} Y_{l_a}^{m_{l_a}}(\theta, \phi),
+  \label{eq:slater_k}
+  R^k(abcd) = \int_0^\infty P_a(r_1) \qty[ \int_0^\infty \frac{r_{<}^k}{r_{>}^{k+1}} P_b(r_2) P_d(r_2) \dd{r_2} ] P_c(r_1) \dd{r_1}.
 \end{equation}
 
-donde \( P_{n_a l_a}(r) \) es la función radial reducida y \( Y_{l_a}^{m_{l_a}}(\theta, \phi) \) representa a los armónicos esféricos. La ortonormalidad de la base espacial implica:
+Estas integrales (que engloban tanto el acoplamiento Coulombiano directo como el Intercambio) dictan la estructura fina de los niveles de energía. Sin embargo, analizar la Ecuación \eqref{eq:slater_k} revela el monumental obstáculo del límite de Hartree-Fock.
 
-\begin{equation}
-\int_0^\infty P_{n_a l_a}(r) P_{n_b l_b}(r) \dd{r} = \delta_{n_a n_b} \delta_{l_a l_b}.
-\end{equation}
+Para determinar las funciones radiales $P(r)$ exactas que minimicen la energía, debemos someterlas a la acción de un "Operador de Fock" efectivo que contiene al potencial electrostático de los demás electrones. Pero, como se observa en la formulación, el potencial en sí mismo está construido a partir de los orbitales radiales $P_b$ y $P_d$ incógnitos. \textbf{Las funciones de onda definen al potencial, y el potencial define a las funciones de onda.}
 
-\section{De la Energía al Operador: Integración Parcial}
-
-Para una derivación rigurosa de las expansiones multipolares utilizando el formalismo de operadores tensoriales esféricos y el teorema de Wigner-Eckart, el lector puede referirse al \textbf{Apéndice \ref{ap:tensores}}. 
-Una vez que factorizamos la repulsión interelectrónica en contribuciones puramente angulares (coeficientes geométricos) y puramente radiales (integrales de Slater), es posible construir ecuaciones de autovalores de una sola partícula.
-
-Para lograrlo, realizamos una integración parcial sobre la coordenada de un electrón, proyectando su densidad radial. Aislamos la dependencia radial y definimos el \textbf{Potencial Radial Multipolar} de orden \( k \):
-
-\begin{equation}
-  y^k(b, d; r_1) = r_1 \int_0^\infty \frac{r_{<}^k}{r_{>}^{k+1}} P_b(r_2) P_d(r_2) \dd{r_2}.
-\end{equation}
-
-Físicamente, \( \frac{y^k(b,d;r_1)}{r_1} \) representa el potencial electrostático eficaz generado por la distribución multipolar proveniente de los orbitales radiales \( b \) y \( d \). 
-La integral doble de Slater se reduce a una integración simple sobre la coordenada libre \( r_1 \):
-
-\begin{equation}
-  R^k(abcd) = \int_0^\infty P_a(r_1) \qty[ \frac{y^k(b,d; r_1)}{r_1} ] P_c(r_1) \dd{r_1}.
-\end{equation}
-
-Esta formulación simplifica los dos tipos fundamentales de interacciones electrónicas:
-
-\begin{itemize}
-\item \textbf{La Integral Directa (\(R^k(abab)\)):}
-  Representa la interacción clásica de Coulomb entre la densidad de carga local del orbital \( a \) con el potencial electrostático central generado por la densidad esférica del orbital \( b \):
-  \begin{equation}
-    R^k(abab) = \int_0^\infty P_a(r_1) \qty[ \frac{y^k(b,b; r_1)}{r_1} ] P_a(r_1) \dd{r_1}.
-  \end{equation}
-  
-\item \textbf{La Integral de Intercambio (\(R^k(abba)\)):}
-  Modula la contribución cuántica que surge debido al solapamiento fermiónico entre los estados orbitales \( a \) y \( b \):
-  \begin{equation}
-    R^k(abba) = \int_0^\infty P_a(r_1) \qty[ \frac{y^k(a,b; r_1)}{r_1} ] P_b(r_1) \dd{r_1}.
-  \end{equation}
-\end{itemize}
+Esta severa no-linealidad e interdependencia condena cualquier esfuerzo de solución analítica directa. Nos sitúa ante la inevitable necesidad metodológica de recurrir a ciclos de convergencia numérica, donde la única forma de descifrar la estructura atómica es forzando iterativamente al sistema hasta que su estado de respuesta se equipare a su estado de entrada. Esta paradoja de autogeneración establece la premisa y motivación central para transitar al siguiente capítulo: el desarrollo de un algoritmo de Campo Autoconsistente (SCF).

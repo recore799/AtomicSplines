@@ -34,8 +34,8 @@ function solve_silicon_rohf(R_max; verbose::Bool=true, estado=nothing,
     # del limite Hartree-Fock y por encima del promedio de configuracion, que es
     # imposible para el termino fundamental. Corregido reproduce a Froese Fischer y a
     # tab:resultados_energia_global del manuscrito a 8 cifras.
-    # OJO: los *_rohf_results_3P_R30.0.jld2 de C y Si en disco se generaron con el signo
-    # viejo y NO son consistentes con este codigo. Hay que regenerarlos.
+    # Los *_rohf_results_3P_R30.0.jld2 de C y Si ya se reemplazaron por los que produce
+    # este signo; estan trackeados y registrados en benchmarks/RESULTS.toml.
     coeff_k2 = (estado == "av") ? (2.0 / 25.0) : (5.0 / 25.0)
     # Solo para verificacion: permite forzar el coeficiente de intercambio intra-capa
     # sin tocar la fisica por defecto. El valor por defecto (nothing) no cambia nada.

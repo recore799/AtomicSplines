@@ -36,24 +36,8 @@ const CASES = Dict(
 )
 const ORDER = ["Carbon", "Silicon", "Germanium", "Tin"]
 
-"""
-    reference_file(path)
-
-Prefiere `<nombre>_f2fix.jld2` si existe. Los `.jld2` de C y Si en disco se generaron con
-el signo viejo de `coeff_k2` (ver docs/claude/HALLAZGOS-2026-09-06.md) y su E_total ya no
-es la que produce este codigo; el archivo `_f2fix` si lo es. Cuando se regeneren los
-originales esta preferencia deja de tener efecto por si sola.
-"""
-function reference_file(path::String)
-    fixed = replace(path, ".jld2" => "_f2fix.jld2")
-    isfile(fixed) && return fixed
-    return path
-end
-
 function run_case(name::String; verbose::Bool = false)
-    solver, reffile0, max_iter = CASES[name]
-    reffile = reference_file(reffile0)
-    reffile == reffile0 || println("  (referencia corregida: $reffile)")
+    solver, reffile, max_iter = CASES[name]
     E_ref = isfile(reffile) ? load(reffile, "E_total") : NaN
 
     rows = Dict{Bool,Any}()

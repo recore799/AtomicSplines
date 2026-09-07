@@ -56,24 +56,9 @@ const NIST = Dict(
 
 const TERMS = ["^3P_0", "^3P_1", "^3P_2", "^1D_2", "^1S_0"]
 
-"""
-    corrected_file(path)
-
-Prefiere `<nombre>_f2fix.jld2` si existe. Los `.jld2` de C y Si en disco se generaron con
-el signo viejo de `coeff_k2` y NO son consistentes con el codigo actual; el `_f2fix` si.
-Ver docs/claude/HALLAZGOS-2026-09-06.md. Cuando se regeneren los originales, esta
-preferencia deja de tener efecto por si sola.
-"""
-function corrected_file(path::String)
-    fixed = replace(path, ".jld2" => "_f2fix.jld2")
-    return isfile(fixed) ? fixed : path
-end
-
 function collect_results(cases; n_per_l = ACTIVE_SPACE)
     out = Dict{String,Any}()
-    for c0 in cases
-        c = merge(c0, (file_hf = corrected_file(c0.file_hf),
-                       file_vpol = c0.file_vpol === nothing ? nothing : corrected_file(c0.file_vpol)))
+    for c in cases
         isfile(c.file_hf) || error("No existe $(c.file_hf). Corre antes el script ROHF de $(c.element).")
         println("### $(c.element): HF+CI desde $(c.file_hf)")
         # selftest = true en la primera llamada de cada elemento: T1-T4 abortan si el
@@ -101,11 +86,11 @@ function print_provenance(cases, results)
     for c in cases
         r = results[c.element]
         @printf("%% %-10s HF+CI  : %s | espacio %s | %d orb, %d CSF(3P), %d R^k | zeta = %.8f Ha | F2 = %.8f Ha | E_corr = %.6e Ha\n",
-                c.element, corrected_file(c.file_hf), space_label(r.hf.n_per_l),
+                c.element, c.file_hf, space_label(r.hf.n_per_l),
                 r.hf.n_orb, r.hf.n_csf[1], r.hf.n_rk, r.hf.zeta, r.hf.F2, r.hf.E_corr)
         if c.file_vpol !== nothing
             @printf("%% %-10s +Vpol  : %s | espacio %s | %d orb, %d CSF(3P), %d R^k | zeta = %.8f Ha | F2 = %.8f Ha | E_corr = %.6e Ha\n",
-                    c.element, corrected_file(c.file_vpol), space_label(r.vpol.n_per_l),
+                    c.element, c.file_vpol, space_label(r.vpol.n_per_l),
                     r.vpol.n_orb, r.vpol.n_csf[1], r.vpol.n_rk, r.vpol.zeta, r.vpol.F2, r.vpol.E_corr)
         end
     end

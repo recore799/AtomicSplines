@@ -1,3 +1,13 @@
+# Referencia analitica de los elementos de matriz espin-orbita del np^2.
+#
+# Imprime <LSJ|H_SO|L'S'J> en unidades de zeta para las parejas que acopla el
+# Hamiltoniano de Breit-Pauli en la configuracion np^2, calculados con 6j puros y
+# sin tocar ningun .jld2. Sirve para contrastar a mano lo que ensamblan los
+# *_fine_structure.jl cuando un desdoblamiento no cuadra: si estos coeficientes
+# salen bien, el error no esta en el algebra angular.
+#
+# Se llamaba print_so_matrix.jl.
+
 using Pkg
 Pkg.activate(joinpath(@__DIR__, "../.."))
 using WignerSymbols

@@ -1,3 +1,18 @@
+# Genera docs/figures/scaling_law.pdf, la Figura \ref{fig:scaling_law} del
+# capitulo de resultados.
+#
+# OJO: los valores de abajo estan escritos a mano y no coinciden con lo que
+# calcula el codigo (regla 3 de CLAUDE.md). Segun docs/claude/HALLAZGOS-2026-09-06.md:
+#
+#   zeta(C) aqui 31.9, calculado 42.216
+#   F2(Si) y F2(Ge) aqui valen los dos 0.1627; son distintos: 0.16594819 y
+#   0.16272437. La repeticion es el mismo copy-paste que contamina
+#   tab:integrales_slater.
+#
+# No se corrigen aqui porque eso mueve una figura publicada: hay que regenerarla
+# leyendo los valores de los .jld2 registrados en benchmarks/RESULTS.toml, no
+# reescribiendo las constantes.
+
 using Pkg
 Pkg.activate(joinpath(@__DIR__, "..", ".."))
 

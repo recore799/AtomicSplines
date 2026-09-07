@@ -1,0 +1,49 @@
+\chapter{Teoría de Momento Angular y Acoplamiento L-S}
+\label{ap:momento-angular}
+
+El acoplamiento de momentos angulares es el pilar para comprender la estructura de la materia a nivel atómico. En elementos ligeros y de peso medio, donde la repulsión electrostática interelectrónica domina sobre la interacción magnética espín-órbita, los estados atómicos se describen bajo el esquema de acoplamiento de Russell-Saunders (o acoplamiento $L-S$).
+
+En este esquema, los momentos angulares orbitales individuales $\mathbf{l}_i$ se acoplan para formar un momento angular orbital total $\mathbf{L} = \sum \mathbf{l}_i$, y los espines individuales $\mathbf{s}_i$ se acoplan en un espín total $\mathbf{S} = \sum \mathbf{s}_i$. El estado del átomo se etiqueta entonces mediante el término espectroscópico $^{2S+1}L$. Finalmente, $\mathbf{L}$ y $\mathbf{S}$ se acoplan para formar el momento angular total del átomo $\mathbf{J} = \mathbf{L} + \mathbf{S}$, dando lugar a los niveles de estructura fina denotados como $^{2S+1}L_J$.
+
+\section{Reglas de Hund}
+\label{sec:hund}
+
+Dentro de una misma configuración electrónica (por ejemplo, $np^2$), la interacción coulómbica separa los distintos términos $L-S$ en energía. Para determinar empíricamente cuál de estos términos constituye el estado fundamental, Friedrich Hund formuló un conjunto de reglas fenoménologicas, sustentadas rigurosamente en la mecánica cuántica:
+
+\begin{enumerate}
+    \item \textbf{Primera Regla de Hund (Maximización del Espín):} Para una configuración dada, el término con menor energía es el que posee la mayor multiplicidad de espín ($2S+1$), es decir, el mayor valor de $S$. Físicamente, esto se debe a la interacción de intercambio: electrones con espines paralelos están forzados por el Principio de Pauli a ocupar orbitales espaciales distintos, lo que maximiza su separación geométrica y minimiza la repulsión coulómbica interelectrónica (hueco de Fermi).
+    \item \textbf{Segunda Regla de Hund (Maximización del Momento Orbital):} Si existen varios términos con la misma multiplicidad máxima de espín $S$, el estado de menor energía es aquel con el mayor momento angular orbital total $L$. Clásicamente, electrones orbitando en la misma dirección (mayor $L$) se cruzan con menor frecuencia que aquellos orbitando en direcciones opuestas, reduciendo así su repulsión electrostática promedio.
+    \item \textbf{Tercera Regla de Hund (Acoplamiento Espín-Órbita):} Para un término determinado por $L$ y $S$, el acoplamiento magnético espín-órbita divide el nivel en estados de diferente $J$. 
+    \begin{itemize}
+        \item Si la subcapa está llena a menos de la mitad, el estado fundamental es el que tiene $J = |L - S|$ (multiplete normal).
+        \item Si la subcapa está llena a más de la mitad, el estado fundamental es el que tiene $J = L + S$ (multiplete invertido).
+    \end{itemize}
+\end{enumerate}
+
+Para la configuración $np^2$, los términos permitidos por el principio de Pauli son $^3P$, $^1D$ y $^1S$. Aplicando las reglas de Hund:
+- La primera regla selecciona el triplete ($S=1$) sobre los singletes ($S=0$), identificando a $^3P$ como el término fundamental.
+- Dentro del término $^3P$, los valores posibles de $J$ son $0, 1, 2$. Como la subcapa $p$ está llena a menos de la mitad (2 electrones de un máximo de 6), la tercera regla predice que el estado de menor energía es el $^3P_0$.
+
+\section{La Regla de Intervalos de Landé}
+
+Una vez establecido el término $L-S$ fundamental, la estructura fina (la separación energética entre los distintos niveles $J$) está dictada, en primera aproximación, por la interacción espín-órbita. El operador fenomenológico de esta interacción es proporcional al producto punto $\mathbf{L} \cdot \mathbf{S}$:
+
+\begin{equation}
+    \hat{H}_{\text{SO}} = \zeta(L,S) \mathbf{L} \cdot \mathbf{S},
+\end{equation}
+
+donde $\zeta(L,S)$ es la constante de acoplamiento espín-órbita del multiplete. Utilizando la identidad de operadores $\mathbf{J}^2 = (\mathbf{L} + \mathbf{S})^2 = \mathbf{L}^2 + \mathbf{S}^2 + 2\mathbf{L} \cdot \mathbf{S}$, podemos evaluar la energía de interacción:
+
+\begin{equation}
+    \Delta E_J = \frac{\zeta(L,S)}{2} \left[ J(J+1) - L(L+1) - S(S+1) \right].
+\end{equation}
+
+La separación energética entre dos niveles adyacentes $J$ y $J-1$ resulta ser:
+\begin{align}
+    \Delta E_J - \Delta E_{J-1} &= \frac{\zeta(L,S)}{2} \left[ J(J+1) - (J-1)J \right] \nonumber \\
+    &= \zeta(L,S) J.
+\end{align}
+
+Esta simple relación lineal es conocida como la \textbf{Regla de Intervalos de Landé}: la separación en energía entre dos niveles de estructura fina adyacentes de un mismo multiplete $L-S$ es directamente proporcional al mayor de los dos valores de $J$.
+
+El cumplimiento de esta regla es la "prueba de fuego" espectroscópica que confirma la validez del acoplamiento puro de Russell-Saunders. Sin embargo, en átomos pesados (como el Germanio y más allá), la constante $\zeta$ crece fuertemente ($Z^4$), lo que provoca que la interacción espín-órbita sea de la misma magnitud que la repulsión electrostática. En este régimen, $L$ y $S$ dejan de ser buenos números cuánticos, originando el fenómeno de \textbf{acoplamiento intermedio}, donde los niveles energéticos se desvían drásticamente de la predicción de Landé. Cuantificar y modelar rigurosamente esta desviación usando orbitales numéricos B-splines es uno de los objetivos centrales en la presentación de resultados.

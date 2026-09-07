@@ -91,7 +91,7 @@ function compute_child_F2_coefficient(child_term::LSTerm, n::Int)
     return Float64(exact_fraction)
 end
 
-function compute_effective_central_potential(ws::SolverWorkspace, orbitals::Vector{Orbital}, dense_grid::Vector{Float64}, Z::Float64)
+function compute_effective_central_potential(ws::SolverWorkspace, orbitals::Vector{Orbital}, dense_grid::Vector{Float64}, Z::Float64; alpha_d::Float64=0.0, r_c::Float64=1.0)
     n_splines = ws.basis.num_splines
     total_Y0_coeffs = zeros(Float64, n_splines)
     y_temp = zeros(Float64, n_splines)
@@ -110,7 +110,7 @@ function compute_effective_central_potential(ws::SolverWorkspace, orbitals::Vect
     # 2. Evaluate the continuous spline over the dense physical grid
     Y0_grid = evaluate_orbital(ws.basis, total_Y0_coeffs, dense_grid)
     
-    # 3. Construct V_eff(r) = (-Z + Y0(r)) / r
+    # 3. Construct V_eff(r) = (-Z + Y0(r)) / r + V_pol(r)
     n_points = length(dense_grid)
     V_eff = zeros(Float64, n_points)
     
@@ -118,7 +118,14 @@ function compute_effective_central_potential(ws::SolverWorkspace, orbitals::Vect
         r = dense_grid[i]
         # Prevent division by zero precisely at the origin
         if r > 1e-12
-            V_eff[i] = (-Z + Y0_grid[i]) / r
+            V_pol = 0.0
+            if alpha_d > 0.0
+                x = r / r_c
+                x6 = x^6
+                W6 = 1.0 - exp(-x6)
+                V_pol = -0.5 * alpha_d * (1.0/r^4) * W6
+            end
+            V_eff[i] = (-Z + Y0_grid[i]) / r + V_pol
         else
             # Deep in the core, the potential is heavily dominated by the bare nucleus
             V_eff[i] = -Z / 1e-12 

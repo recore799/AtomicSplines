@@ -40,3 +40,8 @@ docs/auto/
 *.xdv
 
 *.jld2
+
+# AUCTeX caches (regenerables)
+auto/
+*.rel
+*-SAVE-ERROR

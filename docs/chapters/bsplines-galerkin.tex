@@ -1,0 +1,181 @@
+\chapter{Método Numérico: B-splines y el método de Galerkin}
+\label{ch:bsplines-galerkin}
+
+\todo{buscar referencias para las STOs y GTOs (probablemente del Szabo) y buscar referencia para la condicion de Kato}
+Para resolver numéricamente las ecuaciones integro-diferenciales de Hartree-Fock descritas en el capítulo anterior, es necesario proyectar las funciones de onda radiales incógnitas $P_a(r)$ sobre un conjunto base finito. Tradicionalmente, la química cuántica ha dependido de bases polinómicas globales como los Orbitales de Tipo Slater (STO) o las funciones Gaussianas (GTO). Si bien estas bases son eficientes para ciertos cálculos, sufren de limitaciones críticas: la sobrecompletitud, que genera problemas de dependencia lineal, y una representación deficiente en las regiones muy cercanas al núcleo o en las colas asintóticas.
+
+\todo{insertar cita a bachau donde digo precision de maquina}
+Para superar estos problemas, en este trabajo empleamos una base de funciones localizadas conocida como polinomios B-splines \cite{deBoor1978}. A diferencia de las representaciones polinómicas globales, los B-splines ofrecen una flexibilidad local controlada, un soporte riguroso capaz de aproximar orbitales con precisión casi ilimitada (alcanzando precisiones de máquina), y una discretización altamente eficaz del continuo atómico.
+
+\section{Fundamentos de los B-splines}
+
+Los B-splines (\textit{Basis Splines}) constituyen una base para el espacio vectorial de funciones spline polinómicas definidas a trozos. Un B-spline de grado $p$ está totalmente determinado por un conjunto ordenado de parámetros denominados nodos (\textit{knot vector}).
+
+\subsection{Definición y Recurrencia de Cox-de Boor}
+Sea $T = \{ t_0, t_1, \dots, t_m \}$ una secuencia no decreciente de números reales. El $i$-ésimo B-spline de grado $p$ (u orden $k=p+1$), denotado como $B_i^p(r)$, se construye mediante la estable fórmula de recurrencia de Cox-de Boor:
+\begin{itemize}
+    \item \textbf{Paso base ($p=0$):} Funciones escalón ortogonales.
+    \begin{equation}
+        B_i^0(r) = \begin{cases} 1 & \text{si } t_i \leq r < t_{i+1} \\ 0 & \text{en otro caso.} \end{cases}
+    \end{equation}
+    \item \textbf{Paso recursivo ($p>0$):} Combinación convexa.
+    \begin{equation}
+        B_i^p(r) = \frac{r - t_i}{t_{i+p}- t_i} B_i^{p-1}(r) + \frac{t_{i+p+1} - r}{t_{i+p+1}-t_{i+1}} B_{i+1}^{p-1}(r).
+    \end{equation}
+\end{itemize}
+
+Esta formulación evita las cancelaciones catastróficas comunes en la definición histórica por diferencias divididas y garantiza estabilidad incondicional. La evolución de los B-splines al aumentar su grado se ilustra en la Figura \ref{fig:bspline-evolucion}. A mayor grado, la función adquiere mayor suavidad ($C^{p-1}$), y su soporte compacto se ensancha de 1 intervalo a $p+1$ intervalos.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figura_evolucion_splines.pdf}
+    \caption{Evolución de las funciones base B-spline generadas mediante la fórmula de recurrencia de Cox-de Boor. \textbf{a)} Paso base ($p=0$) mostrando funciones escalón ortogonales. \textbf{b-d)} Aumento progresivo del grado ($p=1, 2, 3$) y de la regularidad $C^{p-1}$.}
+    \label{fig:bspline-evolucion}
+\end{figure}
+
+\subsection{Soporte Compacto y Control Local}
+
+La propiedad computacional definitoria de los B-splines es su \textbf{soporte compacto}. A diferencia de las bases globales (STOs, GTOs), un B-spline $B_i^p(r)$ es estrictamente cero fuera del intervalo local $[t_i, t_{i+p+1})$. Esto significa que la función base solo vive sobre $p+1$ intervalos de nodos consecutivos.
+
+Esta localidad tiene dos consecuencias críticas:
+\begin{enumerate}
+    \item \textbf{Matrices Banda:} Al integrar el producto de dos funciones base, $\int B_i(r) B_j(r) dr$, el resultado es distinto de cero solo si sus soportes se intersectan ($|i-j| \leq p$). Las matrices resultantes (solapamiento, energía cinética) no son densas, sino matrices de banda (\textit{banded matrices}). Esto reduce drásticamente el costo computacional de almacenamiento y resolución del sistema lineal de $O(N^3)$ a $O(N)$, permitiendo usar mallas de altísima resolución.
+    \item \textbf{Control Local:} La alteración de un coeficiente $c_k$ en la expansión de la función de onda altera la curva \textit{exclusivamente} dentro de su región de influencia local $[t_k, t_{k+p+1})$. Esto permite capturar detalles muy finos (como la cúspide nuclear) sin inducir oscilaciones espurias (fenómeno de Runge) en otras regiones del dominio, otorgando una robustez muy superior a las bases globales (ver Figura \ref{fig:control_local_fem}).
+\end{enumerate}
+\todo{aqui serviria una referencia tanto al paper de Bachau, como a algo que describa el fenomeno de Runge}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figura_control_local_fem.pdf}
+    \caption{Ilustración de la propiedad de control local en B-splines. La perturbación de un coeficiente $\Delta c_k$ altera la curva solución exclusivamente dentro de la \textbf{Región de Influencia Local} (área sombreada correspondiente al soporte compacto de $B_k^p$). Fuera de este intervalo, la curva no se ve afectada.}
+    \label{fig:control_local_fem}
+\end{figure}
+
+\subsection{Malla Exponencial y Distribución de Nudos}
+
+Para resolver eficientemente la ecuación radial atómica, es necesario adaptar la densidad de la base a la física del problema: se requiere altísima resolución cerca del origen (debido a la singularidad del potencial coulombiano $-Z/r$) y menor resolución en la región asintótica. Siguiendo enfoques probados en la literatura (ej. \cite{Bachau2001}), esto se logra mapeando una variable uniforme $\xi \in [0,1]$ al dominio físico radial mediante una transformación exponencial:
+\begin{equation}
+\label{eq:exp-grid}
+    r(\xi) = R_{\text{max}} \frac{e^{\gamma \xi}-1}{e^{\gamma}-1},
+\end{equation}
+donde $\gamma$ es el parámetro de rigidez. El Jacobiano de esta transformación, $\dv*{r}{\xi} \propto e^{\gamma \xi}$, indica que el tamaño físico de cada elemento crece exponencialmente conforme nos alejamos del núcleo. Esta distribución permite mantener un número de condición numéricamente tratable en las matrices sin sacrificar precisión en el núcleo (Figura \ref{fig:grid_comparison}).
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figura_comparacion_mallas.pdf}
+    \caption{\textbf{Comparación de distribuciones de nudos B-spline.} a) Distribución uniforme, ineficiente para orbitales atómicos. b) Distribución exponencial ($\gamma=2.5$), mostrando la alta densidad de bases requerida cerca del origen.}
+    \label{fig:grid_comparison}
+\end{figure}
+
+\section{El Método de Galerkin}
+\label{sec:galerkin}
+
+Elegida la base, resta el problema de cómo proyectar sobre ella una ecuación diferencial. En este trabajo empleamos el \textbf{método de Galerkin}, una formulación del Método de Elementos Finitos (FEM) que discretiza de manera unificada tanto la ecuación de eigenvalores de Hartree-Fock como la ecuación de Poisson que determina los potenciales de interacción. Presentamos aquí el esquema y sus resultados; la derivación formal, la comparación con las demás familias de métodos de residuos ponderados y la demostración de su equivalencia con el principio variacional de Ritz se desarrollan en el Apéndice \ref{ap:galerkin-poisson}.
+
+\subsection{Del problema continuo al problema matricial}
+
+Partimos de la ecuación de Schrödinger radial \eqref{eq:radial_schrodinger}, deducida en la Sección \ref{sec:campo_central} a partir de la aproximación de campo central,
+
+\begin{equation}
+\label{eq:strong-form}
+  \qty[ - \frac{1}{2}\dv[2]{r} + V_{\text{eff}}(r) ] P(r) = \epsilon P(r),
+\end{equation}
+
+donde $V_{\text{eff}}(r)$ contiene la atracción nuclear, el término centrífugo $l(l+1)/2r^2$ y el potencial de campo medio. Al sustituir la expansión finita en la base de B-splines,
+
+\begin{equation}
+\label{eq:expansion-metodo}
+  P(r) \approx \tilde{P}(r) = \sum_{j=1}^{N} c_j B_j(r),
+\end{equation}
+
+la igualdad (\ref{eq:strong-form}) deja de satisfacerse de manera exacta: el subespacio finito generado por $\{B_j\}$ no contiene, en general, a la solución verdadera. La discrepancia define el \textbf{residuo}
+
+\begin{equation}
+\label{eq:residuo}
+  R(r) = \qty[ - \frac{1}{2}\dv[2]{r} + V_{\text{eff}}(r) - \epsilon ] \tilde{P}(r) \neq 0.
+\end{equation}
+
+El método de Galerkin impone que este residuo sea ortogonal al subespacio de aproximación, tomando como funciones de peso las mismas funciones base:
+
+\begin{equation}
+\label{eq:galerkin-condition}
+  \int_{0}^{R_{\text{max}}} B_i(r) R(r) \dd{r} = 0, \qquad i = 1, \dots, N.
+\end{equation}
+
+La interpretación geométrica es directa: al anular la proyección del error sobre cada función base, garantizamos que no quede ninguna componente del residuo que pudiéramos haber corregido ajustando los coeficientes $c_j$. El error remanente es entonces intrínseco al tamaño de la base, y no un defecto de la proyección.
+
+El término cinético de (\ref{eq:galerkin-condition}) contiene una segunda derivada que tratamos mediante integración por partes,
+
+\begin{equation}
+\label{eq:ibp-metodo}
+  \int_{0}^{R_{\text{max}}} B_i(r) \dv[2]{\tilde{P}}{r} \dd{r} = \underbrace{\eval{ B_i(r) \dv{\tilde{P}}{r} }_{0}^{R_{\text{max}}}}_{=\,0} - \int_{0}^{R_{\text{max}}} \dv{B_i}{r} \dv{\tilde{P}}{r} \dd{r},
+\end{equation}
+
+donde el término de borde se anula por las condiciones de frontera $P(0) = P(R_{\text{max}}) = 0$. Este paso, característico de la \textit{forma débil}, cumple dos funciones: rebaja el requisito de continuidad sobre la base (basta con que sea derivable una vez) y simetriza el operador, lo cual garantiza que la matriz resultante sea Hermitiana.
+
+Sustituyendo la expansión (\ref{eq:expansion-metodo}) y factorizando los coeficientes, cada integral se convierte en un elemento de matriz:
+
+\begin{align}
+  \label{eq:matrix-elements}
+  T_{ij} = \frac{1}{2}\int_{0}^{R_{\text{max}}} \dv{B_i}{r} \dv{B_j}{r} \dd{r} \qc & 
+  V_{ij}= \int_{0}^{R_{\text{max}}} B_i(r)\, V_{\text{eff}}(r)\, B_j(r) \dd{r}, \\
+  S_{ij} = \int_{0}^{R_{\text{max}}} & B_i(r) B_j(r) \dd{r}.
+\end{align}
+
+La condición de Galerkin para todo $i$ produce entonces el sistema $\sum_j (T_{ij} + V_{ij}) c_j = \epsilon \sum_j S_{ij} c_j$. Definiendo la matriz Hamiltoniana $H_{ij} = T_{ij} + V_{ij}$, el problema continuo colapsa en un \textbf{problema de eigenvalores generalizado}:
+
+\begin{equation}
+\label{eq:eigen-metodo}
+  \bm{H}\bm{c} = \epsilon\, \bm{S}\bm{c}.
+\end{equation}
+
+La aparición de la matriz de solapamiento $\bm{S}$ en el lado derecho es consecuencia directa de que la base de B-splines no es ortogonal: a diferencia de una base ortonormal, $S_{ij} \neq \delta_{ij}$, y $\bm{S}$ define la métrica del espacio de Hilbert discretizado. Por el soporte compacto de la base, tanto $\bm{H}$ como $\bm{S}$ son matrices de banda con ancho determinado únicamente por el orden $k$ del spline.
+
+\subsection{Aplicación: la ecuación de Poisson radial}
+\label{subsec:poisson-metodo}
+
+La misma maquinaria resuelve el segundo obstáculo del método de Hartree-Fock: la evaluación de las integrales de Slater que describen la repulsión electrón-electrón. Al expandir el operador de Coulomb $\abs{\bm{r}_i - \bm{r}_j}^{-1}$ en armónicos esféricos, la parte angular se resuelve analíticamente mediante el álgebra de momento angular, y toda la física radial queda contenida en el potencial multipolar de orden $k$ generado por la densidad de par $\rho_{ab}(r) = P_a(r)P_b(r)$:
+
+\begin{equation}
+\label{eq:Yk-metodo}
+  Y^k(a,b;r) = r \int_0^\infty \frac{r_{<}^k}{r_{>}^{k+1}} P_a(s) P_b(s) \dd{s}.
+\end{equation}
+
+Evaluar (\ref{eq:Yk-metodo}) directamente por cuadratura es costoso y genera matrices densas, pues se trata de un operador integral \textit{global}: el valor del potencial en un punto depende de la densidad en todo el dominio. La alternativa que adoptamos explota el hecho de que $Y^k(a,b;r)$ es solución de una ecuación diferencial \textit{local}, la \textbf{ecuación de Poisson radial generalizada} (\ref{eq:poisson-true}):
+
+\begin{equation}
+\label{eq:poisson-metodo}
+  \qty( -\dv[2]{r} + \frac{k(k+1)}{r^2} ) Y^k(a,b;r) = \frac{2k+1}{r} P_a(r) P_b(r),
+\end{equation}
+
+sujeta a las condiciones de frontera $Y^k(0) = 0$ y a un comportamiento asintótico fijado por el momento multipolar de la densidad de par,
+
+\begin{equation}
+\label{eq:bc-metodo}
+  Y^k(R_{\text{max}}) = \frac{1}{R_{\text{max}}^{k}} \int_0^{R_{\text{max}}} s^k P_a(s)P_b(s) \dd{s}.
+\end{equation}
+
+La equivalencia entre la definición integral (\ref{eq:Yk-metodo}) y la forma diferencial (\ref{eq:poisson-metodo}), así como la derivación de estas condiciones de frontera, se demuestran formalmente en el Apéndice \ref{ap:galerkin-poisson} mediante diferenciación bajo el signo integral (regla de Leibniz generalizada).
+
+Proyectamos (\ref{eq:poisson-metodo}) sobre la base con el mismo procedimiento de la sección anterior. Multiplicando por $B_i(r)$, integrando por partes el término de segunda derivada y expandiendo $Y^k(r) \approx \sum_j y_j B_j(r)$, obtenemos la forma débil
+
+\begin{equation}
+\label{eq:poisson-weak-metodo}
+  \int_0^{R_{\text{max}}} \dv{B_i}{r}\dv{B_j}{r} \dd{r} + k(k+1)\int_0^{R_{\text{max}}} \frac{B_i(r) B_j(r)}{r^2} \dd{r} = (2k+1)\int_0^{R_{\text{max}}} B_i(r) \frac{P_a(r)P_b(r)}{r} \dd{r},
+\end{equation}
+
+que en notación matricial es simplemente un sistema lineal,
+
+\begin{equation}
+\label{eq:poisson-linear-metodo}
+  \bm{A}^{(k)} \bm{y} = \bm{b}, \qquad \bm{A}^{(k)} = 2\bm{T} + k(k+1)\bm{V}^{(2)},
+\end{equation}
+
+donde $\bm{T}$ es la misma matriz cinética de (\ref{eq:matrix-elements}) y $\bm{V}^{(2)}$ es la matriz del operador $r^{-2}$. El resultado es notable por dos razones. Primero, el operador $\bm{A}^{(k)}$ depende únicamente de la malla de nudos y del orden multipolar $k$: es completamente independiente de la densidad electrónica y, por lo tanto, invariante a lo largo del ciclo autoconsistente. Segundo, $\bm{A}^{(k)}$ hereda de la base la misma estructura de banda simétrica que $\bm{H}$ y $\bm{S}$, de modo que resolver el potencial de Hartree-Fock cuesta lo mismo que resolver la propia función de onda.
+
+Así, un único formalismo variacional discretiza el operador de Fock y los potenciales de interacción $Y^k$, unificando la arquitectura del solucionador. En el Capítulo \ref{ch:ciclo-scf} explotamos la invariancia de $\bm{A}^{(k)}$ y de los operadores de un cuerpo para reorganizar el ciclo SCF como una secuencia de contracciones algebraicas.
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

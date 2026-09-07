@@ -1,7 +1,7 @@
-function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices::Bool=false) where {K}
+function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices::Bool=false, alpha_d::Float64=0.0, r_c::Float64=1.0) where {K}
     n = basis.num_splines
 
-    S, T, V, R_inv2, R_inv3, R, R2, tensors = assemble_geometry(basis, Z; calc_R_matrices=calc_R_matrices)
+    S, T, V, R_inv2, R_inv3, R, R2, tensors = assemble_geometry(basis, Z; calc_R_matrices=calc_R_matrices, alpha_d=alpha_d, r_c=r_c)
     
     J = zeros(Float64, n, n)
 
@@ -28,9 +28,9 @@ function init_scf_workspace(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices:
 end
 
 
-function cached_init_scf_workspace(R_max::Float64, N_elems::Int, ::Val{K}, Z::Float64; γ::Float64=2.0, calc_R_matrices::Bool=true) where {K}
+function cached_init_scf_workspace(R_max::Float64, N_elems::Int, ::Val{K}, Z::Float64; γ::Float64=2.0, calc_R_matrices::Bool=true, alpha_d::Float64=0.0, r_c::Float64=1.0) where {K}
 
-    filename = @sprintf("geometry_Z%.1f_R%.1f_N%d_K%d_g%.2f.jld2", Z, R_max, N_elems, K, γ)
+    filename = @sprintf("geometry_Z%.1f_R%.1f_N%d_K%d_g%.2f_ad%.3f_rc%.3f.jld2", Z, R_max, N_elems, K, γ, alpha_d, r_c)
     
     basis = generate_basis(R_max, N_elems, Val(K); γ=γ)
     n = basis.num_splines
@@ -48,7 +48,7 @@ function cached_init_scf_workspace(R_max::Float64, N_elems::Int, ::Val{K}, Z::Fl
         tensors = data["tensors"]
     else
         println("No cache found. Computing geometry and saving to $filename ...")
-        S, T, V, R, R2, R_inv2, R_inv3, tensors = assemble_geometry(basis, Z; calc_R_matrices=calc_R_matrices)
+        S, T, V, R, R2, R_inv2, R_inv3, tensors = assemble_geometry(basis, Z; calc_R_matrices=calc_R_matrices, alpha_d=alpha_d, r_c=r_c)
         
         jldsave(filename; S=S, T=T, V=V, R=R, R2=R2, R_inv2=R_inv2, R_inv3=R_inv3, tensors=tensors)
     end
@@ -76,7 +76,7 @@ function cached_init_scf_workspace(R_max::Float64, N_elems::Int, ::Val{K}, Z::Fl
 end
 
 
-function assemble_geometry(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices::Bool=true) where {K}
+function assemble_geometry(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices::Bool=true, alpha_d::Float64=0.0, r_c::Float64=1.0) where {K}
     n = basis.num_splines
 
     S  = zeros(Float64, n, n)
@@ -110,6 +110,15 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices::
             inv_r = (r > 1e-12) ? 1.0/r : 0.0
             inv_r2 = inv_r * inv_r
             inv_r3 = inv_r * inv_r2
+            inv_r4 = inv_r2 * inv_r2
+            
+            V_pol = 0.0
+            if alpha_d > 0.0 && r > 1e-12
+                x = r / r_c
+                x6 = x^6
+                W6 = 1.0 - exp(-x6)
+                V_pol = -0.5 * alpha_d * inv_r4 * W6
+            end
 
             eval_bspline_kernel!(vals, derivs, Val(true), Val(true), i, r, basis.knots, Val(K))
 
@@ -127,7 +136,7 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64; calc_R_matrices::
                         
                         S[g_a, g_b]  += term_S
                         T[g_a, g_b]  += w * 0.5 * dNa * dNb
-                        V[g_a, g_b]  -= Z * term_S * inv_r
+                        V[g_a, g_b]  += (V_pol - Z * inv_r) * term_S
                         R_inv2[g_a, g_b] += term_S * inv_r2
                         
                         if calc_R_matrices

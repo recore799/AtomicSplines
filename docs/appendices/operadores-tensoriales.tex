@@ -1,0 +1,280 @@
+\chapter{Formalismo Avanzado de Tensores}
+\label{ap:operadores-tensoriales}
+
+\section{Expansión de Laplace}
+
+El operador interelectrónico \( \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} \) depende de la distancia relativa entre ambos electrones. Para poder evaluar las integrales de dos cuerpos, es fundamental desacoplar las coordenadas de ambos electrones. Para ello, expandimos la función de Green del operador Laplaciano en una serie de polinomios de Legendre:
+
+\begin{equation}
+  \label{eq:laplace}
+  \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} = \sum_{k=0}^{\infty} \frac{r_{<}^k}{r_{>}^{k+1}} P_k(\cos\omega_{ij}),
+\end{equation}
+
+donde \( r_{<} = \min(r_i, r_j) \) y \( r_{>} = \max(r_i, r_j) \), mientras que \( \omega_{ij} \) representa el ángulo entre los vectores de posición \( \bm{r}_i \) y \( \bm{r}_j \). Aplicando el teorema de adición para armónicos esféricos, desacoplamos la expresión angular:
+
+\begin{equation}
+  \label{eq:laplace-harm}
+  \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} = \sum_{k=0}^{\infty} \sum_{q=-k}^k \frac{4\pi}{2k+1} \frac{r_{<}^k}{r_{>}^{k+1}} Y_{kq}^{*}(\Omega_i) Y_{kq}(\Omega_j).
+\end{equation}
+
+Para simplificar y sistematizar este tratamiento matemático, introducimos los operadores tensoriales esféricos normalizados de orden \( k \), definidos por:
+
+\begin{equation}
+  C_q^{(k)}(\theta, \phi) = \sqrt{\frac{4\pi}{2k+1}} Y_k^q(\theta, \phi).
+\end{equation}
+
+De este modo, la expansión de Laplace se puede reescribir de forma sumamente compacta y elegante como un producto escalar de tensores esféricos desacoplados:
+
+\begin{equation}
+  \frac{1}{\abs{\bm{r}_i-\bm{r}_j}} = \sum_{k=0}^{\infty} \frac{r_{<}^k}{r_{>}^{k+1}} \qty( C^{(k)}(i) \cdot C^{(k)}(j) ),
+\end{equation}
+
+donde el producto tensorial escalar se define como:
+
+\begin{equation}
+  \qty( C^{(k)}(1) \cdot C^{(k)}(2) ) = \sum_{q=-k}^k (-1)^q C_{-q}^{(k)}(1) C_q^{(k)}(2).
+\end{equation}
+
+\section{Integración de dos Cuerpos y Coeficientes Angulares}
+
+Al evaluar la repulsión Coulombiana sobre orbitales espaciales factorizados de la forma \( \ket{a} = \frac{P_a(r)}{r} Y_{l_a m_a}(\Omega) \), podemos sustituir la expansión de Laplace para separar las componentes radiales y angulares del integrando:
+
+\begin{equation}
+  \mel{ab}{\frac{1}{r_{12}}}{cd} = \sum_{k=0}^{\infty} \sum_{q=-k}^k \mel{ab}{\frac{r_{<}^k}{r_{>}^{k+1}} (-1)^q C_{-q}^{(k)}(1) C_q^{(k)}(2)}{cd}.
+\end{equation}
+
+Esto nos permite factorizar la integral de dos cuerpos en un término puramente radial y un factor geométrico angular:
+
+\begin{equation}
+  \mel{ab}{\frac{1}{r_{12}}}{cd} = \sum_{k=0}^{\infty} R^k(abcd) c_k(a,b,c,d).
+\end{equation}
+
+La contribución radial define a las llamadas \textbf{Integrales de Slater} de orden \( k \):
+
+\begin{equation}
+  \label{eq:slater-integral}
+  R^k(abcd) = \int_0^\infty \int_0^\infty P_a(r_1) P_b(r_2) \frac{r_{<}^k}{r_{>}^{k+1}} P_c(r_1) P_d(r_2) \dd{r_1} \dd{r_2}.
+\end{equation}
+
+Por su parte, la contribución angular se describe a través de los coeficientes angulares de Slater:
+
+\begin{equation}
+  c_k(a,b,c,d) = \sum_{q=-k}^k (-1)^q \mel{l_a m_{l_a}}{C_{-q}^{(k)}}{l_c m_{l_c}} \mel{l_b m_{l_b}}{C_q^{(k)}}{l_d m_{l_d}}.
+\end{equation}
+
+\section{El Teorema de Wigner-Eckart}
+
+Dado que los operadores \( C_{q}^{(k)} \) son operadores tensoriales irreducibles bajo el grupo de rotaciones espaciales $SO(3)$, sus elementos de matriz angulares obedecen simetrías universales profundas. El Teorema de Wigner-Eckart es, sin lugar a dudas, el pilar central del álgebra de momentos angulares, ya que permite desacoplar totalmente la dependencia geométrica de un sistema físico de su dinámica intrínseca. Matemáticamente, el teorema establece que cualquier elemento de matriz de un tensor irreducible se factoriza como:
+
+\begin{equation}
+  \mel{lm}{C_{q}^{(k)}}{l'm'} = (-1)^{l-m} \begin{pmatrix} l & k & l' \\ -m & q & m' \end{pmatrix} \mel{l}{\|C^{(k)}\|}{l'},
+\end{equation}
+
+donde el término en la matriz de $3 \times 3$ representa el símbolo $3-j$ de Wigner. La inmensa belleza y utilidad de este teorema radica en su interpretación física:
+\begin{itemize}
+    \item \textbf{El factor geométrico (Símbolo $3-j$):} Este término encapsula absolutamente toda la dependencia en las proyecciones magnéticas $m, m', q$. Representa la topología de cómo se suman los vectores en el espacio 3D, dictando las reglas de selección de conservación de momento angular direccional. Es universal y completamente independiente de la naturaleza física del operador perturbador o de las funciones de onda radiales.
+    \item \textbf{El factor dinámico (Elemento de Matriz Reducido $\mel{l}{\|C^{(k)}\|}{l'}$):} Este término concentra toda la física subyacente. Es completamente independiente de la orientación espacial (los números $m$). Para el caso específico de los armónicos esféricos $C^{(k)}$, su valor se puede derivar analíticamente integrando sobre la esfera unidad:
+    \begin{equation}
+      \mel{l}{\|C^{(k)}\|}{l'} = (-1)^l \sqrt{(2l+1)(2l'+1)} \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}.
+    \end{equation}
+\end{itemize}
+
+Uniendo estas expresiones bajo el amparo del teorema, obtenemos la fórmula explícita para evaluar exactamente los coeficientes geométricos \( c_k(a,b,c,d) \):
+
+\begin{align}
+  c_k(a,b,c,d) = \sum_{q=-k}^k & (-1)^{q + l_a - m_{l_a} + l_b - m_{l_b}} \nonumber \\
+  & \times \begin{pmatrix} l_a & k & l_c \\ -m_{l_a} & -q & m_{l_c} \end{pmatrix} \begin{pmatrix} l_b & k & l_d \\ -m_{l_b} & q & m_{l_d} \end{pmatrix} \mel{l_a}{\|C^{(k)}\|}{l_c}\mel{l_b}{\|C^{(k)}\|}{l_d}.
+\end{align}
+
+Las propiedades intrínsecas de los símbolos \( 3-j \) de Wigner imponen estrictas reglas de selección geométricas que truncan de forma severa la sumatoria infinita sobre el orden multipolar \( k \):
+
+\begin{itemize}
+\item \textbf{Regla de paridad:} Los coeficientes \( \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix} \) son nulos a menos que la suma \( l + k + l' \) sea un número entero par. Esto restringe los multipolos permitidos a valores de \( k \) con la misma paridad que la diferencia de momentos angulares.
+\item \textbf{Condición triangular:} Los símbolos son no nulos únicamente si se cumplen las condiciones algebraicas \( \abs{l_a - l_c} \le k \le l_a + l_c \) y \( \abs{l_b - l_d} \le k \le l_b + l_d \).
+\item \textbf{Conservación de la proyección:} Se requiere que \( q = m_{l_a} - m_{l_c} \) y \( -q = m_{l_b} - m_{l_d} \), lo que implica de forma directa la conservación de la proyección del momento angular total: \( m_{l_a} + m_{l_b} = m_{l_c} + m_{l_d} \).
+\end{itemize}
+
+Para ilustrar el inmenso poder analítico de estas reglas, apliquémoslas a nuestro sistema de interés: la configuración electrónica de valencia $np^2$. Dado que tratamos exclusivamente con electrones en orbitales $p$, tenemos $l_a = l_b = l_c = l_d = 1$. 
+
+La \textbf{condición triangular} del primer símbolo $3-j$ ($\abs{1 - 1} \le k \le 1 + 1$) restringe rigurosamente los posibles multipolos a la expansión $k \in \{0, 1, 2\}$. Sin embargo, la \textbf{regla de paridad} estipula además que la suma $l_a + k + l_c = 1 + k + 1 = 2 + k$ debe ser forzosamente un número par. Esta imposición topológica anula automáticamente cualquier contribución del término dipolar $k=1$. 
+
+Como consecuencia directa, la repulsión coulómbica de la configuración $np^2$ (y por ende de todo el grupo 14 de la tabla periódica) \textit{depende de forma exacta y exclusiva} de dos únicas integrales radiales: el término monopolar isotrópico ($k=0$, descrito por la integral $F^0$) y el término cuadrupolar puramente anisótropo ($k=2$, descrito por $F^2$). Todos los demás infinitos momentos multipolares ($k > 2$) se anulan por simetría esférica. Este colapso algebraico de una serie infinita a exactamente dos términos demuestra cómo el teorema de Wigner-Eckart simplifica un problema intratable de $N$ cuerpos a una evaluación determinista.
+
+\section{El Teorema de Unsöld}
+\label{sec:unsold}
+
+Uno de los resultados más hermosos y fundamentales para la simplificación de las capas atómicas cerradas es el Teorema de Unsöld, el cual establece que la densidad de probabilidad angular de una subcapa completamente llena (donde se ocupan todos los estados $m = -l, \dots, l$) posee simetría perfectamente esférica. Matemáticamente, esto se enuncia como:
+
+\begin{equation}
+    \sum_{m=-l}^{l} |Y_l^m(\theta, \phi)|^2 = \frac{2l+1}{4\pi}.
+\end{equation}
+
+Para demostrar esta identidad rigurosamente, partimos del \textbf{Teorema de Adición para Armónicos Esféricos}. Si consideramos dos vectores direccionales parametrizados por los ángulos sólidos $\Omega_1 = (\theta_1, \phi_1)$ y $\Omega_2 = (\theta_2, \phi_2)$, el ángulo intermedio $\gamma$ entre ambos satisface:
+
+\begin{equation}
+    P_l(\cos \gamma) = \frac{4\pi}{2l+1} \sum_{m=-l}^{l} \left[Y_l^m(\theta_1, \phi_1)\right]^* Y_l^m(\theta_2, \phi_2),
+\end{equation}
+
+donde $P_l$ es el polinomio de Legendre de grado $l$.
+
+Para evaluar la densidad electrónica de la subcapa en un punto particular del espacio definido por la dirección $\Omega = (\theta, \phi)$, evaluamos el caso donde ambos vectores direccionales coinciden exactamente. Tomando $\Omega_1 = \Omega_2 = \Omega$, el ángulo intermedio entre los dos vectores colineales es estrictamente $\gamma = 0$. En consecuencia, el coseno del ángulo es $\cos(0) = 1$.
+
+Sustituyendo esto en el teorema de adición:
+
+\begin{equation}
+    P_l(1) = \frac{4\pi}{2l+1} \sum_{m=-l}^{l} \left[Y_l^m(\theta, \phi)\right]^* Y_l^m(\theta, \phi).
+\end{equation}
+
+Sabiendo que el producto de un número complejo por su conjugado es su magnitud al cuadrado $\left[Y_l^m\right]^* Y_l^m = |Y_l^m|^2$, y recordando que todos los polinomios de Legendre se normalizan de manera que $P_l(1) = 1$ sin importar el grado $l$, la ecuación se reduce a:
+
+\begin{equation}
+    1 = \frac{4\pi}{2l+1} \sum_{m=-l}^{l} |Y_l^m(\theta, \phi)|^2.
+\end{equation}
+
+Despejando la sumatoria, concluimos la prueba de forma exacta:
+
+\begin{equation}
+    \sum_{m=-l}^{l} |Y_l^m(\theta, \phi)|^2 = \frac{2l+1}{4\pi}.
+\end{equation}
+
+Este asombroso resultado analítico dictamina que la suma de las densidades angulares de todos los electrones en una subcapa cerrada $nl^{4l+2}$ es una simple constante geométrica independiente de $\theta$ y $\phi$. Es esta propiedad la que permite que el formalismo de Hartree-Fock restringido (RHF) asuma un campo de potencial medio central puramente radial, justificando de forma íntegra la separación de variables y la dependencia del pozo $V(r)$ exclusivamente de la coordenada $r$. Cuando tratamos con subcapas abiertas, como en la configuración $np^2$, el teorema de Unsöld se rompe, lo que hace mandatorio recurrir al formalismo ROHF \cite{Roothaan1960, Cowan1981} desarrollado en esta tesis para mantener la coherencia del grupo de rotación.
+
+\section{Evaluación Computacional de Símbolos $3-j$}
+\label{sec:wigner-eval}
+
+La estructura fina y el tratamiento de interacciones direccionales exigen la evaluación repetitiva de los símbolos $3-j$ de Wigner (o análogamente, coeficientes de Clebsch-Gordan). Aunque tradicionalmente estos coeficientes se obtenían de tablas precalculadas para momentos angulares pequeños, la automatización computacional de un motor SCF requiere evaluarlos al vuelo para cualquier combinación cuántica permitida.
+
+Para garantizar rigor matemático y estabilidad algorítmica general, evitamos aproximaciones tabulares y nos apoyamos en la fórmula analítica de Racah \cite{Edmonds1957}. Esta expresión exacta descompone cualquier símbolo $3-j$ en un solo factor global y una serie hipergeométrica finita:
+
+\begin{equation}
+\label{eq:racah-formula}
+    \begin{pmatrix} j_1 & j_2 & j_3 \\ m_1 & m_2 & m_3 \end{pmatrix} 
+    = (-1)^{j_1 - j_2 - m_3} \sqrt{\Delta(j_1, j_2, j_3)} 
+    \sqrt{\prod_{i=1}^3 (j_i - m_i)! (j_i + m_i)!} 
+    \sum_t \frac{(-1)^t}{f(t)},
+\end{equation}
+
+donde $\Delta(j_1, j_2, j_3)$ es el coeficiente triangular definido como:
+\begin{equation}
+    \Delta(j_1, j_2, j_3) = \frac{(j_1 + j_2 - j_3)! (j_1 - j_2 + j_3)! (-j_1 + j_2 + j_3)!}{(j_1 + j_2 + j_3 + 1)!},
+\end{equation}
+y el denominador factorial iterativo es:
+\begin{equation}
+    f(t) = t! (j_3 - j_2 + t + m_1)! (j_3 - j_1 + t - m_2)! (j_1 + j_2 - j_3 - t)! (j_1 - t - m_1)! (j_2 - t + m_2)!.
+\end{equation}
+La variable entera de suma $t$ recorre todos los valores que garantizan que los argumentos de los factoriales sean no negativos.
+
+Si bien la Ec. \cref{eq:racah-formula} es exacta, su evaluación ingenua a través de factoriales de enteros conduce inexorablemente al desbordamiento aritmético (overflow) incluso para momentos angulares moderados (por ejemplo, $20! \approx 2.43 \times 10^{18}$, el límite para enteros de 64 bits). 
+
+Para soslayar esta catástrofe de representación, nuestro marco computacional (implementado nativamente aprovechando el ecosistema de computación científica del lenguaje Julia) eleva la evaluación al espacio logarítmico. Aprovechamos la función \textit{log-gamma}, $\ln \Gamma(n) = \ln((n-1)!)$, provista por la biblioteca matemática estándar o bibliotecas especializadas en momentos angulares. 
+
+Al transformar los enormes productos y cocientes de factoriales en simples sumas y restas de logaritmos, el término de la raíz cuadrada global puede escribirse algebraicamente como:
+\begin{equation}
+    \exp\left( \frac{1}{2} \left[ \sum \ln(\text{numeradores}) - \sum \ln(\text{denominadores}) \right] \right).
+\end{equation}
+
+Aunando esto, el algoritmo numérico logra una estabilidad incondicional. Finalmente, dado que en un átomo como el Germanio las integrales angulares $c_k(a,b,c,d)$ involucran combinaciones fuertemente redundantes de los mismos símbolos $3-j$ (e.g., elementos de la matriz reducida $||C^{(k)}||$), nuestro código de producción almacena los coeficientes requeridos en una tabla hash en memoria (memoización) tras su primera evaluación computacional logarítmica. Esta hibridación—la fórmula estricta de Racah resuelta en el espacio de logaritmos y amortizada por caché en memoria—hace que la integración geométrica, que de otro modo sería el cuello de botella teórico del formalismo ROHF, se complete en una fracción insignificante del ciclo de Campo Autoconsistente.
+
+\section{Interacción de Configuraciones y Álgebra de Racah}
+
+La potencia deductiva del álgebra tensorial se revela en su máxima expresión al abandonar el ansatz de un solo determinante y adentrarnos en la Interacción de Configuraciones (CI). Para evaluar los elementos de matriz de la interacción coulómbica $1/r_{12}$ entre estados doblemente excitados (por ejemplo, $\langle np^2 | 1/r_{12} | nd^2 \rangle$), la teoría de momentos angulares nos exime de calcular determinantes de Slater gigantescos.
+
+En su lugar, utilizando el teorema de Wigner-Eckart y el álgebra de Racah, la interacción completa entre dos configuraciones de electrones equivalentes $l^2$ y $l'^2$ acopladas a un término espectroscópico final $L S$, se reduce a la siguiente expresión exacta en términos de los símbolos $6-j$ de Wigner y los tensores esféricos de Raca $C^{(k)}$:
+
+\begin{equation}
+    \langle l^2 \, L S | \frac{1}{r_{12}} | l'^2 \, L S \rangle = \sum_k (-1)^L \begin{Bmatrix} l & l & L \\ l' & l' & k \end{Bmatrix} \langle l || C^{(k)} || l' \rangle^2 R^k(l, l, l', l')
+\end{equation}
+
+Esta elegante formulación matricial es exactamente la que implementamos en nuestro módulo de CI restringido. El símbolo $6-j$ (denotado por las llaves) encapsula la compleja topología del acoplamiento tetradimensional del momento angular, garantizando que el Hamiltoniano de correlación preserve las simetrías espaciales del átomo. Al delegar la evaluación de este símbolo a nuestra infraestructura computacional, el problema de muchos cuerpos se reduce a una simple combinación lineal de integrales radiales $R^k$ mediada por la geometría esférica pura.
+
+\subsection{Coeficientes de Parentesco Fraccional (CFP)}
+\label{sec:cfp}
+
+Aunque la ecuación anterior basta para sistemas de dos electrones de valencia (como nuestra secuencia $np^2$), la teoría tensorial de Racah fue concebida para una generalidad absoluta. Cuando lidiamos con capas abiertas que contienen $N$ electrones equivalentes ($l^N$, con $N > 2$), la imposición del Principio de Exclusión de Pauli sobre la función de onda total se vuelve un problema formidable. No es trivial construir un estado de $N$ cuerpos que sea simultáneamente antisimétrico y eigenestado simultáneo de los operadores $\hat{L}^2$ y $\hat{S}^2$.
+
+Para resolver esto, Racah introdujo los \textbf{Coeficientes de Parentesco Fraccional (CFP)}, denotados convencionalmente como $\langle l^{N-1} (\alpha' L' S') l |\} l^N \alpha L S \rangle$. La filosofía detrás del CFP es inherentemente recursiva: nos indica matemáticamente cómo ``desacoplar'' (aislar) un único electrón de la capa de $N$ electrones, proyectando el estado total $(\alpha L S)$ sobre una suma ponderada de subestados base constituidos por un ``padre'' de $N-1$ electrones acoplado a la partícula aislada.
+
+El coeficiente de parentesco fraccional no es un simple factor de acoplamiento de espín-órbita; es estrictamente un peso topológico que garantiza que la permutación del electrón extraído con cualquiera de los $N-1$ electrones restantes respete la antisimetría fermiónica. Gracias a esta desvinculación asimétrica dictada por el CFP, el operador repulsivo de dos cuerpos $\frac{1}{r_{ij}}$ puede integrarse sobre la partícula aislada, permitiendo que la maquinaria algebraica evalúe las interacciones de correlación de Coulomb de una capa $l^N$ arbitraria reutilizando únicamente integrales radiales y tensores de Racah esféricos. Es esta robustez matemática la que consagra al formalismo tensorial como el lenguaje definitivo de la física atómica multielectrónica.
+
+
+\section{Evaluación Explícita de los Coeficientes Angulares para $np^2$}
+\label{sec:coef_angulares_np2}
+
+Toda la maquinaria de las secciones anteriores converge, para la configuración que estudiamos, en un cálculo notablemente corto. Vale la pena recorrerlo de manera explícita, tanto porque fija los coeficientes numéricos que el Capítulo \ref{ch:particulas-independientes} y el Capítulo \ref{ch:resultados} emplean sin volver a derivar, como porque su misma sencillez es un resultado: la configuración $np^2$ es el caso más simple en el que la anisotropía electrostática se manifiesta, y esa simplicidad es la que permite validar la implementación tensorial contra valores analíticos exactos.
+
+\subsection{El coeficiente de parentesco fraccional se reduce a la unidad}
+
+Para una configuración $l^N$, el estado antisimétrico se construye acoplando un estado parental $\ket{l^{N-1}\,\alpha' L' S'}$ al $N$-ésimo electrón,
+\begin{equation}
+    \label{eq:cfp_expansion}
+    \ket{l^N \alpha L S} = \sum_{\alpha' L' S'} \langle l^{N-1}(\alpha' L' S')\,l \,|\}\, l^N \alpha L S \rangle \;\ket{(l^{N-1}\alpha' L' S')\,l\,L S}.
+\end{equation}
+
+En nuestro caso $N=2$ y $l=1$, de modo que la configuración parental es simplemente $p^1$, la cual posee un único término espectroscópico: $^2P$, con $L'=1$ y $S'=1/2$. La suma sobre estados parentales de \eqref{eq:cfp_expansion} colapsa entonces a un solo sumando. Puesto que tanto el estado físico $\ket{p^2 LS}$ como el estado acoplado por Clebsch-Gordan están normalizados a la unidad, tomar el producto interno de \eqref{eq:cfp_expansion} consigo misma deja
+\begin{equation}
+    1 = \abs{\langle p^1(^2P)\,p \,|\}\, p^2 L S \rangle}^2,
+\end{equation}
+y adoptando la convención de fase de Condon y Shortley, que fija el signo positivo,
+\begin{equation}
+    \label{eq:cfp_np2}
+    \langle p^1(^2P)\,p \,|\}\, p^2 L S \rangle = 1.
+\end{equation}
+
+El parentesco queda indiviso porque no existe ningún otro estado parental sobre el cual repartirlo. Conviene subrayar que esto no es una simplificación que hayamos impuesto, sino una consecuencia de que $p^1$ tenga un solo término; en una configuración como $d^3$, donde el par $(L,S)$ puede repetirse y hacen falta los CFP completos junto con el número cuántico adicional $\alpha$, la maquinaria de la Sección \ref{sec:cfp} sí resulta indispensable.
+
+\subsection{Evaluación de los coeficientes $c_k(L)$}
+
+Con el parentesco resuelto, el coeficiente angular de la interacción de Coulomb para un par de electrones equivalentes acoplados al término $L$ queda
+\begin{equation}
+    \label{eq:fk_general}
+    c_k(l, l', L) = (-1)^L \begin{Bmatrix} l & l & L \\ l' & l' & k \end{Bmatrix} (2l+1)(2l'+1) \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}^2 .
+\end{equation}
+
+La expresión se separa de manera natural en dos factores con significados distintos. El símbolo $3j$ evalúa la integral angular de una sola partícula y depende únicamente de los momentos individuales y del multipolo; es un factor de escala común a todos los términos. El símbolo $6j$, en cambio, codifica la \textbf{geometría del acoplamiento} entre los dos electrones: el valor de $L$ determina la orientación relativa de las dos órbitas, y puesto que los electrones se repelen, esa orientación decide cuánta repulsión cuadrupolar experimenta cada término.
+
+Para $p^2$ tenemos $l = l' = 1$. La regla del triángulo del símbolo $3j$ con las tres proyecciones nulas exige que $k$ sea par y no exceda $2l$, de modo que solo sobreviven $k=0$ y $k=2$. El factor común del $3j$ para $k=2$ vale
+\begin{equation}
+    \begin{pmatrix} 1 & 2 & 1 \\ 0 & 0 & 0 \end{pmatrix} = \sqrt{\frac{2}{15}}
+    \quad \Longrightarrow \quad
+    (3)(3)\left(\sqrt{\tfrac{2}{15}}\right)^2 = \frac{18}{15} = \frac{6}{5},
+\end{equation}
+con lo cual \eqref{eq:fk_general} se reduce a
+\begin{equation}
+    \label{eq:c2_reducido}
+    c_2(L) = (-1)^L \begin{Bmatrix} 1 & 1 & L \\ 1 & 1 & 2 \end{Bmatrix} \frac{6}{5}.
+\end{equation}
+
+Solo resta evaluar los tres símbolos $6j$ correspondientes a los términos que la antisimetría permite, es decir, aquellos con $L+S$ par:
+\begin{align}
+    ^3P\ (L=1):&\quad \begin{Bmatrix} 1 & 1 & 1 \\ 1 & 1 & 2 \end{Bmatrix} = \frac{1}{6}
+    &&\Longrightarrow\quad c_2(^3P) = -\frac{1}{6}\cdot\frac{6}{5} = -\frac{5}{25}, \label{eq:c2_3P}\\
+    ^1D\ (L=2):&\quad \begin{Bmatrix} 1 & 1 & 2 \\ 1 & 1 & 2 \end{Bmatrix} = \frac{1}{30}
+    &&\Longrightarrow\quad c_2(^1D) = +\frac{1}{30}\cdot\frac{6}{5} = +\frac{1}{25}, \label{eq:c2_1D}\\
+    ^1S\ (L=0):&\quad \begin{Bmatrix} 1 & 1 & 0 \\ 1 & 1 & 2 \end{Bmatrix} = \frac{1}{3}
+    &&\Longrightarrow\quad c_2(^1S) = +\frac{1}{3}\cdot\frac{6}{5} = +\frac{10}{25}. \label{eq:c2_1S}
+\end{align}
+
+El signo de $c_2$ admite una lectura física directa. Un término cuya geometría de acoplamiento mantiene a los dos electrones espacialmente separados paga menos repulsión cuadrupolar y recibe un coeficiente negativo. El $^3P$ es el que mejor los separa, en parte porque el espín paralelo obliga a la parte espacial a ser antisimétrica, y por eso queda como estado fundamental de la configuración, en concordancia con la primera regla de Hund.
+
+\subsection{Por qué $F^2$ es la única integral que desdobla}
+
+De la restricción $k \in \{0,2\}$ se sigue un resultado que el texto principal utiliza repetidamente. La contribución monopolar tiene $c_0(L) = 1$ para los tres términos, sin excepción: desplaza la configuración completa en energía pero no separa nada. Toda la dependencia angular reside en $k=2$. En consecuencia, dentro del límite de Hartree-Fock para $np^2$, \textbf{una sola integral radial, $F^2(np,np)$, es responsable de la totalidad de la separación} entre $^3P$, $^1D$ y $^1S$.
+
+Esta exclusividad se pierde en cuanto se abandona el modelo uniconfiguracional. Al mezclar $np^2$ con configuraciones virtuales como $nd^2$ en el cálculo de interacción de configuraciones, aparecen momentos angulares distintos, la regla del triángulo admite nuevos valores de $k$, y se vuelven necesarias las integrales generalizadas $R^k(abcd)$ junto con los intercambios $G^k$ entre electrones no equivalentes.
+
+\subsection{El promedio de la configuración}
+
+El promedio configuracional es la media de los $c_2(L)$ pesada por la degeneración $g = (2L+1)(2S+1)$ de cada término. Con $g(^3P)=9$, $g(^1D)=5$ y $g(^1S)=1$, que suman los quince microestados de $p^2$,
+\begin{equation}
+    \label{eq:c2_promedio}
+    \overline{c_2} = \frac{9\left(-\frac{5}{25}\right) + 5\left(+\frac{1}{25}\right) + 1\left(+\frac{10}{25}\right)}{15}
+    = \frac{-\frac{30}{25}}{15} = -\frac{2}{25},
+\end{equation}
+de donde $E_{\text{av}}(p^2) = F^0 - \frac{2}{25}F^2$, tal como se anticipó en la Ecuación \eqref{eq:e_av_p2}.
+
+Conviene ser explícito respecto al punto de referencia, porque es una fuente frecuente de confusión. Los coeficientes \eqref{eq:c2_3P}--\eqref{eq:c2_1S} están medidos respecto a $F^0$, es decir, respecto a la energía de la configuración \textit{sin} la contribución cuadrupolar. Los coeficientes de la Sección \ref{sec:rohf}, en cambio, están medidos respecto a $E_{\text{av}}$, que ya incluye el promedio $\overline{c_2} = -2/25$. La conversión entre ambos es una simple traslación,
+\begin{equation}
+    \label{eq:conversion_referencia}
+    E(^{2S+1}L) = F^0 + c_2(L)\,F^2 = E_{\text{av}} + \left[c_2(L) - \overline{c_2}\right] F^2,
+\end{equation}
+que reproduce los valores $-3/25$, $+3/25$ y $+12/25$ empleados en el texto principal. Estos últimos son los que satisfacen la regla del baricentro, ya que su promedio ponderado se anula por construcción.

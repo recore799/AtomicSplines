@@ -8,6 +8,8 @@
 \author{Rafael Obed Egurrola Corella}
 \date{\today}
 
+\includeonly{chapters/introduccion}
+
 \begin{document}
 
 \frontmatter
@@ -16,34 +18,22 @@
 \listoffigures
 
 \mainmatter
-% Prólogo
-\include{chapters/prologo}
-
 % Capítulo 1: Introducción
 \include{chapters/introduccion}
 
-\part{Fundamentos Teóricos}
-% Capítulo 2: El Modelo de Partículas Independientes
+% Capítulo 2: Marco Teórico
 \include{chapters/particulas-independientes}
 
-% Capítulo 3: Correlación Electrónica y Estructura Fina
-\include{chapters/correlacion-estructura-fina}
-
-\part{Formulación Numérica y Computacional}
-% Capítulo 4: B-splines y el método de Galerkin
+% Capítulo 3: Método Numérico
 \include{chapters/bsplines-galerkin}
 
-% Capítulo 5: Implementación del Ciclo SCF y Correcciones
-\include{chapters/ciclo-scf}
-
-\part{Resultados y Análisis}
-% Capítulo 6: Resultados
+% Capítulo 4: Resultados
 \include{chapters/resultados}
 
-% Capítulo 7: Discusión
+% Capítulo 5: Discusión
 \include{chapters/discusion}
 
-% Capítulo 8: Conclusiones
+% Capítulo 6: Conclusiones
 \include{chapters/conclusiones}
 
 \appendix
@@ -53,16 +43,16 @@
 % Apéndice B: Teoría de Momento Angular
 \include{appendices/momento-angular}
 
-% Apéndice C: Operadores Tensoriales Irreducibles y Álgebra de Racah
+% Apéndice C: Formalismo Avanzado de Tensores
 \include{appendices/operadores-tensoriales}
 
 % Apéndice D: Teoría e Implementación de B-splines
 \include{appendices/bsplines}
 
-% Apéndice E: Formulación de Galerkin y Ecuación de Poisson radial generalizada
+% Apéndice E: Ecuación de Poisson radial generalizada
 \include{appendices/galerkin-poisson}
 
-% Apéndice F: Métodos Numéricos Auxiliares y Potencial de Polarización
+% Apéndice F: Métodos Numéricos Auxiliares
 \include{appendices/metodos-auxiliares}
 
 \backmatter

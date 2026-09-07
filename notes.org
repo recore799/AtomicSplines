@@ -401,3 +401,31 @@ Barium has a closed Xenon core plus two 6s valence electrons.
 * Why do I need dest_mat in assemble_J_matrix?
 
 * calc_R_matrices = ? make it smarter
+
+
+
+* Hacer enfasis en la malla radial utilizada (creo que es una malla exponencial que usa Bachau)
+
+* Simetria por armonicos esfericos?
+ Creo que nunca hice una descripcion de los numeros de ocupacion o de por que en una subcapa d "caben" 10 electrones. Posiblemente sea buena idea anadir una seccion de esto en el marco teorico. Por ejemplo, en el marco teorico digo varias veces electrones equilaventes, pero nunca explique que significa eso. Tal vez una breve explicacion de como los numeros cuanticos describen inequivocamente el estado de un electron (lo que se vuelve bastante complejo para describir el ensemble de electrones y que requiere el formalismo del momento angular para realizar)
+
+
+* Correspondencia con Moller-Pleset y Breit-Pauli
+
+
+* Froes fischer usa STOs, comentar sobre la diferencia
+
+* Descomposicion de cholesky
+
+
+* Para decirle a adrian
+
++ Reestructura masiva
++ Le puse lo de Galerkin desde el principio en el marco teorico
+
+
+* Matriz de traslape?
+
+* Regenerar figura 4.3 con un Gamma mucho mas alto para apreciar mejor la exponencial
+
+* Creo que solo en los apendices use Cref, pero en algunas ecuaciones puse "en la ec \\cref{}" lo que hace que salga como "en la ec ecuacion (1.1)", hay que estandarizar esto, deberiamos de usar cref en todo el documento y cuidar el no poner "ec" dos veces

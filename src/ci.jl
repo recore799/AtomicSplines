@@ -65,19 +65,32 @@ const CFP_P_SHELL = Dict{Int, Dict{Term, Vector{Tuple{Term, Float64}}}}(
     )
 )
 
-function extract_virtuals(evals::Vector{Float64}, evecs::Matrix{Float64}, l::Int, num_occupied::Int, N_virt::Int, active_idx::UnitRange{Int}, n_splines::Int, ws; offset::Int=0)
+function extract_virtuals(evals::Vector{Float64}, evecs::Matrix{Float64}, l::Int, num_occupied::Int, N_virt::Int, active_idx::UnitRange{Int}, n_splines::Int, ws, Z::Float64; offset::Int=0)
     virtuals = Orbital[]
+    
+    # Filter out spurious states. Hydrogenic ground state is -Z^2 / 2.
+    # Anything significantly below that is spurious.
+    min_physical_energy = -(Z^2) 
+    
+    physical_indices = Int[]
+    for i in 1:length(evals)
+        if evals[i] > min_physical_energy
+            push!(physical_indices, i)
+        end
+    end
+    
     start_idx = num_occupied + 1 + offset
-    end_idx = min(start_idx + N_virt - 1, length(evals))
+    end_idx = min(start_idx + N_virt - 1, length(physical_indices))
     
     for i in start_idx:end_idx
+        idx = physical_indices[i]
         pseudo_n = l + 1 + num_occupied + (i - start_idx) 
         
         virt_orb = Orbital(pseudo_n, l, 0.0)
-        virt_orb.energy = evals[i]
+        virt_orb.energy = evals[idx]
         
         virt_orb.coeffs = zeros(Float64, n_splines)
-        virt_orb.coeffs[active_idx] = evecs[:, i]
+        virt_orb.coeffs[active_idx] = evecs[:, idx]
         
         norm_factor = sqrt(dot(virt_orb.coeffs, ws.S * virt_orb.coeffs))
         virt_orb.coeffs ./= norm_factor

@@ -1,0 +1,2 @@
+Germanio g_eff = 1.410
+Carbono g_eff = 1.497

@@ -1,20 +1,30 @@
 \chapter{Introducción}
 \label{ch:introduccion}
 
-\section{Motivación}
-
-La resolución analítica de la ecuación de Schrödinger está estrictamente limitada a sistemas de un solo electrón (como el átomo de hidrógeno o iones hidrogenoides). Para sistemas multielectrónicos, la interacción repulsiva interelectrónica acopla las ecuaciones de movimiento, imposibilitando una solución exacta de forma cerrada. Esta intrincada correlación dinámica ha motivado el desarrollo histórico de la química cuántica computacional y la física atómica teórica, cuyo pilar fundamental es el método de Campo Autoconsistente de Hartree-Fock (HF).
-
-El método de Hartree-Fock busca la mejor aproximación uniconfiguracional a la función de onda exacta utilizando un determinante de Slater, reduciendo el problema de muchos cuerpos a un sistema de ecuaciones integro-diferenciales no lineales. Tradicionalmente, para resolver estas ecuaciones, los orbitales atómicos se expanden en conjuntos de bases analíticas, como los orbitales de tipo Slater (STO) o funciones Gaussianas (GTO). Si bien estas bases globales son eficientes, sufren de limitaciones críticas: la sobrecompletitud, que genera problemas de dependencia lineal, y una representación deficiente en las regiones muy cercanas al núcleo y en las colas asintóticas de la función de onda.
-
 \section{Planteamiento del Problema}
 
-En contraste con las funciones globales, el uso de B-splines (polinomios a trozos finitos) introduce un marco numérico de alta precisión libre de dependencias lineales. Esta base finita proporciona un soporte riguroso para la representación de orbitales con una precisión casi ilimitada, al mismo tiempo que discretiza el continuo atómico, permitiendo estudios profundos sobre fenómenos de fotoionización y correlación electrónica (Johnson, 2007). 
+En contraste con las funciones globales, el uso de B-splines (polinomios a trozos finitos) introduce un marco numérico de alta precisión libre de dependencias lineales que es inherentemente agnóstico a la física subyacente. Al ser un constructo puramente matemático, comúnmente empleado en los métodos de elementos finitos, proporciona una flexibilidad representativa extraordinaria. Esta base finita garantiza un soporte riguroso capaz de aproximar orbitales con precisión casi ilimitada (autores como \cite{Bachau2001, deBoor1978} aclaman obtener precisión de máquina), al mismo tiempo que discretiza eficazmente el continuo atómico, permitiendo estudios profundos sobre fenómenos de fotoionización y correlación electrónica \cite{Johnson2007}. De hecho, la robustez de los B-splines no se limita a la ecuación radial de Schrödinger, sino que ha demostrado ser estable en la resolución de la ecuación relativista de Dirac-Hartree-Fock para elementos pesados \cite{Johnson1988}.
 
-El objetivo principal de esta tesis es desarrollar, implementar e iterar un solucionador numérico \textit{ab-initio} robusto fundamentado en B-splines para sistemas atómicos multielectrónicos. En particular, nos enfocamos en el método Restricted Open-Shell Hartree-Fock (ROHF) para estudiar con extrema fidelidad la secuencia homóloga $np^2$, conformada por el Carbono ($2p^2$), Silicio ($3p^2$) y Germanio ($4p^2$). 
+El objetivo principal de esta tesis es desarrollar, implementar e iterar un solucionador numérico \textit{ab-initio} fundamentado en B-splines para sistemas atómicos multielectrónicos. En particular, nos enfocamos en el método Restricted Open-Shell Hartree-Fock (ROHF) para estudiar con extrema fidelidad la secuencia isoelectrónica $np^2$, conformada por el Carbono ($2p^2$), Silicio ($3p^2$), Germanio ($4p^2$) y Estaño ($5p^2$). 
 
-A medida que descendemos por el grupo 14 de la tabla periódica, el aumento en la carga nuclear $Z$ y el efecto de apantallamiento de las capas internas cerradas provocan un rápido incremento en las fuerzas relativistas efectivas experimentadas por los electrones de valencia. El reto es demostrar que nuestra base de B-splines no solo obtiene energías autoconsistentes exactas a nivel no-relativista, sino que permite calcular con precisión el parámetro de acoplamiento espín-órbita radial ($\zeta_{np}$) y evaluar la matriz del Hamiltoniano de Breit-Pauli. Este análisis culminará demostrando el desglose de la aproximación tradicional del acoplamiento Russell-Saunders ($LS$) en el Germanio, revelando una transición hacia un régimen de acoplamiento intermedio.
+A medida que descendemos por el grupo 14 de la tabla periódica, el aumento en la carga nuclear $Z$ y el efecto de apantallamiento de las capas internas cerradas provocan un rápido incremento en las fuerzas relativistas efectivas experimentadas por los electrones de valencia. El reto es demostrar que nuestra base de B-splines no solo obtiene energías autoconsistentes exactas a nivel no-relativista, sino que permite calcular con precisión el parámetro de acoplamiento espín-órbita radial ($\zeta_{np}$) y evaluar la matriz del Hamiltoniano de Breit-Pauli. Este análisis culminará demostrando el desglose de la aproximación tradicional del acoplamiento Russell-Saunders ($LS$) en el Germanio y el Estaño, revelando una transición contundente hacia un régimen de acoplamiento intermedio.
 
+Es fundamental enmarcar que, dada la naturaleza de este trabajo como un proyecto de tesis de licenciatura, el objetivo central no radica en postular un desarrollo teórico original para el estado del arte de la física atómica. Por el contrario, la presente investigación posee un carácter netamente formativo y exploratorio. La implementación desde cero de este motor \textit{ab-initio} busca demostrar un dominio analítico y numérico profundo de la mecánica cuántica multielectrónica y la fenomenología relativista. Al aplicar de manera formal la teoría espectroscópica de \cite{Cowan1981}, se establece una base metodológica que avala la capacidad técnica y conceptual requerida para abordar problemas avanzados en futuros estudios de posgrado.
+
+\section{Estrategia de Modelado: De Hartree-Fock al Acoplamiento Intermedio}
+
+Para comprender la metodología empleada y los resultados obtenidos en este tratado, es fundamental asimilar el flujo lógico del modelo físico, el cual evoluciona desde una perspectiva teórica básica hacia una representación empírica cada vez más sofisticada.
+
+El desarrollo se cimenta en primer lugar sobre el esquema tradicional uniconfiguracional de Hartree-Fock. En esta etapa, el problema de muchos cuerpos se aborda mediante la aproximación de campo medio, resolviendo iterativamente las ecuaciones integro-diferenciales para alcanzar la convergencia del Campo Autoconsistente (SCF). Los orbitales obtenidos en este límite, aunque útiles para una descripción estática, adolecen de precisión empírica dado que ignoran efectos de correlación y relativistas cruciales para los átomos pesados.
+
+Una vez establecidos y convergidos estos resultados del SCF, la estrategia de modelado consiste en utilizar dichos orbitales optimizados como una base confiable para introducir sistemáticamente correcciones físicas. De este modo, procedemos a mejorar nuestro modelo incorporando los siguientes componentes fenomenológicos:
+\begin{itemize}
+    \item \textbf{Interacción de Configuraciones (CI):} Para recuperar la energía de correlación estática omitida en el determinante de Slater inicial.
+    \item \textbf{Acoplamiento Espín-Órbita (SO):} Integrando el Hamiltoniano de Breit-Pauli sobre nuestros orbitales para capturar el desdoblamiento magnético característico del régimen de acoplamiento intermedio.
+    \item \textbf{Potencial de Polarización ($V_{\text{pol}}$):} Una corrección semiempírica que modela la interacción del core inerte con los electrones de valencia, vital para afinar las predicciones energéticas en elementos pesados como el Germanio y el Estaño.
+\end{itemize}
+
+A través de esta escalada metodológica, transitamos del modelo estricto de partículas independientes hacia un modelo robusto que reproduce con alta fidelidad las observaciones espectroscópicas empíricas.
 \section{Estructura del Documento}
 
 Este trabajo se ha estructurado de la siguiente manera:
@@ -24,4 +34,9 @@ El \textbf{Capítulo 4} expone la validación numérica de la implementación (c
 El \textbf{Capítulo 5} discute el contraste físico a lo largo de la secuencia $np^2$ y la transición al acoplamiento intermedio.
 Por último, el \textbf{Capítulo 6} sintetiza las conclusiones principales derivadas de esta investigación.
 
-Para facilitar la legibilidad del texto principal a nivel licenciatura, las demostraciones formales de álgebra tensorial esférica y los pormenores algorítmicos complejos de los B-splines se han confinado a los \textbf{Apéndices A y B}, respectivamente.
+Para facilitar la legibilidad del texto principal y mantener un hilo conductor enfocado en la física del problema, los desarrollos formales más extensos y técnicos se han delegado a una serie de apéndices. El \textbf{Apéndice A} precisa el sistema de unidades atómicas; el \textbf{Apéndice B} desarrolla la teoría general de momento angular; el \textbf{Apéndice C} expone el formalismo avanzado de operadores tensoriales irreducibles; el \textbf{Apéndice D} presenta los fundamentos algorítmicos de la base de B-splines; el \textbf{Apéndice E} presenta la formulación de Galerkin y la resolución de la ecuación de Poisson radial que sustenta el cálculo de los potenciales de interacción electrónica; y, finalmente, el \textbf{Apéndice F} documenta los métodos numéricos auxiliares empleados durante la implementación.
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

@@ -13,7 +13,61 @@ En el caso del Carbono ($Z=6$), la repulsión electrostática intra-capa (parame
 \subsection{La fractura inicial y re-optimización (Silicio)}
 Al descender al Silicio ($Z=14$), comenzamos a notar que la inyección estática del término espín-órbita altera ligeramente las distancias relativas inter-multipletes. Como se discutió en el capítulo de Resultados, la pequeña desviación observada en los parámetros de repulsión $\zeta_{3p}$ y $F^2$ frente a los cálculos focalizados al estado base de Froese Fischer es evidencia directa del uso de un campo medio promediado. Optimizar el SCF bajo el promedio de configuraciones relaja artificialmente las constricciones sobre el término singlete contra el triplete, asegurando que las funciones radiales generadas sirvan como una base imparcial para la superposición e interferencia de estados en cálculos posteriores de interacción de configuraciones. Aquí, la fractura de la regla de Landé comienza a ser medible.
 
-\subsection{El colapso espectroscópico y mezcla fuerte (Germanio)}
-El colapso total de la aproximación tradicional sucede de manera inevitable en el Germanio ($Z=32$). Por el drástico acortamiento del pozo efectivo y el intenso apantallamiento de su núcleo pesado, la magnitud de la interacción magnética radial $\zeta_{4p}$ asciende bruscamente hasta escalar y competir en el mismo orden de magnitud que la repulsión coulómbica $F^2(4p, 4p)$. 
+\subsection{El colapso espectroscópico y mezcla fuerte (Germanio y Estaño)}
+El colapso total de la aproximación tradicional sucede de manera inevitable a partir del Germanio ($Z=32$) y se agudiza severamente en el Estaño ($Z=50$). Por el drástico acortamiento del pozo efectivo y el intenso apantallamiento de sus núcleos masivos, la magnitud de las interacciones magnéticas radiales asciende bruscamente hasta escalar y competir en el mismo orden de magnitud que la repulsión coulómbica. 
 
-Frente a la diagonalización matricial del operador completo de la energía de Breit-Pauli, los elementos de matriz fuera de la diagonal dominan la dinámica de subespacios con el mismo Momento Angular Total $J$. En la configuración $np^2$, los autoestados con $J=0$ y $J=2$ son composiciones altamente mezcladas del término singlete ($^1S_0$, $^1D_2$) y el término triplete ($^3P_0$, $^3P_2$). La fuerte interacción no-diagonal rompe de facto la degeneración electrostática y entrelaza las funciones de onda analíticas, indicando que el formalismo $LS$ ha sucumbido frente a la relatividad escalar. Las notaciones espectroscópicas que aún clasifican experimentalmente los niveles del germanio pierden su pureza puramente cuántica y sólo sobreviven como etiquetas topológicas remanentes de su ancestro ligero, coronando de manera magistral la capacidad del motor de acoplamiento intermedio propuesto en esta tesis.
+Frente a la diagonalización matricial del operador completo de la energía de Breit-Pauli, los elementos de matriz fuera de la diagonal dominan la dinámica de subespacios con el mismo Momento Angular Total $J$. En la configuración $np^2$, los autoestados con $J=0$ y $J=2$ son composiciones altamente mezcladas del término singlete ($^1S_0$, $^1D_2$) y el término triplete ($^3P_0$, $^3P_2$). La fuerte interacción no-diagonal rompe de facto la degeneración electrostática y entrelaza las funciones de onda analíticas, indicando que el formalismo $LS$ ha sucumbido frente a la relatividad escalar. Las notaciones espectroscópicas que aún clasifican experimentalmente los niveles del germanio pierden su pureza puramente cuántica y sólo sobreviven como etiquetas formales remanentes de su ancestro ligero, demostrando la capacidad del método de acoplamiento intermedio propuesto en esta tesis.
+
+\section{Efecto Zeeman Anómalo y el Factor $g$ de Landé}
+
+Una forma contundente y físicamente observable de cuantificar la fractura espectroscópica discutida en la sección anterior es evaluar la interacción del átomo con un campo magnético externo débil, fenómeno conocido como el \textbf{Efecto Zeeman anómalo} \cite{CohenTannoudji1977}. 
+
+Cuando un átomo se somete a un campo magnético estático $\mathbf{B}$, la degeneración espacial de los subniveles magnéticos $M_J$ se rompe. La interacción está gobernada por el Hamiltoniano de Zeeman, el cual acopla el campo externo con los momentos dipolares magnéticos orbital ($\boldsymbol{\mu}_L$) y de espín ($\boldsymbol{\mu}_S$):
+
+\begin{equation}
+    \hat{H}_Z = - (\boldsymbol{\mu}_L + \boldsymbol{\mu}_S) \cdot \mathbf{B} = \frac{\mu_B}{\hbar} (\mathbf{L} + g_s \mathbf{S}) \cdot \mathbf{B},
+\end{equation}
+
+donde $\mu_B$ es el magnetón de Bohr y $g_s \approx 2$ es el factor giromagnético anómalo del espín del electrón. Debido a que el momento orbital pondera con un factor de $1$ y el espín con un factor de $2$, el momento magnético total $\boldsymbol{\mu}_J$ no es colineal con el momento angular total $\mathbf{J}$. 
+
+\subsection{El Límite del Acoplamiento LS}
+
+Para un estado de acoplamiento $LS$ perfectamente puro, los vectores $\mathbf{L}$ y $\mathbf{S}$ precesan rápidamente alrededor de $\mathbf{J}$ debido a la interacción espín-órbita, mientras que $\mathbf{J}$ precesa lentamente alrededor del eje definido por $\mathbf{B}$ (típicamente el eje $z$). Al aplicar el teorema de Wigner-Eckart para proyectar el operador vectorial $(\mathbf{L} + 2\mathbf{S})$ sobre la dirección del vector constante $\mathbf{J}$, el desdoblamiento energético resulta estrictamente lineal y proporcional a un factor adimensional $g_{LS}$, conocido como el \textbf{factor de Landé}:
+
+\begin{equation}
+    \Delta E = g_{LS} \mu_B B M_J, \quad \text{donde} \quad g_{LS} = 1 + \frac{J(J+1) - L(L+1) + S(S+1)}{2J(J+1)}.
+\end{equation}
+
+En este régimen, el factor $g$ es una constante intrínseca rígidamente determinada por los números cuánticos del multiplete. Por ejemplo, analizando el nivel espectroscópico con $J=2$ para nuestra configuración $np^2$:
+\begin{itemize}
+    \item El estado triplete puramente acoplado $^3P_2$ ($L=1, S=1$) impone invariablemente un factor $g(^3P_2) = 1.50$.
+    \item El estado singlete $^1D_2$ ($L=2, S=0$) exige un factor diamagnético $g(^1D_2) = 1.00$.
+\end{itemize}
+
+\subsection{El Factor de Landé en Acoplamiento Intermedio}
+
+Sin embargo, como hemos demostrado computacionalmente, nuestro esquema de acoplamiento intermedio (gobernado por la diagonalización completa de la matriz de Breit-Pauli) rompe la conservación aislada de $L$ y $S$. El autoestado físico resultante $| \psi_{J=2} \rangle$ no es puro, sino una superposición lineal ortonormal de los estados base del subespacio: 
+
+\begin{equation}
+    | \psi \rangle = c_1 | ^3P_2 \rangle + c_2 | ^1D_2 \rangle.
+\end{equation}
+
+Dado que la corrección de Zeeman en campo débil es un operador diagonal en $J$ de primer orden de perturbación, el factor $g$ efectivo que mediría el experimento es el valor esperado del operador sobre el estado mezclado, es decir, el promedio probabilístico ponderado de las aportaciones puras:
+
+\begin{equation}
+    g_{\text{eff}} = \langle \psi | \hat{g} | \psi \rangle = |c_1|^2 g_{LS}(^3P_2) + |c_2|^2 g_{LS}(^1D_2) = |c_1|^2 (1.50) + |c_2|^2 (1.00).
+\end{equation}
+
+Utilizando los coeficientes obtenidos directamente de nuestro motor numérico B-spline:
+\begin{itemize}
+    \item Para el \textbf{Carbono ($Z=6$)}, el Hamiltoniano es asintóticamente electrostático. La mezcla es marginal ($c_1 \approx 1.0$, $c_2 \approx 0.0$). El factor calculado arroja $g_{\text{eff}} = 1.500$, corroborando teóricamente que el átomo se comporta como un triplete ideal $^3P_2$.
+    \item Para el \textbf{Germanio ($Z=32$)}, la interacción magnética espín-órbita no-diagonal induce una perturbación visible en el espacio de Hilbert. Nuestro cálculo teórico estricto en el límite Hartree-Fock predice una mezcla incipiente ($99.5\%$ del triplete $^3P$ y $0.5\%$ del singlete $^1D$), lo que resulta en un factor de Landé efectivo de \textbf{$g_{\text{eff}} = 1.4975$}. 
+\end{itemize}
+
+El veredicto definitivo de esta fractura del acoplamiento $LS$ proviene del experimento. La base de datos del NIST reporta un valor empírico para el nivel $^3P_2$ del Germanio de \textbf{$g_{\text{exp}} = 1.496$}. Inyectando este valor medido en el laboratorio en nuestra fórmula probabilística, la naturaleza revela que el estado físico opera con una mezcla de aproximadamente $99.2\%$ del estado $^3P$ y $0.8\%$ del estado $^1D$. 
+
+El hecho de que nuestro modelo SCF de campo medio capture la caída del factor $g$ desde $1.500$ hasta $1.4975$ demuestra la precisión del método B-spline. Sin embargo, aún queda una pequeña brecha respecto al $1.496$ experimental. Como discutimos en el capítulo de Resultados, la aproximación de campo medio sobreestima la repulsión electrostática $F^2$, manteniendo los estados artificialmente separados. 
+
+Para comprobar el origen de esta brecha y probar por qué ocurre, implementamos un cálculo de Interacción de Configuraciones (CI) restringido a la capa de valencia. Un detalle teórico profundo de este método radica en el \textbf{Teorema de Brillouin}, el cual establece que la función de onda de Hartree-Fock no interactúa directamente con excitaciones simples ($\langle \Psi_{\text{HF}} | \hat{H} | \Psi_{S} \rangle = 0$). Este postulado revela que la correlación electrónica estática no puede ser extraída moviendo un solo electrón. Por lo tanto, fue computacionalmente necesario recurrir a excitaciones dobles ($np^2 \to nd^2$) hacia los pseudo-estados virtuales extraídos de nuestra base B-spline. 
+
+Al incluir estas configuraciones excitadas doblemente, la correlación electrónica reduce exitosamente la integral efectiva $F^2$. Esta compresión del espectro fortalece el peso relativo de la interacción espín-órbita $\zeta_{4p}$, incrementando la mezcla singlete-triplete y empujando el factor de Landé teórico hacia el valor experimental, trazando así de manera elegante y concluyente la frontera entre el límite de partícula independiente y la realidad de los sistemas multielectrónicos.

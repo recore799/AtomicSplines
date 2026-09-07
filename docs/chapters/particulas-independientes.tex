@@ -1,0 +1,257 @@
+\chapter{El Modelo de Partículas Independientes}
+\label{ch:particulas-independientes}
+
+\section{El Problema Multielectrónico y la Aproximación del Campo Medio}
+
+El objetivo fundamental de la física atómica computacional es resolver la ecuación de Schrödinger independiente del tiempo para un sistema de \( N \) electrones interactuando con un núcleo fijo de carga \( Z \). El Hamiltoniano no relativista en unidades atómicas está dado por:
+
+\begin{equation}
+  \label{eq:hamiltonian-mb}
+  \hat{H} = \sum_{i=1}^N \qty(-\frac{1}{2}\laplacian_i - \frac{Z}{r_i}) + \sum_{i<j}^N \frac{1}{\abs{\bm{r}_i-\bm{r}_j}}.
+\end{equation}
+
+En esta expresión, el primer término representa la energía cinética de cada electrón, el segundo la interacción atractiva de Coulomb entre cada electrón y el núcleo de carga $Z$, y el último término modela la repulsión coulómbica cruzada entre todos los pares de electrones posibles. Las coordenadas dinámicas de la partícula $i$ se describen mediante el vector de posición $\bm{r}_i$. Sin embargo, para describir el estado cuántico completo de un electrón, es fundamental considerar también su grado de libertad intrínseco magnético: el espín. Por lo tanto, definimos la coordenada espaciotemporal generalizada $\bm{x} = (\bm{r}, \sigma)$, y las funciones base que describen el estado individual de un electrón se denominan \textbf{espín-orbitales}, denotados convencionalmente como $\phi_a(\bm{x})$.
+
+Encontrar la función de onda exacta \( \Psi(\bm{x}_1, \bm{x}_2, \dots, \bm{x}_N) \) en este inmenso espacio de Hilbert de \( 3N \) dimensiones espaciales es analítica y numéricamente intratable para \( N \geq 2 \). El obstáculo principal radica en el término de repulsión interelectrónica (el operador de dos cuerpos), el cual acopla todas las coordenadas de las partículas, impidiendo la separación de variables. 
+
+Para sortear esta barrera, introducimos la aproximación de campo medio o Hartree-Fock. En esta aproximación, se asume que cada electrón se mueve independientemente de los demás, sintiendo únicamente el potencial electrostático esférico promedio generado por el núcleo y la nube de carga del resto de los electrones. 
+
+\section{El Teorema de la Estadística del Espín y sus Consecuencias}
+
+El comportamiento colectivo de las partículas idénticas en mecánica cuántica está dictado por el \textbf{Teorema de la Estadística del Espín} \cite{Pauli1940}. Este teorema establece una conexión inquebrantable entre el espín intrínseco de una partícula y la simetría de su función de onda bajo el intercambio de coordenadas.
+
+Según el teorema, las partículas con espín entero (bosones) obedecen la estadística de Bose-Einstein y requieren funciones de onda totalmente simétricas. Por el contrario, las partículas con espín semi-entero (fermiones), como los electrones ($s = 1/2$), obedecen la estadística de Fermi-Dirac y exigen que la función de onda total del sistema sea \textit{estrictamente antisimétrica} frente al intercambio de cualquier par de electrones.
+
+Si denotamos el estado de un sistema de $N$ electrones mediante la función de onda $\Psi(\bm{x}_1, \dots, \bm{x}_i, \dots, \bm{x}_j, \dots, \bm{x}_N)$, donde $\bm{x} = (\bm{r}, \sigma)$ engloba tanto la coordenada espacial como la de espín, la condición de antisimetría exige que:
+\begin{equation}
+    \Psi(\dots, \bm{x}_i, \dots, \bm{x}_j, \dots) = -\Psi(\dots, \bm{x}_j, \dots, \bm{x}_i, \dots).
+\end{equation}
+
+Una consecuencia matemática inmediata y profunda de esta antisimetría es el \textbf{Principio de Exclusión de Pauli}. Si dos electrones intentaran ocupar exactamente el mismo estado cuántico, es decir, si $\bm{x}_i = \bm{x}_j$, la ecuación anterior se reduciría a $\Psi = -\Psi$, lo que implica trivialmente que $\Psi = 0$. Por lo tanto, es físicamente imposible que dos fermiones idénticos coexistan en el mismo microestado.
+    
+Esta exigencia de antisimetría no es una mera curiosidad matemática; actúa como una poderosa \textbf{regla de selección fundamental} que rige la estructura de capas de la materia. Por ejemplo, en una configuración electrónica abierta como $np^2$, si se ignorara el principio de Pauli, los dos electrones equivalentes podrían acoplarse en una amplia gama de microestados. Sin embargo, la antisimetría total prohíbe cualquier estado donde los números cuánticos espaciales y de espín sean idénticos, purgando el espectro y limitando los términos espectroscópicos permitidos a $^3P$, $^1D$ y $^1S$. De esta manera, el principio de exclusión esculpe la arquitectura espectral de los átomos.
+
+\section{El Determinante de Slater y la Antisimetría}
+
+Matemáticamente, la forma natural de construir una función de onda multielectrónica que satisfaga rigurosamente esta antisimetría a partir de espín-orbitales individuales es mediante un determinante, conocido como el \textbf{Determinante de Slater}:
+
+\begin{equation}
+  \Psi(\bm{x}_1, \bm{x}_2, \dots, \bm{x}_N) = \frac{1}{\sqrt{N!}}
+  \vmqty{
+    \phi_1(\bm{x}_1) & \phi_2(\bm{x}_1) & \cdots & \phi_N(\bm{x}_1) \\
+    \phi_1(\bm{x}_2) & \phi_2(\bm{x}_2) & \cdots & \phi_N(\bm{x}_2) \\
+    \vdots & \vdots & \ddots & \vdots \\
+    \phi_1(\bm{x}_N) & \phi_2(\bm{x}_N) & \cdots & \phi_N(\bm{x}_N)
+  }.
+\end{equation}
+
+El objetivo central del método de Hartree-Fock es evaluar el funcional de energía del sistema asumiendo que el estado es un único determinante de Slater:
+
+\begin{equation}
+  \label{eq:energy-func}
+  E = \ev{\hat{H}}{\Psi},
+\end{equation}
+
+y encontrar variacionalmente el conjunto de espín-orbitales \( \{ \phi_i \} \) que minimicen esta energía, manteniendo la condición de ortonormalidad \( \braket{\phi_i}{\phi_j} = \delta_{ij} \).
+
+\section{La Aproximación de Campo Central y la Ecuación Radial}
+\label{sec:campo_central}
+
+El determinante de Slater reduce el problema de $N$ cuerpos a la determinación de $N$ espín-orbitales, pero cada uno de ellos sigue siendo una función de tres coordenadas espaciales. La simplificación decisiva, y la que hace posible todo el desarrollo numérico de esta tesis, proviene de la simetría del problema atómico.
+
+Conviene precisar antes dos aproximaciones que ya están implícitas en el Hamiltoniano \eqref{eq:hamiltonian-mb}. La primera es la de núcleo fijo: hemos tratado el núcleo como una carga puntual inmóvil en el origen, lo que equivale a tomar el límite de masa nuclear infinita y descarta tanto la corrección de masa reducida como el término de polarización de masa. La segunda es la ausencia de todo término magnético o relativista, de modo que el Hamiltoniano es puramente electrostático. Ambas se levantarán parcialmente en el Capítulo \ref{ch:correlacion-estructura-fina}, donde el acoplamiento espín-órbita se reintroduce como una perturbación sobre los orbitales aquí obtenidos.
+
+Bajo estas condiciones, un potencial de campo medio generado por una distribución de carga esféricamente simétrica depende únicamente de la distancia al núcleo. La \textbf{aproximación de campo central} consiste en sustituir el potencial efectivo por su promedio esférico,
+\begin{equation}
+    \label{eq:promedio_esferico}
+    V(r) = \frac{1}{4\pi}\int V_{\text{eff}}(\bm{r}) \dd{\Omega},
+\end{equation}
+con lo cual el Hamiltoniano de un electrón conmuta con $\hat{L}^2$, $\hat{L}_z$ y $\hat{S}_z$. Los números cuánticos $l$, $m_l$ y $m_s$ son entonces buenos números cuánticos y el estado de un electrón queda etiquetado por el conjunto $\ket{n\,l\,m_l\,m_s}$, donde $n$ es el número cuántico principal.
+
+La consecuencia operativa es que la función de onda de un electrón admite separación de variables:
+\begin{equation}
+    \label{eq:separacion_variables}
+    \phi_{nlm_lm_s}(\bm{x}) = \frac{P_{nl}(r)}{r} \, Y_{l}^{m_l}(\theta,\varphi) \, \chi_{m_s}(\sigma),
+\end{equation}
+donde $Y_l^{m_l}$ son los armónicos esféricos, $\chi_{m_s}$ la función de espín y $P_{nl}(r)$ la \textbf{función radial reducida}. El factor $1/r$ no es una convención arbitraria: al sustituir \eqref{eq:separacion_variables} en la ecuación de eigenvalores del Hamiltoniano central, el término de primera derivada que aparece en el Laplaciano en coordenadas esféricas se cancela de manera idéntica, y lo que queda adopta exactamente la forma de una ecuación de Schrödinger unidimensional,
+\begin{equation}
+    \label{eq:radial_schrodinger}
+    \qty[ -\frac{1}{2}\dv[2]{r} + \frac{l(l+1)}{2r^2} + V(r) ] P_{nl}(r) = \epsilon_{nl} P_{nl}(r).
+\end{equation}
+
+Esta es la ecuación que resuelve el motor numérico de esta tesis, y a ella regresaremos en el Capítulo \ref{ch:bsplines-galerkin} para discretizarla sobre una base de B-splines. El término $l(l+1)/2r^2$ es la \textbf{barrera centrífuga}; no proviene de ninguna interacción adicional, sino del momento angular orbital del propio electrón, y su efecto es expulsar del origen a todo estado con $l>0$. La suma $V_{\text{rad}}(r) = V(r) + l(l+1)/2r^2$ define el potencial radial efectivo cuya forma de pozo analizaremos en el Capítulo \ref{ch:resultados}.
+
+La reducción por el factor $1/r$ simplifica también las condiciones que debe satisfacer la solución. La normalización de $\phi$ sobre todo el espacio se reduce a la condición unidimensional
+\begin{equation}
+    \label{eq:norma_radial}
+    \int_0^\infty \abs{P_{nl}(r)}^2 \dd{r} = 1,
+\end{equation}
+y la exigencia de que $\phi$ sea regular en el origen y normalizable en el infinito impone las condiciones de frontera $P_{nl}(0) = 0$ y $P_{nl}(r) \to 0$ cuando $r \to \infty$. Ambas serán las condiciones de Dirichlet que fijaremos sobre la base de splines.
+
+Por último, la separación \eqref{eq:separacion_variables} da cuenta de la estructura de capas de la materia. En un campo central la energía $\epsilon_{nl}$ depende de $n$ y de $l$, pero no de $m_l$ ni de $m_s$; el par $(n,l)$ define entonces una \textbf{subcapa} cuyos estados están degenerados. Como $m_l$ admite $2l+1$ valores y $m_s$ dos, la degeneración de una subcapa es $2(2l+1)$, y el principio de exclusión de la Sección anterior limita su ocupación a ese mismo número: dos electrones en una subcapa $s$ ($l=0$), seis en una $p$ ($l=1$), diez en una $d$ ($l=2$) y catorce en una $f$ ($l=3$). Una configuración como $np^2$ designa por tanto una subcapa $p$ con dos de sus seis plazas ocupadas, esto es, una \textbf{capa abierta}, situación cuyas consecuencias examinaremos en la Sección \ref{sec:rohf}.
+
+\section{El Modelo de Dos Electrones y Expansión Multipolar}
+\label{sec:dos_electrones_multipolar}
+\label{sec:slater_integrals}
+
+Al expandir el valor esperado de la energía \eqref{eq:energy-func} sobre el determinante de Slater de $N$ cuerpos, el problema parece, a primera vista, intratable por sus expansiones factoriales. Sin embargo, observemos con detenimiento la estructura del Hamiltoniano atómico \eqref{eq:hamiltonian-mb}: está compuesto exclusivamente por operadores de \textbf{un cuerpo} (energía cinética y atracción nuclear) y operadores de \textbf{dos cuerpos} (repulsión coulómbica entre pares de electrones). 
+
+No existen operadores fundamentales de tres o más cuerpos en el Hamiltoniano electrostático. Esta simplificación física dictamina que, sin importar si estamos resolviendo el litio ($Z=3$) o el oganesón ($Z=118$), el acoplamiento directo siempre ocurre exclusivamente entre pares de orbitales. Por lo tanto, aislar el comportamiento de un sistema de solo dos electrones es suficiente para derivar las reglas de interacción generales, las cuales posteriormente escalaremos como una sumatoria por pares para todo el átomo.
+
+Consideremos entonces un sistema abstracto de dos electrones descritos por los espín-orbitales \( \ket{a} \) y \( \ket{b} \). El determinante se reduce a una matriz de $2 \times 2$:
+
+\begin{equation}
+  \ket{\Psi_{ab}} = \frac{1}{\sqrt{2}} [\phi_a(\bm{x}_1)\phi_b(\bm{x}_2) - \phi_b(\bm{x}_1)\phi_a(\bm{x}_2)].
+\end{equation}
+
+Al evaluar el valor esperado del operador perturbativo de repulsión coulómbica sobre este estado de dos partículas, $\bra{\Psi_{ab}} \frac{1}{r_{12}} \ket{\Psi_{ab}}$, la integral se expande en dos términos cualitativamente distintos, producto directo de la imposición matemática de la antisimetría:
+
+\begin{itemize}
+\item \textbf{Interacción Directa (Integrales de Coulomb, \(J_{ab}\)):}
+  Provienen de los términos cuadrados perfectos. Reflejan la electrostática clásica: la repulsión de Coulomb entre la nube de densidad de carga del electrón $a$ y la nube de densidad del electrón $b$. 
+  \begin{equation}
+  J_{ab} = \int \dd{\bm{r}_1} \dd{\bm{r}_2} \abs{\psi_a(\bm{r}_1)}^2 \frac{1}{r_{12}} \abs{\psi_b(\bm{r}_2)}^2.
+  \end{equation}
+
+\item \textbf{Interacción de Interferencia (Integrales de Intercambio, \(K_{ab}\)):}
+  Surgen exclusivamente del término cruzado. Es un efecto puramente cuántico sin equivalente clásico, generado por el solapamiento indistinguible de los estados. Este término aparece únicamente si ambos electrones poseen el mismo estado de espín, creando un ``Hueco de Fermi'': una repulsión efectiva que mantiene alejados a los electrones con espines paralelos.
+  \begin{equation}
+  K_{ab} = \delta_{\sigma_a \sigma_b} \int \dd{\bm{r}_1} \dd{\bm{r}_2} \psi_a^*(\bm{r}_1)\psi_b^*(\bm{r}_2)\frac{1}{r_{12}}\psi_b(\bm{r}_1)\psi_a(\bm{r}_2).
+  \end{equation}
+\end{itemize}
+
+La generalización de este resultado a un sistema de $N$ cuerpos es directa. Se demuestra formalmente \cite{Cowan1981} que la energía total de repulsión al tomar el valor esperado del Hamiltoniano electrostático sobre un único determinante de Slater es simplemente la suma de las interacciones acopladas de los pares:
+\begin{equation}
+  E_{ee} = \sum_{a=1}^N \sum_{b>a}^N \qty( J_{ab} - K_{ab} ).
+\end{equation}
+
+Para evaluar explícitamente $J_{ab}$ y $K_{ab}$ en un campo con simetría central, aprovechamos la separación de variables \eqref{eq:separacion_variables}, que factoriza cada orbital en su función radial reducida $P_a(r)$ y su parte angular. Recurrimos a la \textbf{Expansión de Laplace} del potencial coulómbico en armónicos esféricos \cite{Cowan1981}:
+\begin{equation}
+  \frac{1}{r_{12}} = \sum_{k=0}^{\infty} \sum_{q=-k}^{k} \frac{4\pi}{2k+1} \frac{r_<^{k}}{r_>^{k+1}} Y_{kq}^*(\theta_1, \phi_1) Y_{kq}(\theta_2, \phi_2),
+\end{equation}
+
+donde $r_<$ y $r_>$ son el menor y mayor de $r_1, r_2$ respectivamente. Al sustituir esta expansión en las definiciones de $J_{ab}$ y $K_{ab}$, e integrar analíticamente las coordenadas angulares (véase el \textbf{Apéndice \ref{ap:operadores-tensoriales}}), las integrales de repulsión colapsan en una suma ponderada de \textbf{Integrales Radiales de Slater}, $R^k(abcd)$, definidas como:
+\begin{equation}
+  \label{eq:slater_k}
+  R^k(abcd) = \int_0^\infty P_a(r_1) \qty[ \int_0^\infty \frac{r_{<}^k}{r_{>}^{k+1}} P_b(r_2) P_d(r_2) \dd{r_2} ] P_c(r_1) \dd{r_1}.
+\end{equation}
+
+Es conveniente clasificar estas integrales radiales genéricas en dos categorías asociadas a las interacciones fundamentales que acabamos de derivar. Cuando los electrones interactuantes no cambian de estado ($a=c$ y $b=d$), la integral conforma la parte radial de la Interacción de Coulomb $J_{ab}$ y se denomina \textbf{Integral de Coulomb Radial}, $F^k(a,b) = R^k(abab)$. Por otro lado, si los electrones intercambian sus estados ($a=d$ y $b=c$), conforma la parte radial del Intercambio $K_{ab}$ y se conoce como \textbf{Integral de Intercambio Radial}, $G^k(a,b) = R^k(abba)$. Particularmente, para una configuración de dos electrones equivalentes como $np^2$, la integral $F^2(np, np)$ representa el término cuadrupolar. Como se detalla en el \textbf{Apéndice \ref{ap:operadores-tensoriales}}, es precisamente la contribución anisótropa de $F^2$ la que levanta la degeneración de la configuración, separando energéticamente los multipletes $^3P$, $^1D$ y $^1S$ al penalizar electrostáticamente los estados donde los electrones están espacialmente más correlacionados.
+
+\section{El Operador Efectivo de Fock y el Problema de Eigenvalores}
+\label{sec:fock_operator}
+
+Para resolver el sistema acoplado de electrones, las interacciones repulsivas descritas previamente se amalgaman en operadores efectivos de un cuerpo. Definimos los operadores locales de Coulomb $\hat{J}_b$ y no-locales de intercambio $\hat{K}_b$ por su acción sobre un orbital cualquiera $\ket{\phi_a}$:
+\begin{equation}
+  \hat{J}_b \ket{\phi_a} = \qty[ \int \dd{\bm{r}_2} \abs{\psi_b(\bm{r}_2)}^2 \frac{1}{r_{12}} ] \ket{\phi_a}, \quad \hat{K}_b \ket{\phi_a} = \qty[ \int \dd{\bm{r}_2} \psi_b^*(\bm{r}_2) \frac{1}{r_{12}} \psi_a(\bm{r}_2) ] \ket{\phi_b}.
+\end{equation}
+
+El núcleo del método consiste en ensamblar el \textbf{Operador de Fock efectivo}, $\hat{f} = \hat{h} + \sum_b (\hat{J}_b - \hat{K}_b)$, donde $\hat{h}$ es el Hamiltoniano hidrogénico de un cuerpo. Es instructivo observar cómo este operador de Fock actúa como un Hamiltoniano efectivo para un solo electrón que se mueve en el campo promedio del resto. La forma explícita de este Hamiltoniano efectivo es:
+\begin{equation}
+    \hat{f}_i = -\frac{1}{2}\laplacian_i - \frac{Z}{r_i} + V_{\text{HF}}(\bm{r}_i)
+\end{equation}
+
+donde $V_{\text{HF}}$ representa el potencial de campo medio. Es fundamental hacer una distinción conceptual aquí: en la aproximación de Hartree-Fock Restringido (RHF) estándar para capas cerradas, $V_{\text{HF}}$ colapsa en una función puramente escalar y esféricamente simétrica $V(r)$. Sin embargo, para configuraciones de capa abierta como $np^2$, la falta de simetría esférica en la densidad electrónica implica que los operadores de intercambio $\hat{K}_b$ son fuertemente dependientes del estado (no locales y anisotrópicos). Por lo tanto, el ``potencial'' efectivo $V_{\text{HF}}$ no es simplemente una función escalar multiplicativa, sino un \textbf{operador íntegro-diferencial no local} cuya acción depende del momento angular y del estado específico sobre el cual actúa. Para reconciliar esta anisotropía manteniendo un modelo numéricamente tratable, recurriremos al esquema de Hartree-Fock Restringido para Capas Abiertas (ROHF) que se desarrolla en la Sección \ref{sec:rohf}.
+
+Bajo esta perspectiva, cada electrón satisface una ecuación de Schrödinger efectiva:
+\begin{equation}
+  \label{eq:hartree-fock-eq}
+  \hat{f} \ket{\phi_a} = \epsilon_a \ket{\phi_a}.
+\end{equation}
+
+En los textos tradicionales de química cuántica (e.g. \cite[Capítulo 7]{Cowan1981}), las Ecuaciones de Hartree-Fock (\ref{eq:hartree-fock-eq}) se derivan minimizando el funcional de energía (\ref{eq:energy-func}) mediante el método variacional de Ritz, donde $\epsilon_a$ emergen matemáticamente como multiplicadores de Lagrange para garantizar la ortonormalidad de la base. 
+
+Sin embargo, en la formulación numérica moderna que adoptamos en este trabajo (basada en el Método de Elementos Finitos con B-splines), evitamos la optimización explícita de funcionales. En su lugar, abordamos directamente la Ecuación \ref{eq:hartree-fock-eq} a través del \textbf{Método de Residuos Ponderados de Galerkin}. Proyectamos la función incógnita sobre un subespacio funcional finito y exigimos, en su forma débil, que el residuo de la ecuación íntegro-diferencial sea estrictamente ortogonal a las funciones de prueba. 
+
+Como se demuestra formalmente en el \textbf{Apéndice \ref{ap:galerkin-poisson}} (Sección \ref{sec:ritz-galerkin}), debido a que $\hat{f}$ es un operador Hermitiano, la formulación débil de Galerkin y la minimización variacional de Ritz son matemáticamente isomórficas. Ambos caminos transforman el sistema continuo en un álgebra matricial discreta, y la ecuación íntegro-diferencial de Hartree-Fock se convierte inexorablemente en un \textbf{Problema de Eigenvalores Generalizado} dependiente de las energías orbitales $\epsilon_a$. Debido a que $\hat{f}$ depende implícitamente de las propias soluciones $\ket{\phi_a}$ (a través de $\hat{J}$ y $\hat{K}$), el problema retiene una severa no-linealidad que requiere resolución iterativa mediante un ciclo de Campo Autoconsistente (SCF).
+
+\section{Hartree-Fock Restringido de Capa Abierta y el Promedio de la Configuración}
+\label{sec:rohf}
+
+La aproximación de campo central de la Sección \ref{sec:campo_central} descansa sobre una hipótesis que conviene examinar de cerca. Por el \textbf{teorema de Unsöld}, demostrado en la Sección \ref{sec:unsold} del Apéndice \ref{ap:operadores-tensoriales}, la suma de los módulos cuadrados de los armónicos esféricos sobre todas las proyecciones de una subcapa vale la constante $(2l+1)/4\pi$, de manera que la densidad de carga de una subcapa \textit{llena} es rigurosamente esférica. El campo central no es entonces una aproximación para átomos de capa cerrada, sino una propiedad exacta dentro del esquema de Hartree-Fock. Nuestra secuencia $np^2$, en cambio, tiene dos electrones en una subcapa con capacidad para seis: esa suma queda incompleta, la densidad de valencia es anisótropa y el potencial efectivo deja de depender solo de $r$. Existen dos maneras de reconciliar esta anisotropía con un formalismo radial unidimensional, y ambas intervienen en este trabajo.
+
+\subsection{El promedio de la configuración}
+
+La primera consiste en renunciar a describir un término espectroscópico particular y resolver en su lugar el \textbf{promedio de la configuración}, $E_{\text{av}}$, definido como la media de las energías de todos los términos $LS$ de la configuración pesada por su degeneración $(2L+1)(2S+1)$. Este promedio es esféricamente simétrico por construcción, ya que promediar sobre todos los microestados de la subcapa equivale a repartir uniformemente los electrones entre las $2(2l+1)$ plazas disponibles y restaurar así la condición de Unsöld.
+
+Para una subcapa $l^w$ de electrones equivalentes, el promedio admite la forma cerrada \cite{Cowan1981}
+\begin{equation}
+    \label{eq:e_av_general}
+    E_{\text{av}}(l^w) = \frac{w(w-1)}{2}\left[ F^0 - \frac{2l+1}{4l+1} \sum_{k>0} \begin{pmatrix} l & k & l \\ 0 & 0 & 0 \end{pmatrix}^2 F^k \right],
+\end{equation}
+que para el caso $p^2$ se reduce a
+\begin{equation}
+    \label{eq:e_av_p2}
+    E_{\text{av}}(p^2) = F^0(np,np) - \frac{2}{25}F^2(np,np).
+\end{equation}
+
+El factor combinatorio $w(w-1)/2$ merece atención, porque en él se origina un error sutil que conviene anticipar. Ese factor cuenta el número de pares de electrones que efectivamente se repelen dentro de la subcapa, y para dos electrones vale exactamente uno. Si en cambio el promedio esférico se implementa asignando a cada uno de los seis espín-orbitales $np$ una ocupación fraccionaria $w/2(2l+1) = 1/3$, el motor evalúa la repulsión de una capa llena, con $6\cdot 5/2 = 15$ pares, atenuada por el cuadrado de la fracción de ocupación, ya que la energía de Coulomb es cuadrática en la densidad. El resultado son $15 \times (1/3)^2 = 5/3$ pares efectivos frente al único par físico, es decir, un exceso de $2/3$ de par que constituye un \textbf{error de autointeracción} y obliga a sustraer $\tfrac{2}{3}F^0(np,np)$ del término monopolar como corrección \textit{a posteriori}.
+
+\subsection{Los operadores de Fock diferenciados}
+
+La segunda vía, que es la que adopta el motor de esta tesis, evita el promedio fraccionario y su corrección posterior. El esquema de \textbf{Hartree-Fock Restringido de Capa Abierta} (ROHF) conserva una única función radial por subcapa —de ahí el calificativo de restringido— pero construye un operador de Fock distinto para cada bloque de simetría angular. Para una configuración $[\text{core}]\,np^2$ se resuelven dos problemas de eigenvalores acoplados,
+\begin{align}
+    \hat{f}_c &= \hat{h} + \hat{J}_{\text{core}} - \hat{K}_{\text{core}} + \hat{J}_{np}^{\text{esf}} - \hat{K}_{np \to c}, \label{eq:fock_cerrada}\\
+    \hat{f}_p &= \hat{h} + \hat{J}_{\text{core}} - \hat{K}_{\text{core}} + (w-1)\qty( \hat{J}_{np}^{\text{intra}} - \hat{K}_{np}^{\text{intra}} ). \label{eq:fock_abierta}
+\end{align}
+
+El operador $\hat{f}_c$ actúa sobre los orbitales del core cerrado, que perciben el campo esféricamente promediado de la valencia; al diagonalizarlo sobre una misma base radial queda garantizada de manera automática la ortogonalidad entre orbitales de igual $l$ y distinto $n$, por ser autovectores de un mismo operador hermitiano asociados a autovalores distintos. El operador $\hat{f}_p$ gobierna la subcapa abierta, y en él aparece el factor $(w-1)$ que resuelve de raíz el problema combinatorio descrito arriba: un electrón $np$ interactúa con los $w-1$ electrones \textit{restantes} de su propia subcapa y nunca consigo mismo. Para $np^2$ se tiene $w-1 = 1$ y el operador intracapa entra con peso unitario, sin necesidad de corrección alguna.
+
+Las contribuciones intracapa $\hat{J}_{np}^{\text{intra}}$ y $\hat{K}_{np}^{\text{intra}}$ no son escalares. El monopolo $k=0$ entra con peso completo, mientras que el intercambio modula la componente cuadrupolar $k=2$ mediante coeficientes angulares que se obtienen del álgebra de Racah y del teorema de Wigner-Eckart, desarrollados en el Apéndice \ref{ap:operadores-tensoriales}. La construcción numérica de ambos bloques y su acoplamiento dentro del ciclo iterativo se detallan en el Capítulo \ref{ch:ciclo-scf}.
+
+\subsection{Recuperación de los términos espectroscópicos}
+
+Resuelto el problema radial, los tres términos que la antisimetría permite se recuperan devolviendo la contribución anisótropa que el campo central había promediado. Para $p^2$, en función de la integral cuadrupolar y medidos respecto al promedio de la configuración, con los coeficientes angulares que se evalúan explícitamente en la Sección \ref{sec:coef_angulares_np2},
+\begin{align}
+    E(^3P) &= E_{\text{av}} - \frac{3}{25}F^2(np,np), \label{eq:termino_3P}\\
+    E(^1D) &= E_{\text{av}} + \frac{3}{25}F^2(np,np), \label{eq:termino_1D}\\
+    E(^1S) &= E_{\text{av}} + \frac{12}{25}F^2(np,np). \label{eq:termino_1S}
+\end{align}
+
+Los coeficientes satisfacen la regla del baricentro, que sirve como verificación inmediata. Pesados por las degeneraciones $(2L+1)(2S+1)$ de cada término —nueve para $^3P$, cinco para $^1D$ y uno para $^1S$— su suma se anula, $9(-3) + 5(3) + 1(12) = 0$, como debe ocurrir si $E_{\text{av}}$ es en efecto el centro de gravedad de la configuración. De estas expresiones se desprende un hecho que el Capítulo \ref{ch:resultados} explota de manera sistemática: tanto el ordenamiento de los términos como la magnitud de sus separaciones quedan determinados por una sola cantidad radial, la integral $F^2(np,np)$.
+
+\section{El Teorema de Koopmans}
+\label{sec:koopmans_theorem}
+
+\begin{theorem}[Teorema de Koopmans]
+Bajo la aproximación de Hartree-Fock y asumiendo que los orbitales de los electrones restantes no se relajan (aproximación de orbitales congelados) al remover un electrón de la capa $i$, el potencial de ionización vertical $I_i$ del sistema está dado exactamente por el negativo del eigenvalor de ese orbital:
+\begin{equation}
+    I_i \approx -\epsilon_i.
+\end{equation}
+\end{theorem}
+
+Físicamente, aunque este teorema provee una excelente estimación de primer orden para los potenciales de ionización, ignora sistemáticamente la correlación electrónica y la relajación orbital. Cuando un electrón es removido para formar el ion positivo, el resto de la nube electrónica se contrae debido al menor apantallamiento, reduciendo la energía total. Más importante aún, la energía de correlación $E_{\text{corr}}$ es invariablemente negativa y suele ser mayor en magnitud para el sistema neutro (que posee más pares de electrones interactuando) que para el ion. Como consecuencia de perder esta mayor estabilización por correlación, el Teorema de Koopmans habitualmente subestima ligeramente el potencial de ionización verdadero. La incorporación de modelos post-Hartree-Fock, como la Interacción de Configuraciones (CI), recupera esta correlación y corrige sistemáticamente las predicciones de ionización, empujándolas hacia el valor empírico mayor.
+
+\section{El Teorema del Virial como Criterio de Convergencia}
+\label{sec:virial}
+
+La solución autoconsistente satisface una identidad exacta que no depende de ningún detalle del método numérico empleado y que, precisamente por ello, constituye el diagnóstico más severo sobre la calidad de una base.
+
+\begin{theorem}[Teorema del virial para un potencial coulombiano]
+Para un estado ligado estacionario de un sistema cuya energía potencial es una función homogénea de grado $-1$ en las coordenadas, los valores esperados de la energía cinética y de la potencial satisfacen
+\begin{equation}
+    \label{eq:virial}
+    2\ev{\hat{T}} = -\ev{\hat{V}},
+\end{equation}
+de donde la energía total cumple $E = -\ev{\hat{T}} = \tfrac{1}{2}\ev{\hat{V}}$ y el cociente del virial vale exactamente
+\begin{equation}
+    \label{eq:cociente_virial}
+    -\frac{\ev{\hat{V}}}{\ev{\hat{T}}} = 2.
+\end{equation}
+\end{theorem}
+
+La demostración más útil para nuestros fines procede por escalamiento. Sea $\Psi$ la solución del problema y considérese la familia de funciones reescaladas $\Psi_\lambda(\bm{r}_1,\dots,\bm{r}_N) = \lambda^{3N/2}\,\Psi(\lambda\bm{r}_1,\dots,\lambda\bm{r}_N)$, construida de modo que permanezca normalizada para todo $\lambda>0$. Bajo esta transformación el operador cinético, cuadrático en las derivadas, escala como $\lambda^2$, mientras que todos los términos del potencial atómico —tanto la atracción nuclear $-Z/r_i$ como la repulsión interelectrónica $1/r_{ij}$— son homogéneos de grado $-1$ y escalan como $\lambda$. La energía de la familia es entonces
+\begin{equation}
+    \label{eq:energia_escalada}
+    E(\lambda) = \lambda^2 \ev{\hat{T}} + \lambda \ev{\hat{V}}.
+\end{equation}
+Puesto que $\Psi$ es un punto estacionario del funcional de energía \eqref{eq:energy-func} y $\Psi_{\lambda=1} = \Psi$, la derivada $\dv{E}{\lambda}$ debe anularse en $\lambda = 1$, lo que conduce de inmediato a $2\ev{\hat{T}} + \ev{\hat{V}} = 0$ y establece la Ecuación \eqref{eq:virial}.
+
+El argumento anterior deja ver por qué el cociente del virial resulta informativo en un cálculo numérico. La identidad se cumple no solo para la solución exacta, sino para cualquier solución variacional cuyo espacio de prueba sea cerrado bajo el escalamiento $\bm{r} \to \lambda\bm{r}$; en ese caso la estacionariedad respecto a $\lambda$ está garantizada por construcción y el virial se satisface de manera trivial, sin aportar información alguna. Una base de B-splines no posee esa propiedad, ya que sus nodos están fijos sobre una malla concreta dentro de una caja finita $[0, R_{\text{max}}]$ y reescalar una solución la saca del espacio generado. La estacionariedad respecto a $\lambda$ es por tanto una condición genuinamente adicional, y la desviación de $-\ev{\hat{V}}/\ev{\hat{T}}$ respecto a $2$ mide de forma agregada tres deficiencias distintas: una malla demasiado gruesa en la región nuclear, una caja demasiado pequeña para contener la cola de valencia, y un ciclo autoconsistente detenido antes de la convergencia real.
+
+Conviene subrayar el alcance de la identidad. El teorema vale para el Hamiltoniano puramente electrostático \eqref{eq:hamiltonian-mb}; la inclusión de términos que no son homogéneos de grado $-1$, como el potencial de polarización $V_{\text{pol}} \sim r^{-4}$ que se introduce en el Capítulo \ref{ch:correlacion-estructura-fina}, altera la relación y el cociente deja de valer $2$. Por esta razón el virial se emplea en el Capítulo \ref{ch:resultados} como criterio de validación del límite Hartree-Fock estricto, y no de los modelos corregidos. Del teorema se sigue además una relación práctica que usaremos allí: dado que $E = -\ev{\hat{T}}$, la energía potencial total de un átomo convergido es sencillamente $\ev{\hat{V}} = 2E$.
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

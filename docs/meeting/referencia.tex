@@ -1,0 +1,341 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath, amssymb, braket}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Notas de Referencia Completas: Interacción de Configuraciones, Formalismo Tensorial y Código}
+\author{Revisión y Apuntes para Asesoría}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Guía de Revisión de Código y Puntos Clave}
+
+\subsection{Resumen de las Actualizaciones del Código}
+Las recientes actualizaciones han elevado la base de código de un simple solucionador de campo medio (Hartree-Fock) a un motor robusto de \textbf{Interacción de Configuraciones (CI)} para electrones de valencia.
+La lógica central reside en \texttt{benchmarks/np2\_sequence/np2\_toy\_ci.jl} y \texttt{src/ci.jl}. El flujo es el siguiente:
+\begin{enumerate}
+    \item \textbf{Construcción del Core Congelado:} Toma los orbitales convergidos de Hartree-Fock, congela el núcleo (core) y construye un Hamiltoniano especializado.
+    \item \textbf{Extracción de Orbitales Virtuales:} Diagonaliza este Hamiltoniano para extraer estados virtuales ($ns, np, nd$) mientras filtra matemáticamente los estados espurios no físicos.
+    \item \textbf{Ensamblaje de la Matriz CI:} Construye las matrices interactuantes para $^3P$, $^1D$ y $^1S$ calculando la repulsión de Coulomb entre todas las transiciones posibles usando símbolos de Wigner exactos.
+    \item \textbf{Acoplamiento Intermedio:} Proyecta estas energías correlacionadas puras de $LS$ en el Hamiltoniano de Spin-Órbita de Breit-Pauli para obtener el espectro final de multipletes $J=0, 1, 2$.
+\end{enumerate}
+
+\subsection{Fragmentos de Código}
+Al revisar el código con el asesor, se deben destacar los siguientes logros técnicos:
+
+\subsubsection{La función \texttt{interaction\_coefficient}}
+En lugar de depender de tablas precalculadas de libros antiguos (como $2/25$ o $5/25$), el código evalúa la verdadera álgebra de momento angular en tiempo de ejecución usando \texttt{WignerSymbols.jl}. Esto hace que el código sea fácilmente generalizable para cualquier $l$.
+\begin{verbatim}
+function interaction_coefficient(l1::Int, l2::Int, L::Int, k::Int)
+    w6j = wigner6j(Float64, l1, l1, L, l2, l2, k)
+    w3j = wigner3j(Float64, l1, k, l2, 0, 0, 0)
+    ...
+    rme2 = (2*l1 + 1) * (2*l2 + 1) * w3j^2
+    return (-1)^L * w6j * rme2
+end
+\end{verbatim}
+
+\subsubsection{Interacción del Core Congelado (\texttt{get\_h\_core})}
+El código maneja explícitamente las interacciones directas ($J$) y de intercambio ($K$) exactas entre los electrones de valencia y las capas cerradas, utilizando el solucionador tensorial generalizado $R^k$.
+
+\subsubsection{Filtrado de Estados Espurios (\texttt{extract\_virtuals})}
+Las bases de B-splines producen de forma nativa estados "espurios" no físicos a energías extremadamente negativas. El código identifica y filtra matemáticamente estos artefactos utilizando el límite del estado base hidrogenoide ($-Z^2 / 2$), asegurando que el CI no colapse.
+
+\subsection{Navegando Preguntas Anticipadas}
+\begin{itemize}
+    \item \textbf{¿Por qué no usaste Coeficientes de Parentesco Fraccional (CFPs) para los elementos de matriz?} \\
+    Aunque los CFPs son fundamentales para configuraciones generales $l^N$, para la secuencia $np^2$ tenemos $N=2$. Para $N=2$, el CFP se evalúa trivialmente a $1.0$, y la fórmula explícita de dos cuerpos $\bra{l_1^2} 1/r_{12} \ket{l_2^2}$ incorpora de forma nativa el principio de Pauli (restringiendo $L+S$ a pares). Omitir el algoritmo recursivo del CFP en este caso específico lo hace mucho más rápido y sigue siendo matemáticamente exacto.
+    \item \textbf{¿Cómo manejas el costo computacional de las integrales de Slater?} \\
+    Mediante la función \texttt{get\_cached\_Rk!}. Ya que el CI requiere resolver la ecuación de Poisson generalizada sobre la malla B-spline miles de veces, implementamos una caché basada en Hash que empaqueta los IDs de los orbitales y el multipolo $k$ en una llave \texttt{UInt64}, acelerando la diagonalización en órdenes de magnitud.
+    \item \textbf{¿Es acoplamiento $LS$ puro? ¿Cómo manejas los efectos relativistas?} \\
+    La diagonalización CI inicial se hace en acoplamiento $LS$ puro para capturar la correlación electrónica electrostática. Sin embargo, luego proyectamos estas energías en el Hamiltoniano de Spin-Órbita de Breit-Pauli (mezclando, por ejemplo, $^3P_2$ y $^1D_2$), cerrando la brecha hacia la estructura fina en acoplamiento intermedio.
+\end{itemize}
+
+\newpage
+\section{Fundamentos Físicos: Acoplamiento e Integrales de Slater}
+
+\subsection{¿Qué es el "Término" del que dependen los Símbolos $3nj$?}
+En física atómica, un \textbf{término} espectroscópico se etiqueta por su momento angular orbital total $L$ y su espín total $S$, denotado como $^{2S+1}L$.
+\begin{itemize}
+    \item El \textbf{Símbolo $3-j$} $\begin{pmatrix} l_1 & k & l_2 \\ 0 & 0 & 0 \end{pmatrix}$ evalúa las integrales angulares de una sola partícula y solo depende de los orbitales individuales ($l$) y el multipolo ($k$).
+    \item El \textbf{Símbolo $6-j$} $\begin{Bmatrix} l & l & L \\ l & l & k \end{Bmatrix}$ evalúa la \textbf{geometría de acoplamiento} entre los dos electrones. El valor total $L$ dicta la orientación relativa de las órbitas individuales. Dado que los electrones se repelen, esta repulsión depende de si sus órbitas están alineadas o antialineadas. El símbolo $6-j$ proyecta la interacción de Coulomb de dos partículas sobre ese estado acoplado específico $L$.
+\end{itemize}
+
+\subsection{El Significado Físico de $c_k(L)$}
+Al expandir la repulsión de Coulomb $1/r_{12}$ en polinomios de Legendre, se obtiene una suma de multipolos indexados por $k$. Cada término produce una integral radial (Integral de Slater, $F^k$) multiplicada por un coeficiente angular $c_k(L)$.
+\begin{itemize}
+    \item $k=0$ es la interacción \textbf{monopolar} (esférica).
+    \item $k=2$ es la interacción \textbf{cuadrupolar} (anisotrópica).
+\end{itemize}
+$c_2(L)$ es el peso geométrico de esta repulsión cuadrupolar. Un término que mantiene a los electrones espacialmente alejados tendrá un coeficiente $c_2(L)$ más negativo. Para el $p^2$, el término $^3P$ es el que mejor los separa (en parte por la exclusión de espines paralelos), resultando en $c_2(^3P) = -5/25$, lo que lo convierte en el estado base de menor energía.
+
+\subsection{¿Por qué $F^2$ es la única integral para el desdoblamiento en HF regular?}
+Para electrones $p$ ($l=1$), la regla del triángulo del símbolo $3-j$ dicta que $k$ solo puede tomar valores pares hasta $2l$. Para $p^2$, $k \in \{0, 2\}$.
+\begin{itemize}
+    \item \textbf{$F^0$ (Monopolo):} Su coeficiente $c_0(L)$ es exactamente $1.0$ para todos los términos. Desplaza toda la configuración hacia arriba en energía, pero \textbf{no separa los términos}.
+    \item \textbf{$F^2$ (Cuadrupolo):} Al ser el único término angularmente dependiente, \textbf{$F^2$ es completamente responsable de separar las energías} entre $^3P$, $^1D$ y $^1S$ en el régimen de Hartree-Fock.
+\end{itemize}
+
+\subsection{¿Por qué necesitamos "las otras integrales" para Breit-Pauli y CI?}
+\begin{itemize}
+    \item \textbf{Breit-Pauli (Spin-Órbita):} El acoplamiento $\mathbf{L} \cdot \mathbf{S}$ rompe la conservación estricta de $L$ y $S$, conservando solo el momento total $J = L + S$. Para calcular esta mezcla de estados, necesitamos el parámetro de Spin-Órbita ($\zeta_{np}$), el cual requiere una integral radial dependiente de la derivada del potencial $\langle \frac{1}{r} \frac{dV}{dr} \rangle$.
+    \item \textbf{Interacción de Configuraciones (CI):} Al mezclar la configuración $np^2$ con virtuales como $nd^2$, introducimos nuevos valores de $l$. La regla del triángulo cambia y $k$ ya no está restringido a $0$ y $2$. Necesitamos \textbf{Integrales de Slater Generalizadas $R^k(a,b,c,d)$} para capturar el intercambio (como $G^1, G^3$) entre electrones no equivalentes.
+\end{itemize}
+
+\subsection{Degeneración, Electrones Equivalentes y $LS$ vs $jj$}
+\begin{itemize}
+    \item \textbf{El Número Cuántico $\alpha$:} Es necesario en configuraciones donde un par $(L, S)$ se repite (ej. dos términos $^2D$ en $d^3$). Para $p^2$, $\alpha$ es redundante.
+    \item \textbf{Electrones Equivalentes:} Comparten $n$ y $l$. El Principio de Pauli restringe agresivamente sus términos permitidos. Nuestro código de CI funciona porque también mezcla electrones \textbf{no equivalentes} (excitaciones virtuales), donde la restricción de paridad no aplica.
+    \item \textbf{Acoplamiento $LS$ vs $jj$:} Nuestros CFPs asumen acoplamiento $LS$ puro (padre $L'S'$). Si usáramos acoplamiento $jj$ (común en elementos muy pesados), los CFPs cambiarían drásticamente, proyectando sobre un padre de momento total $J'$.
+    \item \textbf{Degeneración y Microestados ($g=9$):} Un "Término" (como $^3P$) es un nivel de energía. No es un solo estado, sino una familia de microestados. La multiplicidad es $g = (2S+1)(2L+1) = 3 \times 3 = 9$. Estos 9 microestados (combinaciones de $M_L$ y $M_S$) son degenerados en energía en ausencia de espín-órbita. ¡P, D y S NO son degenerados entre sí!
+\end{itemize}
+
+
+\newpage
+\section{Evaluación Analítica de Factores $F^2$ y Parentesco Fraccional}
+
+\subsection{Coeficiente de Parentesco Fraccional para $np^2$}
+Para comprender de manera completa cómo el coeficiente de parentesco fraccional (CFP) se evalúa exactamente a $1.0$ para la configuración $np^2$, debemos diseccionar la maquinaria matemática definida por Robert D. Cowan. 
+
+Para una configuración $l^N$, construimos un estado antisimétrico $\ket{l^N \alpha L S}$ acoplando un estado parental $\ket{l^{N-1} \alpha' L' S'}$ al $N$-ésimo electrón $\ket{l}$:
+\begin{equation}
+\ket{l^N \alpha L S} = \sum_{\alpha' L' S'} \bra{l^{N-1}(\alpha' L' S')l} \}\ket{l^N \alpha L S} \ket{(l^{N-1} \alpha' L' S') l L S}
+\end{equation}
+Para $p^2$ ($N = 2$, $l = 1$), la configuración parental es simplemente $p^1$. Esta configuración posee un solo término espectroscópico inequívoco: $^2P$ ($L'=1, S'=1/2$).
+La sumatoria colapsa a un único término:
+\begin{equation}
+\ket{p^2 L S} = \bra{p^1(^2P) p} \}\ket{p^2 L S} \ket{(p^1(^2P)) p L S}
+\end{equation}
+
+El principio de exclusión de Pauli impone que la paridad total de intercambio $(-1)^{S+L}$ debe garantizar antisimetría. Para $l^2$, esto significa que $L+S$ debe ser par, lo que nos deja solo con los términos permitidos $^3P$, $^1D$ y $^1S$.
+Dado que tanto el estado físico $\ket{p^2 L S}$ como el estado acoplado mediante Clebsch-Gordan $\ket{(p^1(^2P)) p L S}$ están normalizados a la unidad ($\braket{\psi}{\psi} = 1$), al tomar el producto interno obtenemos:
+\begin{equation}
+1 = \left| \bra{p^1(^2P) p} \}\ket{p^2 L S} \right|^2 \times 1 \implies \left| \bra{p^1(^2P) p} \}\ket{p^2 L S} \right| = 1
+\end{equation}
+Adoptando la convención de fase de Condon y Shortley, el factor de fase se elige positivo, resolviendo analíticamente que:
+\begin{equation}
+\bra{p^1(^2P) p} \}\ket{p^2 L S} = 1.0
+\end{equation}
+El parentesco está completamente indiviso debido a que no hay ningún otro estado parental disponible en el sistema.
+
+\subsection{Derivación de los Factores $F^2$ usando Símbolos de Wigner}
+El coeficiente angular para la interacción de Coulomb se computa en el código mediante:
+\begin{equation}
+f_k(l, l', L) = (-1)^L \begin{Bmatrix} l & l & L \\ l' & l' & k \end{Bmatrix} (2l+1)(2l'+1) \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}^2 
+\end{equation}
+
+Para el factor $F^2$ ($k=2$) en $p^2$ ($l=1$):
+El Símbolo $3-j$ (Factor de Escala Radial) se evalúa como:
+\begin{equation}
+\begin{pmatrix} 1 & 2 & 1 \\ 0 & 0 & 0 \end{pmatrix} = \sqrt{\frac{2}{15}} \implies (3)(3) \left(\sqrt{\frac{2}{15}}\right)^2 = \frac{18}{15} = \frac{6}{5}
+\end{equation}
+La fórmula general para el factor $F^2$ se reduce a:
+\begin{equation}
+c_2(L) = (-1)^L \begin{Bmatrix} 1 & 1 & L \\ 1 & 1 & 2 \end{Bmatrix} \left( \frac{6}{5} \right)
+\end{equation}
+
+Evaluando los Símbolos $6-j$ dependientes del término:
+\begin{itemize}
+    \item \textbf{Término $^3P$ ($L=1$):} $\begin{Bmatrix} 1 & 1 & 1 \\ 1 & 1 & 2 \end{Bmatrix} = \frac{1}{6} \implies c_2(^3P) = (-1)^1 \left(\frac{1}{6}\right) \left(\frac{6}{5}\right) = \mathbf{-\frac{5}{25}}$
+    \item \textbf{Término $^1D$ ($L=2$):} $\begin{Bmatrix} 1 & 1 & 2 \\ 1 & 1 & 2 \end{Bmatrix} = \frac{1}{30} \implies c_2(^1D) = (-1)^2 \left(\frac{1}{30}\right) \left(\frac{6}{5}\right) = \mathbf{+\frac{1}{25}}$
+    \item \textbf{Término $^1S$ ($L=0$):} $\begin{Bmatrix} 1 & 1 & 0 \\ 1 & 1 & 2 \end{Bmatrix} = \frac{1}{3} \implies c_2(^1S) = (-1)^0 \left(\frac{1}{3}\right) \left(\frac{6}{5}\right) = \mathbf{+\frac{10}{25}}$
+\end{itemize}
+
+\subsection{El Promedio Configuracional ($E_{av}$)}
+El promedio configuracional es la suma estadísticamente ponderada por $g = (2S+1)(2L+1)$.
+Con $g(^3P) = 9$, $g(^1D) = 5$, y $g(^1S) = 1$ (Total = 15 estados), el promedio es:
+\begin{equation}
+\overline{c_2} = \frac{9(-\frac{5}{25}) + 5(\frac{1}{25}) + 1(\frac{10}{25})}{15} = \frac{-\frac{30}{25}}{15} = \mathbf{-\frac{2}{25}}
+\end{equation}
+Esta rigurosa derivación angular garantiza que los coeficientes en nuestro modelo computacional provengan directamente de primeros principios.
+\section{Introducción: El Límite del Modelo No Relativista}
+El modelo de Hartree-Fock estándar se basa en la ecuación de Schrödinger, la cual es intrínsecamente no relativista. Este modelo funciona excepcionalmente bien para elementos ligeros (como el Carbono), donde la velocidad de los electrones es una fracción pequeña de la velocidad de la luz $c$. 
+
+Sin embargo, a medida que el número atómico $Z$ aumenta (por ejemplo, en el Germanio $Z=32$ o el Estaño $Z=50$), la carga nuclear masiva acelera a los electrones internos a velocidades relativistas (la velocidad del electrón $1s$ es aproximadamente $v \approx Zc/137$). Estos profundos efectos relativistas en el núcleo (core) se propagan y apantallan de manera diferente el potencial nuclear, afectando indirectamente e incluso de forma directa a los electrones de valencia.
+
+Para una descripción matemáticamente rigurosa, se debe abandonar la ecuación de Schrödinger y adoptar la \textbf{Ecuación de Dirac} de 4 componentes, la cual fusiona la relatividad especial con la mecánica cuántica espinorial de forma natural. No obstante, resolver sistemas interactuantes de muchos cuerpos con Dirac-Fock es computacionalmente masivo y altamente inestable (debido a la incursión al continuo de energía negativa). 
+
+La solución canónica y elegante en la física atómica tradicional es la \textbf{Aproximación de Breit-Pauli}. Esta teoría trata las correcciones relativistas como \textit{perturbaciones} que actúan sobre las funciones de onda no relativistas, logrando una asombrosa precisión sin el costo extremo del formalismo de 4 componentes.
+
+\section{El Hamiltoniano de Breit-Pauli}
+El Hamiltoniano de Breit-Pauli se deduce al realizar una expansión en serie de potencias de $(v/c)^2$ (o equivalentemente, en la constante de estructura fina $\alpha^2$) a partir de la ecuación de Dirac interactuante. 
+
+Esta expansión "pliega" el espinor de 4 componentes a una función de onda regular de 2 componentes (eliminando analíticamente las "componentes pequeñas"), e introduce tres términos de corrección fundamentales al Hamiltoniano atómico de Schrödinger de un cuerpo:
+\begin{equation}
+H_{BP} = H_{Schr\ddot{o}dinger} + H_{MV} + H_{Darwin} + H_{SO}
+\end{equation}
+
+A continuación, analizaremos la naturaleza física de cada una de estas expansiones.
+
+\subsection{1. Corrección de Masa-Velocidad ($H_{MV}$)}
+De acuerdo con la relatividad especial fundamental, la masa inercial de un electrón aumenta dinámicamente con su velocidad ($m = \gamma m_0$). Si expandimos la energía relativista $E = \sqrt{p^2c^2 + m_e^2c^4} - m_ec^2$ en una serie de Taylor, el primer término de corrección al límite clásico $\frac{p^2}{2m_e}$ es:
+\begin{equation}
+H_{MV} = -\frac{p^4}{8 m_e^3 c^2}
+\end{equation}
+Dado que el momento $p$ adquiere valores gigantescos cerca del núcleo, este término es uniformemente negativo y reduce severamente la energía de los orbitales penetrantes. Físicamente, esto causa la conocida \textbf{"contracción relativista"}: los orbitales $s$ y $p_{1/2}$ reducen su radio orbital y colapsan más cerca del núcleo.
+
+\subsection{2. El Término de Darwin ($H_{Darwin}$)}
+El término de Darwin es un artificio puramente cuántico relativista sin análogo clásico. Emana de la interferencia intrínseca entre las componentes de energía positiva y negativa de Dirac, resultando en un fenómeno conocido como \textit{Zitterbewegung} (movimiento tembloroso ultrarrápido). Como consecuencia de este temblor cuántico a la escala de la longitud de onda de Compton, el electrón no "siente" el potencial del núcleo en un punto singular exacto, sino como un valor promediado en una esfera minúscula local.
+\begin{equation}
+H_{Darwin} = \frac{\pi \hbar^2}{2 m_e^2 c^2} \left( \frac{Ze^2}{4\pi\epsilon_0} \right) \delta^3(\mathbf{r})
+\end{equation}
+Debido a la aparición de la función delta de Dirac en el origen espacial $\delta^3(\mathbf{r})$, este término únicamente altera y afecta a los electrones que tienen una densidad de probabilidad no nula de existir exactamente dentro del núcleo atómico: es decir, los electrones con $l=0$ (los orbitales $s$). Su signo es positivo (repulsivo), lo que actúa para contrarrestar (aunque no vencer por completo) a la contracción impuesta por la corrección de Masa-Velocidad.
+
+\subsection{3. Acoplamiento Espín-Órbita ($H_{SO}$)}
+Mientras que los dos primeros términos (Masa-Velocidad y Darwin) son escalares y simplemente alteran el radio y la energía global de los orbitales sin separar los multipletes, el término de acoplamiento espín-órbita es de naturaleza tensorial. Interactúa íntimamente con los momentos angulares, siendo el causante directo de la \textbf{Estructura Fina} (el desdoblamiento observable de las líneas espectrales).
+\begin{equation}
+H_{SO} = \frac{1}{2m_e^2 c^2} \frac{1}{r} \frac{dV(r)}{dr} \mathbf{L} \cdot \mathbf{S}
+\end{equation}
+Físicamente, este término surge de la relatividad especial y del electromagnetismo básico. En el marco de referencia en reposo de un electrón en órbita, es el núcleo cargado positivamente el que parece estar orbitando a su alrededor. Esta enorme carga en movimiento circular genera un poderoso campo magnético interno $\mathbf{B}$ en la posición del electrón. Este campo interactúa directamente con el momento dipolar magnético intrínseco del electrón (producto de su espín innato $\mathbf{S}$).
+
+\section{Evaluación Matemática del Espín-Órbita}
+
+\subsection{La Constante Radial $\zeta_{nl}$}
+En los códigos de estructura atómica, la computación del operador de acoplamiento espín-órbita para un electrón se simplifica parametrizando y aislando sus componentes puramente radiales de las angulares. Se define mediante el operador escalar:
+\begin{equation}
+H_{SO} = \zeta_{nl} (\mathbf{l} \cdot \mathbf{s})
+\end{equation}
+Donde $\zeta_{nl}$ es el \textbf{parámetro de espín-órbita radial} de un solo electrón. Este se computa tomando el valor esperado formal de la derivada del potencial efectivo de Hartree-Fock a lo largo del volumen orbital:
+\begin{equation}
+\zeta_{nl} = \frac{\hbar^2}{2 m_e^2 c^2} \int_0^\infty R_{nl}^2(r) \left( \frac{1}{r} \frac{dV_{eff}(r)}{dr} \right) r^2 dr
+\end{equation}
+Un detalle crucial es que este parámetro escala y crece de forma hiper-agresiva. Para los electrones fuertemente unidos o penetrantes, $\zeta_{nl}$ escala aproximadamente como $Z^4$. Esta dependencia brutal explica numéricamente por qué los efectos relativistas y el desdoblamiento espectral dominan la física en el Estaño ($Z=50$), mientras que en el Carbono ($Z=6$) son meras perturbaciones casi invisibles.
+
+\subsection{Regla del Intervalo de Landé}
+Para evaluar analíticamente el operador $\mathbf{l} \cdot \mathbf{s}$, se utiliza el momento angular total $\mathbf{j} = \mathbf{l} + \mathbf{s}$. Elevando esta definición al cuadrado: $\mathbf{j}^2 = \mathbf{l}^2 + \mathbf{s}^2 + 2\mathbf{l}\cdot\mathbf{s}$, podemos despejar:
+\begin{equation}
+\mathbf{l} \cdot \mathbf{s} = \frac{1}{2} (\mathbf{j}^2 - \mathbf{l}^2 - \mathbf{s}^2)
+\end{equation}
+Al aplicar esto sobre una función de onda pura (donde $j, l, s$ son buenos números cuánticos), los operadores actúan generando sus autovalores y produce el desplazamiento de energía:
+\begin{equation}
+\Delta E_{SO} = \frac{1}{2} \zeta_{nl} \left[ j(j+1) - l(l+1) - s(s+1) \right]
+\end{equation}
+Esto es extensivo para sistemas de varios electrones usando los operadores totales $\mathbf{J}$, $\mathbf{L}$ y $\mathbf{S}$, dictando analíticamente los desplazamientos proporcionales entre las ramas de un multiplete (la famosa Regla del Intervalo de Landé).
+
+\section{Del Acoplamiento $LS$ al Acoplamiento Intermedio}
+
+En el régimen donde $Z$ es bajo, las integrales repulsivas de Coulomb ($F^2$, $G^k$) son abrumadoramente mayores que la fuerza de espín-órbita $\zeta_{nl}$. Este es el paradigma puro del \textbf{Acoplamiento $LS$}.
+
+Sin embargo, a medida que descendemos por la columna del grupo 14 (Carbono $\rightarrow$ Silicio $\rightarrow$ Germanio $\rightarrow$ Estaño), el constante crecimiento en $Z^4$ propulsa a la integral $\zeta_{np}$ a rivalizar fuertemente con la separación de Coulomb de los términos (que en su caso solo escala con $Z$). Es en este régimen (Acoplamiento Intermedio) donde la física de las perturbaciones se vuelve fascinantemente intrincada.
+
+El problema radica en que el Hamiltoniano de Espín-Órbita ($\mathbf{L} \cdot \mathbf{S}$) **no conmuta matemáticamente** con $\mathbf{L}^2$ ni con $\mathbf{S}^2$.
+Como consecuencia insalvable, el momento orbital $L$ y el espín $S$ \textbf{dejan de ser conservados; dejan de ser "buenos" números cuánticos}. La fuerza magnética impone un torque cuántico que destroza la integridad aislada de los estados $LS$. Los estados físicos colapsan unos sobre otros y comienzan a mezclarse cuánticamente de forma irreversible, unidos por el único momento que sí se conserva de manera absoluta: el momento angular total $J$.
+
+\subsection{Construcción de las Matrices de Breit-Pauli para $np^2$}
+Para resolver numéricamente el Acoplamiento Intermedio en nuestro código, no calculamos la perturbación ciega, sino que construimos matrices diagonales por bloques para cada colector estricto de paridad $J$. El proceso consiste en inyectar las energías correlacionadas $LS$ (extraídas de la diagonalización electrostática de CI) y mezclar los términos empleando las componentes fuera de la diagonal del Hamiltoniano de Espín-Órbita.
+
+\textbf{El subespacio $J=0$:}
+Aquí presenciamos la mezcla entre el estado de menor energía $^3P_0$ y el estado excitado $^1S_0$. La matriz del Hamiltoniano de Breit-Pauli resultante es:
+\begin{equation}
+H_{BP}(J=0) = \begin{pmatrix}
+E( ^3P ) - \zeta_{np} & \sqrt{2}\zeta_{np} \\
+\sqrt{2}\zeta_{np} & E( ^1S )
+\end{pmatrix}
+\end{equation}
+
+\textbf{El subespacio $J=2$:}
+De igual forma, el operador de espín-órbita acopla y repele los estados masivos $^3P_2$ y $^1D_2$.
+\begin{equation}
+H_{BP}(J=2) = \begin{pmatrix}
+E( ^3P ) + \frac{1}{2}\zeta_{np} & -\frac{1}{\sqrt{2}}\zeta_{np} \\
+-\frac{1}{\sqrt{2}}\zeta_{np} & E( ^1D )
+\end{pmatrix}
+\end{equation}
+
+\textbf{El subespacio $J=1$:}
+El estado $^3P_1$ es el único estado accesible con $J=1$ en la configuración restringida de valencia $np^2$. Por lo tanto, no posee contraparte para interactuar y mezclarse, y su energía relativista obedece únicamente a un desplazamiento de Landé:
+\begin{equation}
+E( ^3P_1 ) = E( ^3P ) - \frac{1}{2}\zeta_{np}
+\end{equation}
+
+Al proveer de autovectores (diagonalizar) estas matrices de $2 \times 2$ en el código final (\texttt{np2\_toy\_ci.jl}), desentrañamos los pesos exactos de la combinación lineal, obteniendo una descripción teórica definitiva del átomo. Esta técnica enriquece la simple repulsión de Coulomb (HF y CI) con relatividad fenomenológica, ofreciendo un espectro atómico virtual que rastrea los resultados experimentales con altísima fidelidad.
+
+\section{Potencial de polarizacion}
+
+En su formulación general, Müller, Flesch y Meyer (1984) desarrollaron el Potencial de Polarización del Core (CPP) pensando en \textbf{moléculas} y clústeres. Por ello, su ecuación es tan densa. A continuación, demostraremos paso a paso cómo esa ecuación molecular colapsa exactamente en el potencial atómico que nosotros utilizamos.
+
+\subsection{La Ecuación General de Müller}
+La ecuación original para el potencial de polarización total del sistema es:
+\begin{equation}
+V_{cpp} = -\frac{1}{2} \sum_c \left( \alpha_c \mathbf{f}_c \cdot \mathbf{f}_c - 2\mathbf{f}_c \cdot \boldsymbol{\mu}_c^{\circ} + \mathbf{f}_c^{\circ} \cdot \boldsymbol{\mu}_c^{\circ} \right)
+\end{equation}
+Donde el campo eléctrico efectivo evaluado en el centro $c$ es:
+\begin{equation}
+\mathbf{f}_c = \sum_i \frac{\mathbf{r}_{ci}}{r_{ci}^3} C(r_{ci}, \rho_c) - \sum_{c' \neq c} \frac{\mathbf{R}_{cc'}}{R_{cc'}^3} Z_{c'}
+\end{equation}
+
+\subsection{Reducción a un Átomo Aislado (Single Center)}
+Puesto que estamos simulando un átomo aislado de Germanio o Estaño, aplicamos las siguientes simplificaciones por simetría esférica:
+
+\subsection{1. Ausencia de Otros Centros ($c = 1$)}
+Solo existe \textbf{un núcleo} atómico.
+\begin{itemize}
+    \item La sumatoria externa $\sum_c$ desaparece.
+    \item El término molecular $-\sum_{c' \neq c} \frac{\mathbf{R}_{cc'}}{R_{cc'}^3} Z_{c'}$ (que representa el campo eléctrico generado por los otros núcleos de la molécula) es estrictamente \textbf{cero}.
+    \item El vector de posición desde el núcleo al electrón $i$ es simplemente el radio vector del electrón: $\mathbf{r}_{ci} = \mathbf{r}_i$.
+\end{itemize}
+Con esto, el campo eléctrico efectivo generado por los electrones de valencia colapsa a:
+\begin{equation}
+\mathbf{f} = \sum_i \frac{\mathbf{r}_i}{r_i^3} W(r_i)
+\end{equation}
+\textit{(Donde hemos sustituido la función de corte $C(r_i, \rho)$ por nuestra notación $W(r_i)$).}
+
+\subsubsection{2. Momentos Estáticos Nulos ($\boldsymbol{\mu}^{\circ} = 0$)}
+Los términos $\boldsymbol{\mu}_c^{\circ}$ y $\mathbf{f}_c^{\circ}$ representan, respectivamente, el momento dipolar estático y el campo estático del core relajado. 
+En una molécula, los enlaces deforman la nube electrónica permanentemente. Sin embargo, para un átomo aislado, el core de capa cerrada ($d^{10}$) es \textbf{perfectamente esférico}. Un core esférico no tiene momento dipolar permanente. 
+Por lo tanto, $\boldsymbol{\mu}_c^{\circ} = \mathbf{0}$.
+
+\subsubsection{3. El Potencial Colapsado}
+Sustituyendo $\boldsymbol{\mu}_c^{\circ} = \mathbf{0}$ en la ecuación original de $V_{cpp}$, los dos últimos términos se desvanecen por completo. Además, como el core esférico tiene una polarizabilidad isotrópica, el tensor $\alpha_c$ se convierte en un simple escalar $\alpha_d$. Nos quedamos con:
+\begin{equation}
+V_{pol} = -\frac{1}{2} \alpha_d (\mathbf{f} \cdot \mathbf{f})
+\end{equation}
+
+
+\subsection{Expansión para la Capa de Valencia $np^2$}
+Ahora introducimos nuestro campo eléctrico $\mathbf{f}$ en la ecuación reducida:
+\begin{equation}
+V_{pol} = -\frac{1}{2} \alpha_d \left( \sum_i \frac{\mathbf{r}_i}{r_i^3} W(r_i) \right) \cdot \left( \sum_j \frac{\mathbf{r}_j}{r_j^3} W(r_j) \right)
+\end{equation}
+
+Al desarrollar el producto punto de las dos sumatorias, separamos los términos donde los índices son iguales ($i = j$) de los términos donde son diferentes ($i \neq j$).
+
+\subsubsection{Término Diagonal ($i = j$): El Potencial de 1 Cuerpo}
+Cuando $i = j$, el producto punto se realiza sobre el mismo electrón:
+\begin{equation}
+V_{pol}^{(1)} = -\frac{1}{2} \alpha_d \sum_i \left( \frac{\mathbf{r}_i \cdot \mathbf{r}_i}{r_i^6} \right) W^2(r_i)
+\end{equation}
+Sabiendo algebraicamente que $\mathbf{r}_i \cdot \mathbf{r}_i = |\mathbf{r}_i|^2 = r_i^2$, la fracción se simplifica:
+\begin{equation}
+\frac{r_i^2}{r_i^6} = \frac{1}{r_i^4}
+\end{equation}
+Llegando exactamente a la fórmula que empleamos en el código para el Hamiltoniano del core:
+\begin{equation}
+V_{pol}^{(1)} = -\frac{1}{2} \alpha_d \sum_i \frac{W^2(r_i)}{r_i^4}
+\end{equation}
+
+\subsubsection{Término Cruzado ($i \neq j$): El Dieléctrico de 2 Cuerpos}
+Para nuestra configuración de valencia $np^2$, solo tenemos dos electrones ($i=1, j=2$).
+Existen dos combinaciones cruzadas: $(1,2)$ y $(2,1)$. Dado que el producto punto es conmutativo, se suman, lo que cancela el factor $1/2$ frontal:
+\begin{equation}
+V_{pol}^{(2)} = -\alpha_d \frac{\mathbf{r}_1 \cdot \mathbf{r}_2}{r_1^3 r_2^3} W(r_1)W(r_2)
+\end{equation}
+Este es el término de apantallamiento dieléctrico que discutimos antes. Se añade matemáticamente al operador de repulsión de Coulomb $(1/r_{12})$ reduciendo la separación de los multipletes de estructura fina y ajustando los valores al NIST.
+
+\subsection{Conclusión}
+La ecuación que me proporcionaste es la \textbf{versión general y matricial} diseñada para tratar clústeres asimétricos con múltiples núcleos. Al aplicar las condiciones de frontera de un átomo aislado (simetría esférica, centro único), todos los tensores y campos cruzados se desvanecen, y el álgebra vectorial $\frac{\mathbf{r} \cdot \mathbf{r}}{r^6}$ colapsa naturalmente en el elegante operador $1/r^4$ que programaste.
+
+\end{document}
+
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: t
+%%% End:

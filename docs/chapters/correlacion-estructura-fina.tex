@@ -1,0 +1,172 @@
+\chapter{Correlación Electrónica y Estructura Fina}
+\label{ch:correlacion-estructura-fina}
+
+\todo{a ver que le pongo al capitulo para que incluya Vpol}
+\section{Notación de Estructura Electrónica y Espectroscópica}
+
+Para el resto de este documento, es pertinente asentar firmemente la notación estándar empleada en física atómica y astrofísica.
+
+La \textbf{configuración electrónica} describe la ocupación de las subcapas cuánticas. Para el análisis numérico, solemos separar los electrones profundamente ligados (el \textit{core} inerte) de los electrones reactivos (la valencia). Para átomos pesados como el Germanio ($Z=32$) y el Estaño ($Z=50$), la configuración completa se abrevia denotando el gas noble de referencia seguido de las capas subsecuentes, e.g., $[\text{Ar}] 3d^{10} 4s^2 4p^2$ para el Germanio. Frecuentemente, dentro del límite de campo central, consideramos como valencia activa únicamente la subcapa abierta, tratando el resto como un core rígido.
+
+Por su parte, la \textbf{notación de espectroscopía atómica} (adoptada por instituciones como el NIST) categoriza los estados de ionización de un elemento con números romanos. Un átomo neutro se denota con ``I'' (ej. C I para el carbono neutro). El primer ión positivo se denota con ``II'' (ej. C II corresponde a $\text{C}^+$), y así sucesivamente.
+
+Finalmente, los estados cuánticos colectivos generados por los acoplamientos angulares se resumen en los términos de Russell-Saunders, cuya notación compacta es $^{2S+1}L_J$. Aquí, $S$ es el espín total del sistema, la multiplicidad está dada por $2S+1$ (singlete, doblete, triplete, etc.), $L$ es el momento angular orbital total (representado por letras mayúsculas $S, P, D, F \dots$ para $L=0, 1, 2, 3 \dots$), y $J$ es el momento angular total del átomo ($J = L+S$).
+
+\section{La Estructura Electrónica de la Configuración $np^2$}
+\label{sec:np2_structure}
+
+Como se estableció anteriormente, la aproximación del campo central asume que cada electrón experimenta un potencial con simetría esférica perfecta, originado por el promedio espacial del resto de la nube electrónica. Para átomos con subcapas completamente llenas (como los gases nobles), esta aproximación es exacta dentro del límite de campo medio, ya que el Teorema de Unsöld (vease \textbf{Apéndice \ref{ap:operadores-tensoriales}}) garantiza que la densidad de probabilidad total de una capa cerrada es puramente esférica e independiente de los ángulos $\theta$ y $\phi$.
+
+Sin embargo, el objeto de estudio de este trabajo se centra en la configuración $np^2$, característica del grupo 14 de la tabla periódica (Carbono, Silicio, Germanio y Estaño). Esta configuración presenta una subcapa de valencia abierta con dos electrones equivalentes en orbitales $p$ ($l=1$). Al no estar la subcapa completamente llena (que requeriría 6 electrones), la densidad electrónica total pierde su simetría esférica perfecta. Los dos electrones de valencia experimentan interacciones electrostáticas y magnéticas fuertemente direccionales que no pueden ser descritas adecuadamente por un simple potencial esférico promedio.
+
+La teoría del momento angular dicta que el acoplamiento de los momentos angulares orbitales $\mathbf{l}_1, \mathbf{l}_2$ y de espín $\mathbf{s}_1, \mathbf{s}_2$ de estos dos electrones equivalentes da lugar a distintos estados fundamentales posibles, conocidos como términos espectroscópicos o multipletes. Bajo el esquema de acoplamiento $L-S$ (Russell-Saunders), válido para elementos ligeros, el momento angular orbital total $\mathbf{L} = \mathbf{l}_1 + \mathbf{l}_2$ y el espín total $\mathbf{S} = \mathbf{s}_1 + \mathbf{s}_2$ son buenas constantes de movimiento.
+
+Para dos electrones $p$ ($l_1 = l_2 = 1$), los valores posibles para $L$ son $0, 1, 2$ (estados $S, P, D$) y para $S$ son $0, 1$ (singletes y tripletes). No obstante, el Principio de Exclusión de Pauli prohíbe los estados donde todos los números cuánticos sean idénticos, obligando a que la función de onda total (espacial y de espín) sea antisimétrica bajo el intercambio de electrones. Esta restricción purga los estados simétricos y permite exclusivamente tres multipletes físicos para la configuración $np^2$: $^3P$, $^1D$ y $^1S$.
+\begin{itemize}
+    \item $^3P$ (Triplete P): El estado fundamental según las reglas de Hund, donde los espines son paralelos ($S=1$, simétrico) y la parte espacial es antisimétrica ($L=1$).
+    \item $^1D$ (Singlete D): Un estado excitado con espines antiparalelos ($S=0$, antisimétrico) y parte espacial simétrica ($L=2$).
+    \item $^1S$ (Singlete S): El estado excitado de mayor energía, con $S=0$ y $L=0$.
+\end{itemize}
+
+La existencia de estos distintos términos espectroscópicos, que emergen de la misma configuración electrónica pero poseen energías  diferentes, evidencia el fracaso del formalismo de Hartree-Fock restringido (RHF) estándar. En RHF, todos los electrones de una misma subcapa se tratan bajo un potencial promedio único, ignorando el acoplamiento multipolar específico entre las funciones de onda direccionales.
+
+Para resolver correctamente la estructura fina y predecir las energías exactas de los estados $^3P$, $^1D$ y $^1S$, es fundamental abandonar la aproximación esférica de capas cerradas. Se vuelve indispensable invocar el formalismo de operadores tensoriales, el álgebra de Racah y el Teorema de Wigner-Eckart. Este aparato matemático permite evaluar exactamente los factores angulares de repulsión entre armónicos esféricos específicos, capturando la anisotropía de la interacción de Coulomb y sentando las bases para el método de Hartree-Fock Restringido para Capas Abiertas (ROHF) formulado en la Sección \ref{sec:rohf}. A medida que incrementa el número atómico $Z$ (como en el Germanio y, de manera extrema, en el Estaño), los efectos relativistas obligan a transitar hacia un esquema de acoplamiento intermedio, donde la interacción espín-órbita mezcla estos términos puros de $LS$, un fenómeno que exploraremos en el análisis de resultados.
+
+\section{Estructura Fina y el Hamiltoniano de Breit-Pauli}
+\label{sec:spin_orbita}
+
+Hasta ahora, nuestro desarrollo formal ha ignorado deliberadamente los efectos magnéticos y relativistas. Sin embargo, en el sistema de referencia de un electrón orbitando a velocidades sub-lumínicas, el núcleo positivamente cargado parece girar a su alrededor, induciendo un campo magnético local. Este campo interactúa con el momento magnético intrínseco del electrón (su espín). Esta interacción espín-órbita es el origen físico primordial de la estructura fina atómica.
+
+Una descripción rigurosa exigiría abandonar la ecuación de Schrödinger y adoptar la ecuación de Dirac de cuatro componentes. Resolver un sistema interactuante de muchos cuerpos en ese formalismo es, sin embargo, costoso e inestable, en buena medida por la incursión del continuo de energía negativa. La alternativa que adopta la física atómica tradicional, y la que empleamos aquí, es la \textbf{aproximación de Breit-Pauli}: una expansión en potencias de $(v/c)^2$, o equivalentemente en la constante de estructura fina $\alpha \approx 1/137$, que pliega el espinor de cuatro componentes sobre una función de onda de dos componentes eliminando analíticamente las componentes pequeñas. El resultado es un Hamiltoniano efectivo que actúa sobre las funciones de onda no relativistas que ya sabemos calcular,
+\begin{equation}
+    \label{eq:breit_pauli}
+    \hat{H}_{BP} = \hat{H}_{\text{Schr}} + \hat{H}_{MV} + \hat{H}_{D} + \hat{H}_{SO},
+\end{equation}
+con tres términos de corrección cuya naturaleza conviene distinguir, porque solo uno de ellos produce estructura fina.
+
+El primero es la \textbf{corrección de masa-velocidad}, que proviene de expandir la energía relativista $E = \sqrt{p^2c^2 + m^2c^4} - mc^2$ más allá del término clásico $p^2/2m$. En unidades atómicas,
+\begin{equation}
+    \label{eq:h_mv}
+    \hat{H}_{MV} = -\frac{\alpha^2}{8}\sum_i \hat{p}_i^4 .
+\end{equation}
+Es uniformemente negativo y, como el momento alcanza valores muy grandes cerca del núcleo, afecta sobre todo a los orbitales penetrantes; su efecto es la contracción relativista de las capas $s$ y $p_{1/2}$.
+
+El segundo es el \textbf{término de Darwin}, que carece de análogo clásico. Surge de la interferencia entre las componentes de energía positiva y negativa de la ecuación de Dirac, el fenómeno conocido como \textit{Zitterbewegung}, por el cual el electrón no percibe el potencial nuclear en un punto sino promediado sobre una región del orden de la longitud de onda de Compton:
+\begin{equation}
+    \label{eq:h_darwin}
+    \hat{H}_{D} = \frac{\alpha^2}{8}\sum_i \laplacian_i V(r_i) = \frac{\pi \alpha^2 Z}{2}\sum_i \delta^3(\bm{r}_i).
+\end{equation}
+La función delta restringe su acción a los electrones con densidad de probabilidad no nula en el origen, es decir, a los orbitales con $l=0$. Su signo es positivo y contrarresta parcialmente la contracción de masa-velocidad.
+
+Ambos términos son escalares: conmutan con $\hat{L}^2$, $\hat{S}^2$ y $\hat{J}^2$, de modo que desplazan la energía de la configuración completa sin separar los términos ni los niveles $J$. La estructura fina observable proviene enteramente del tercer término, el único de carácter tensorial. El operador de espín-órbita es
+\begin{equation}
+    \hat{H}_{SO} = \sum_{i=1}^N \xi(r_i) \, \mathbf{l}_i \cdot \mathbf{s}_i, \quad \text{donde} \quad \xi(r) = \frac{\alpha^2}{2} \frac{1}{r} \frac{dV(r)}{dr},
+\end{equation}
+donde $\alpha$ es la constante de estructura fina ya introducida. Para un orbital B-spline numérico definido por una función radial $P_{nl}(r)$, la magnitud de esta interacción se cuantifica integrando el valor esperado del gradiente del potencial, lo que define al \textbf{parámetro de estructura fina $\zeta_{nl}$}:
+\begin{equation}
+    \label{eq:zeta_spin_orbit}
+    \zeta_{nl} = \int_0^\infty P_{nl}(r) \, \xi(r) \, P_{nl}(r) \, dr \propto \left\langle \frac{1}{r^3} \right\rangle_{nl}.
+\end{equation}
+
+Físicamente, debido a que el término $\xi(r)$ escala con $\frac{1}{r}\frac{dV}{dr}$ y cerca del núcleo el potencial es dominantemente Coulombiano ($V \sim -Z/r$), su derivada introduce un factor de $Z/r^3$. Para órbitas penetrantes, el valor esperado $\langle 1/r^3 \rangle$ en funciones hidrogenoides es proporcional a $Z^3$. En consecuencia, el parámetro $\zeta_{nl}$ crece dramáticamente conforme incrementa la carga nuclear efectiva, escalando analíticamente con la cuarta potencia de la carga: $\zeta_{nl} \sim Z_{\text{eff}}^4$. Esta dependencia implica que la relatividad, que es un efecto de segundo orden muy pequeño en el carbono, se vuelve una fuerza determinante en la estructura fina de los elementos más pesados del grupo.
+
+\section{El Esquema de Acoplamiento LS y su Ruptura}
+\label{sec:acoplamiento_ls}
+
+El \textbf{Acoplamiento de Russell-Saunders} (o acoplamiento $LS$) es el paradigma fundacional para entender la estructura atómica de elementos ligeros. En este esquema, se asume que las interacciones electrostáticas de repulsión entre los electrones (gobernadas por las integrales $F^k$ y $G^k$) son varios órdenes de magnitud mayores que la débil interacción magnética espín-órbita ($\zeta_{nl}$).
+
+Físicamente, esto significa que los momentos orbitales individuales $\mathbf{l}_i$ se acoplan fuertemente entre sí para formar un momento orbital total $\mathbf{L}$, y los espines $\mathbf{s}_i$ se acoplan para formar un espín total $\mathbf{S}$. Las integrales de Slater, en particular $F^2(np, np)$ para nuestra secuencia $np^2$, miden exactamente la magnitud de esta repulsión anisótropa, siendo el principal actor que rompe la degeneración de la configuración base y separa energéticamente los grandes bloques (los multipletes $^3P$, $^1D$, y $^1S$). A esta brecha de energía generada por la interacción de Coulomb se le conoce como la \textbf{separación LS}.
+
+Bajo este régimen de campo débil, el momento total $\mathbf{J} = \mathbf{L} + \mathbf{S}$ se forma como un acoplamiento secundario, y el operador espín-órbita actúa meramente como una pequeña perturbación lineal. Por ejemplo, en el átomo de Carbono ($Z=6$), la repulsión Coulombiana (cuantificada por $F^2$) es del orden de $\sim 50,000 \, \text{cm}^{-1}$, mientras que la corrección magnética ($\zeta_{2p}$) es minúscula ($\sim 30 \, \text{cm}^{-1}$). El acoplamiento $LS$ es una aproximación casi perfecta.
+
+Sin embargo, a medida que descendemos por el grupo 14 hacia el Germanio ($Z=32$) y el Estaño ($Z=50$), el incremento sustancial de $\zeta$ inducido por la potencia $Z_{\text{eff}}^4$ (con un $\zeta_{4p} \approx 1000 \, \text{cm}^{-1}$ para Ge) altera drásticamen\-te el panorama cuántico. La separación LS electrostática y el acoplamiento magnético se vuelven de órdenes de magnitud comparables. Las interacciones magnéticas rompen el ordenamiento electrostático puro; $\mathbf{L}$ y $\mathbf{S}$ dejan de ser constantes de movimiento estrictas, ya que el espín de cada electrón compite por acoplarse directamente a su propia órbita ($\mathbf{j}_i = \mathbf{l}_i + \mathbf{s}_i$) antes que con el de sus vecinos.
+
+En este \textbf{régimen de acoplamiento intermedio} (transitando hacia el límite $jj$), términos espectroscópicos distintos pero con el mismo momento angular total $J$ (como el $^3P_2$ y el $^1D_2$) se mezclan y perturban mutuamente. Tratar esto con teoría de perturbaciones convencional resulta en un fracaso analítico. Es por ello que, a diferencia de los esquemas puramente perturbativos como la teoría de Møller-Plesset (MP2) que tratan la correlación electrónica como una perturbación asumiendo estados base puros, este fenómeno exige un tratamiento distinto.
+
+Para obtener resultados consistentes, es estrictamente necesario abandonar el enfoque perturbativo y proceder mediante una \textbf{diagonalización directa}. Para cada valor permitido de $J$, se debe construir la matriz numérica completa del Hamiltoniano de Breit-Pauli acoplando los estados base $LS$ permitidos por las reglas de selección tensoriales. Los eigenvalores de esta diagonalización proporcionan el espectro multiplete exacto, y los eigenvectores dictan los coeficientes de mezcla entre los términos puros (por ejemplo, revelando la impureza magnética del $^3P_2$ contaminado por el $^1D_2$). Esta diagonalización matricial no perturbativa es el motor principal detrás de nuestros cálculos de estructura fina presentados en el capítulo de resultados.
+
+
+\subsection{Las matrices de Breit-Pauli para $np^2$}
+\label{sec:matrices_bp}
+
+Conviene escribir explícitamente las matrices que resultan de este procedimiento para nuestra configuración, ya que son las que el motor ensambla y diagonaliza. El operador de espín-órbita conserva $J$ pero no $L$ ni $S$, de modo que el Hamiltoniano es diagonal por bloques en $J$ y solo mezcla términos con el mismo momento angular total. De los cinco niveles de $np^2$, esto deja tres bloques.
+
+El subespacio $J=0$ contiene el nivel fundamental $^3P_0$ y el término más alto $^1S_0$:
+\begin{equation}
+    \label{eq:bp_j0}
+    \bm{H}_{BP}(J=0) = \begin{pmatrix}
+        E(^3P) - \zeta_{np} & \sqrt{2}\,\zeta_{np} \\[2pt]
+        \sqrt{2}\,\zeta_{np} & E(^1S)
+    \end{pmatrix}.
+\end{equation}
+
+El subespacio $J=2$ acopla el $^3P_2$ con el $^1D_2$, y es el responsable de la impureza magnética que se observa experimentalmente en los átomos pesados del grupo:
+\begin{equation}
+    \label{eq:bp_j2}
+    \bm{H}_{BP}(J=2) = \begin{pmatrix}
+        E(^3P) + \tfrac{1}{2}\zeta_{np} & -\tfrac{1}{\sqrt{2}}\,\zeta_{np} \\[2pt]
+        -\tfrac{1}{\sqrt{2}}\,\zeta_{np} & E(^1D)
+    \end{pmatrix}.
+\end{equation}
+
+El subespacio $J=1$ es unidimensional: el $^3P_1$ es el único nivel con $J=1$ en la configuración de valencia restringida, no tiene con quién mezclarse, y su energía obedece un desplazamiento puro de Landé,
+\begin{equation}
+    \label{eq:bp_j1}
+    E(^3P_1) = E(^3P) - \tfrac{1}{2}\zeta_{np}.
+\end{equation}
+
+Los elementos diagonales de los tres bloques reproducen la regla del intervalo de Landé del Apéndice \ref{ap:momento-angular}, con la constante del multiplete $A = \zeta_{np}/2$ que corresponde a una subcapa menos que semillena.
+
+Estas matrices interpolan de manera continua entre los dos regímenes de acoplamiento, y ese hecho ofrece una verificación analítica que conviene realizar. En el límite $jj$, donde $\zeta_{np}$ domina y la separación electrostática se vuelve despreciable, los tres términos $LS$ se degeneran en una misma energía que podemos tomar como cero. Con $E(^3P) = E(^1D) = E(^1S) = 0$, los eigenvalores de \eqref{eq:bp_j0} resultan $-2\zeta_{np}$ y $+\zeta_{np}$, y los de \eqref{eq:bp_j2} resultan $-\tfrac{1}{2}\zeta_{np}$ y $+\zeta_{np}$. Son exactamente las energías que predice el acoplamiento $jj$ puro: dos electrones en $p_{1/2}$ aportan $2\times(-\zeta_{np}) = -2\zeta_{np}$ y solo admiten $J=0$; la pareja $p_{1/2}p_{3/2}$ aporta $-\zeta_{np}+\tfrac{1}{2}\zeta_{np} = -\tfrac{1}{2}\zeta_{np}$ con $J=1,2$; y dos electrones en $p_{3/2}$ aportan $+\zeta_{np}$ con $J=0,2$. Que las matrices construidas en la base $LS$ reproduzcan el espectro $jj$ en el límite adecuado confirma que el tratamiento es no perturbativo y válido en todo el rango intermedio, que es precisamente donde caen el germanio y el estaño.
+
+\section{Interacción de Configuraciones y Correlación Electrónica}
+
+A pesar de su formidable éxito predictivo, el método de Hartree-Fock adolece de un límite físico insuperable: asume que la función de onda total del sistema puede ser descrita por un único determinante de Slater $\Phi_0$. Al hacer esto, cada electrón experimenta solo el campo electromagnético estático y promediado de los demás, ignorando la \textit{correlación electrónica dinámica}—es decir, la capacidad instantánea de los electrones para repelerse espacialmente y evitarse mutuamente en tiempo real. Formalmente, definimos la energía de correlación como la diferencia exacta entre la energía verdadera no relativista y la energía del límite de Hartree-Fock:
+
+\begin{equation}
+    E_{\text{corr}} = E_{\text{exacta}} - E_{\text{HF}}.
+\end{equation}
+
+Para recuperar esta energía faltante, debemos abandonar la rigidez del determinante único. El método de \textbf{Interacción de Configuraciones (CI)} aborda este problema mediante una expansión lineal. Resulta sumamente pedagógico establecer una analogía directa con la resolución de Ecuaciones Diferenciales Parciales (PDEs). Al aplicar el método de separación de variables en una PDE, restringimos arbitrariamente nuestro espacio de búsqueda a soluciones factorizables (análogo a obligar a los electrones a vivir en orbitales independientes dentro de $\Phi_0$). Sin embargo, por el teorema de superposición, construimos la solución general y exacta expresándola como una combinación lineal infinita de esas soluciones base. 
+
+De manera idéntica, en CI construimos la función de onda exacta del átomo como una combinación lineal de todos los posibles determinantes de Slater que se pueden formar en nuestra base de orbitales (incluyendo tanto los ocupados como los virtuales generados por el espacio de B-splines):
+\begin{equation}
+    \Psi = C_0 \Phi_0 + \sum_a \sum_r C_a^r \Phi_a^r + \sum_{a < b} \sum_{r < s} C_{ab}^{rs} \Phi_{ab}^{rs} + \dots
+\end{equation}
+donde $\Phi_a^r$ representa una excitación simple (un electrón promovido del orbital ocupado $a$ al virtual $r$), $\Phi_{ab}^{rs}$ una excitación doble, etc. 
+
+El reto, por lo tanto, se reduce a diagonalizar la matriz del Hamiltoniano evaluada en esta inmensa base de determinantes interactuantes, la cual llamamos la \textbf{matriz de Interacción de Configuraciones}. Al encontrar sus eigenvectores, los coeficientes $C_K$ nos dictan estadísticamente cuánto peso tiene cada configuración excitada en el estado base, y su eigenvalor fundamental arroja la energía exacta correlacionada. 
+
+No obstante, esta expansión matemática oculta un monstruo computacional. El número de determinantes posibles crece combinatoriamente de forma descomunal frente al número de electrones y al tamaño de la base. Construir cada elemento de matriz no diagonal $\langle \Phi_K | \hat{H} | \Phi_L \rangle$ requiere evaluar integrales de Slater de pares virtuales exóticos, haciendo que la diagonalización se vuelva prohibitivamente costosa. Es este reto algorítmico y matemático el que motiva la implementación de expansiones CI severamente truncadas, aislando estratégicamente las configuraciones de valencia más dominantes para capturar la esencia física de la correlación de manera tratable.
+
+\section{Polarización del Core y Efectos de Muchos Cuerpos}
+\label{sec:core_polarization}
+
+A pesar de aislar las excitaciones de valencia en nuestro modelo de Interacción de Configuraciones, la aproximación de un ``core congelado'' (donde los electrones internos se mantienen inertes) es inherentemente incompleta. Desde la perspectiva de la electrodinámica cuántica y la teoría de perturbaciones de muchos cuerpos (MBPT), los electrones de valencia no solo interactúan entre sí en el vacío, sino que polarizan la densa nube electrónica que compone el core. 
+
+Físicamente, cuando un electrón de valencia orbita, su campo eléctrico instantáneo, de magnitud clásica $\mathcal{E} = 1/r^2$ (en unidades atómicas), distorsiona la distribución esférica de carga del core inerte. Esta asimetría induce un momento dipolar eléctrico temporal en el núcleo electrónico, cuya magnitud es proporcional al campo excitante: $\mathbf{p} = \alpha_d \mathcal{\bm{E}}$, donde $\alpha_d$ es la \textbf{polarizabilidad estática dipolar} del core (un momento multipolar de orden 1). 
+
+De acuerdo con la electrodinámica clásica, la energía de interacción estabilizadora entre una carga puntual y un dipolo inducido está dada por $V_{\text{pol}} = -\frac{1}{2} \mathbf{p} \cdot \mathcal{\bm{E}}$. Al sustituir el campo del electrón, recuperamos la célebre dependencia asintótica:
+\begin{equation}
+    V_{\text{pol}}(r \to \infty) = -\frac{\alpha_d}{2 r^4}.
+\end{equation}
+
+Esta interacción de largo alcance proporciona una energía de correlación extra (atractiva) que empuja a los electrones de valencia ligeramente hacia el núcleo. Sin embargo, para $r \to 0$, la expansión multipolar falla catastróficamente; el electrón de valencia penetra el volumen de carga del core, y la divergencia $1/r^4$ carece de sentido físico. 
+
+Para resolver esta singularidad, la literatura estándar de física atómica (iniciada formalmente por M\"{u}ller et al. \cite{Muller1984} para metales alcalinos) introduce funciones de amortiguación empíricas $W(r)$ que truncan el potencial dentro del radio del core ($r_c$). Aunque el trabajo original de M\"{u}ller exploró amortiguaciones exponenciales de la forma $(1 - \exp(-r^2/r_c^2))^n$, en nuestra formulación numérica adaptamos una función de corte de alto orden (super-Gaussiana), común en algoritmos modernos de pseudo-potenciales:
+\begin{equation}
+    \label{eq:vpol_cutoff}
+    V_{\text{pol}}(r) = -\frac{\alpha_d}{2 r^4} W_6\left(\frac{r}{r_c}\right), \quad \text{donde} \quad W_6(x) = 1 - e^{-x^6}.
+\end{equation}
+El parámetro empírico $r_c$ (radio de corte) demarca la frontera donde la física de penetración nuclear neutraliza la polarización.
+
+La inclusión de $V_{\text{pol}}$ altera la estructura orbital de los propios orbitales de valencia. El efecto atractivo apantalla el pozo nuclear profundo, permitiendo que la distribución de probabilidad se relaje y se recorra ligeramente hacia el exterior. Esta leve relajación reduce de forma importante el \textbf{momento radial de orden inverso cúbico}:
+\begin{equation}
+    \left\langle \frac{1}{r^3} \right\rangle_{nl} = \int_0^\infty P_{nl}^2(r) \frac{1}{r^3} \dd{r}.
+\end{equation}
+Dado que el parámetro de estructura fina magnético $\zeta_{nl}$ (que gobierna el Hamiltoniano de Breit-Pauli) es un observable que escala asintóticamente de manera directa con $\langle 1/r^3 \rangle$, la omisión de la polarización del core condena al modelo de Hartree-Fock puro a sobreestimar este momento inverso. Al no poseer $V_{\text{pol}}$, el campo central atrae excesivamente a la nube de valencia hacia $r \to 0$, incrementando la penetración radial y produciendo un acoplamiento espín-órbita anómalamente alto. Este comportamiento subraya la necesidad de incorporar correcciones de correlación adicionales para modelar adecuadamente átomos pesados como el Germanio y el Estaño.
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

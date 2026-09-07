@@ -1,0 +1,210 @@
+\chapter{Implementación del Ciclo SCF y Correcciones}
+\label{ch:ciclo-scf}
+
+\section{El Ciclo del Campo Autoconsistente (SCF)}
+
+Como se demostró al cierre del marco teórico, el problema de muchos cuerpos en mecánica cuántica sufre de un acoplamiento cíclico estricto: es imposible deducir los orbitales electrónicos de un átomo sin conocer el potencial electrostático que ellos mismos generan, y es imposible construir dicho potencial sin disponer de los orbitales. 
+
+Para romper esta recursión infinita y resolver numéricamente el límite de Hartree-Fock, implementamos el algoritmo de Campo Autoconsistente (SCF, por sus siglas en inglés: \textit{Self-Consistent Field}). Si proyectamos las funciones de onda radiales incógnitas $P_a(r)$ sobre un conjunto base finito de dimensión $N$, las ecuaciones íntegro-diferenciales de campo medio se transforman en las ecuaciones matriciales generalizadas de \cite{Roothaan1960}:
+
+\begin{equation}
+  \bm{F}\bm{c} = \epsilon\bm{S}\bm{c},
+\end{equation}
+
+donde $\bm{c}$ es el vector columna que contiene los coeficientes de expansión del orbital, $\bm{S}$ es la matriz de traslape (\textit{overlap}) de las funciones base, y $\bm{F}$ es la Matriz de Fock. La matriz de Fock es el análogo discreto del Hamiltoniano efectivo, y su construcción depende explícitamente de la matriz de densidad $\bm{P}$, la cual se forma a partir de los vectores $\bm{c}$ de los estados ocupados.
+
+La transición desde la ecuación diferencial analítica de Hartree-Fock hacia la formulación matricial de Roothaan-Hall se obtiene aplicando el método de Galerkin desarrollado en el Capítulo \ref{ch:bsplines-galerkin}. Al proyectar el operador de Fock sobre las funciones de prueba de la base, los elementos matriciales son
+
+\begin{equation}
+\label{eq:fock-matrix-elements}
+  F_{ij} = \int_0^{R_{\text{max}}} B_i(r)\, \hat{f}\, B_j(r) \dd{r},
+\end{equation}
+
+y la matriz de solapamiento $\bm{S}$ es la ya definida en la Ec. (\ref{eq:matrix-elements}). La diferencia esencial respecto al problema de un cuerpo de la Ec. (\ref{eq:eigen-metodo}) es que $\hat{f}$ depende de los orbitales que precisamente buscamos: lo que en el Capítulo \ref{ch:bsplines-galerkin} era un problema lineal de eigenvalores se convierte aquí en uno no lineal, que solo puede resolverse por iteración.
+
+El algoritmo procede metodológicamente de la siguiente manera:
+
+\begin{enumerate}
+    \item \textbf{El Ansatz Inicial:} El ciclo exige un ``punto de partida'' o \textit{ansatz}. Dado que no poseemos las soluciones verdaderas, inyectamos en el sistema un conjunto de funciones de onda iniciales. Comúnmente, utilizamos los orbitales analíticos del átomo de hidrógeno (sometidos a una carga nuclear efectiva $Z_{\text{eff}}$) ya que capturan cualitativamente la estructura de nodos esperada. A partir de ellas, calculamos una densidad electrónica inicial.
+    \item \textbf{Construcción del Operador de Fock:} Se asume de manera efímera que estos orbitales ``adivinados'' son los reales. Evaluamos las integrales de Slater para construir las componentes de repulsión de Coulomb y de Intercambio interelectrónica. Al sumar la influencia del núcleo, ensamblamos la matriz global $\bm{F}$. 
+    \item \textbf{Diagonalización:} Resolvemos el problema de autovalores generalizado $\bm{F}\bm{c} = \epsilon\bm{S}\bm{c}$ mediante la diagonalización de la matriz de Fock. La solución arroja un \textit{nuevo} conjunto de vectores $\bm{c}$ óptimos y energías propias $\epsilon$.
+    \item \textbf{Criterio de Autoconsistencia:} Se comparan los orbitales de salida con los de entrada. Si las funciones o las energías propias difieren numéricamente más allá de una tolerancia crítica, descartamos los orbitales viejos, adoptamos los nuevos para construir una nueva matriz de densidad, y regresamos al paso 2. El ciclo culmina cuando la topología de la función de onda que ingresa produce un campo idéntico al que la formó. 
+\end{enumerate}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=1.0\textwidth]{scf}
+  \caption{Diagrama de flujo representativo del ciclo iterativo del Campo Autoconsistente (SCF). El proceso comienza con la construcción de un campo medio inicial (ansatz hidrogenoide) y evoluciona cíclicamente a través de la formación de los operadores de Coulomb e Intercambio, y la diagonalización de la matriz de Fock. El ciclo concluye cuando las energías y las densidades de la función de onda alcanzan un estado de equilibrio definido por una tolerancia numérica estricta.}
+  \label{fig:scf-cycle}
+\end{figure}
+
+\subsection{Amortiguación de Oscilaciones: Level-Shifting}
+\label{sec:level_shifting}
+
+Mientras que los sistemas atómicos ligeros (como el Carbono y el Silicio) logran converger hacia este equilibrio simétrico tras unas decenas de iteraciones, los átomos pesados con núcleos fuertemente apantallados sufren de severas inestabilidades numéricas. En particular, para el Germanio ($Z=32$) y el Estaño ($Z=50$), la profunda repulsión electrostática de sus nubes masivas de electrones y la cercanía energética entre los orbitales virtuales y los ocupados de valencia $np$ provocan que el algoritmo SCF oscile violentamente o diverja por completo.
+
+Durante el proceso iterativo, las variaciones minúsculas en la matriz de densidad $\bm{P}$ inducen cambios drásticos en la estructura de la matriz de Fock de valencia $\bm{F}_p$. Si los autovalores de los estados excitados virtuales se hunden y cruzan por debajo de los autovalores de los estados ocupados (cruce de niveles), el principio de exclusión inyecta la densidad en el subespacio incorrecto en la siguiente iteración, arruinando el ciclo de convergencia.
+
+Para forzar al motor numérico a converger átomos pesados como el Germanio y el Estaño, implementamos la técnica de \textbf{Level-Shifting} propuesta originalmente por Saunders y Hillier \cite{Saunders1973}. El principio matemático de esta técnica consiste en desplazar artificialmente el espectro energético de los estados virtuales hacia arriba (energías más positivas) sin alterar los autovectores espaciales ni las energías de los estados ocupados.
+
+Si denotamos como $\bm{R}_v$ al proyector sobre el subespacio virtual, definimos la matriz de Fock desplazada como:
+
+\begin{equation}
+    \bm{F}^{\text{shift}} = \bm{F} + \lambda \bm{S} \bm{R}_v \bm{S},
+\end{equation}
+
+donde $\lambda > 0$ es un escalar (conocido como parámetro de shift) que actúa como un penalizador energético, y $\bm{S}$ es la matriz de solapamiento de la base no ortogonal de B-splines.
+
+Esta transformación es equivalente a agregar una constante $\lambda$ exclusivamente a las energías de los orbitales desocupados $\epsilon_a \rightarrow \epsilon_a + \lambda$. Al aplicar un shift lo suficientemente grande (típicamente $\lambda \sim 0.5 - 1.0$ Hartrees en átomos como el Germanio o el Estaño), se amplía artificialmente la brecha energética (gap) entre la banda de valencia y la banda de conducción virtual. Este enorme muro energético aísla y "congela" a los autovectores desocupados, suprimiendo las oscilaciones erráticas e impidiendo categóricamente que la matriz de densidad colapse en cruces de niveles espurios. Una vez que el ciclo SCF alcanza la autoconsistencia estricta, la penalización se desvanece por sí misma del subespacio ocupado y las energías físicas obtenidas convergen a los valores exactos del límite multiconfiguracional de Hartree-Fock.
+
+\section{Estructura Algebraica del Ciclo Autoconsistente}
+\label{sec:estructura-algebraica}
+
+\todo{creo que vale la pena mencionar aqui que la cuadratura es por Gauss-Legendre (apendice F)}
+Tal como se describió, cada iteración del ciclo SCF vuelve a construir la matriz de Fock y a resolver las ecuaciones de Poisson que definen los potenciales de interacción. Leído literalmente, esto significa repetir en cada paso la integración numérica de todos los operadores. Sin embargo, esa repetición es en buena medida innecesaria: aunque la densidad electrónica evoluciona, las funciones base y los operadores sobre los que se integra permanecen fijos. Existe entonces una separación exacta entre lo que depende de la \textit{geometría} de la base (la malla de nudos y los splines definidos sobre ella) y lo que depende del \textit{estado} del átomo (la matriz de densidad). Hacer explícita esa separación reorganiza el ciclo autoconsistente como una sucesión de contracciones algebraicas. Conviene subrayar que no se trata de una aproximación adicional, sino de un reordenamiento exacto de las mismas sumas.
+
+\subsection{Tensores de colocación}
+
+Aunque la formulación variacional sea de tipo Galerkin, la evaluación de las integrales mediante cuadratura requiere conocer la base en un conjunto discreto de puntos. Sea $\mathcal{Q} = \{(r_q, w_q)\}_{q=1}^{Q}$ el conjunto de puntos y pesos de cuadratura. Definimos el \textbf{tensor de colocación} $\bm{E}$ y su tensor diferencial $\bm{E}'$ como las evaluaciones puntuales de la base:
+
+\begin{equation}
+\label{eq:collocation-tensor}
+  E_{iq} = B_i(r_q) \qquad \text{y} \qquad E'_{iq} = \eval{\dv{B_i(r)}{r}}_{r=r_q}.
+\end{equation}
+
+Estos dos objetos encapsulan toda la información geométrica de la base. Bajo esta óptica, cualquier operador local de un cuerpo $\hat{O}$, con valor $\Omega(r)$ sobre la malla, se obtiene como una contracción:
+
+\begin{equation}
+\label{eq:one-body-contraction}
+  O_{ij} = \sum_{q=1}^{Q} w_q\, E_{iq}\, \Omega(r_q)\, E_{jq}.
+\end{equation}
+
+La Ec. (\ref{eq:one-body-contraction}) unifica el cálculo de los operadores fundamentales del Hamiltoniano, que dejan de ser integrales distintas para volverse el mismo objeto con distinto peso local:
+
+\begin{align}
+  S_{ij} &= \sum_q w_q\, E_{iq} E_{jq}, &
+  T_{ij} &= \frac{1}{2}\sum_q w_q\, E'_{iq} E'_{jq}, &
+  (V_{\text{nuc}})_{ij} &= -Z \sum_q w_q\, E_{iq}\, \frac{1}{r_q}\, E_{jq}.
+\end{align}
+
+Nótese que la energía cinética emplea el tensor de derivadas $\bm{E}'$ y no una segunda derivada: es la forma débil obtenida al integrar por partes en el Capítulo \ref{ch:bsplines-galerkin} la que permite expresar el Laplaciano como un producto escalar de gradientes. La física del operador entra únicamente a través del factor $\Omega(r_q)$; la base contribuye siempre con los mismos tensores.
+
+\subsection{Factorización de la interacción electrónica}
+
+Los operadores anteriores son estáticos y basta calcularlos una vez. El caso interesante es el de la interacción electrón-electrón, que sí depende de la densidad. En la formulación de Galerkin, el término fuente de la ecuación de Poisson proyectado sobre una función de prueba $B_\mu$ es
+
+\begin{equation}
+\label{eq:poisson-source-continuous}
+  b_\mu = \int_0^{R_{\text{max}}} \frac{B_\mu(r)}{r}\, \rho(r) \dd{r},
+\end{equation}
+
+donde la densidad se expande en la misma base a través de la matriz de densidad $\bm{P}$, como $\rho(r) = \sum_{\alpha\beta} P_{\alpha\beta} B_\alpha(r) B_\beta(r)$. Discretizando la integral con nuestra cuadratura:
+
+\begin{equation}
+\label{eq:poisson-source-discrete}
+  b_\mu \approx \sum_{q=1}^{Q} w_q\, \frac{E_{\mu q}}{r_q} \qty[ \sum_{\alpha, \beta} P_{\alpha\beta}\, E_{\alpha q} E_{\beta q} ].
+\end{equation}
+
+En esta forma, el índice de cuadratura $q$ aparece entrelazado con los índices $\alpha,\beta$ de la densidad, lo que obliga a reconstruir la densidad sobre la malla y a reintegrar en cada iteración. Pero los pesos $w_q$, el factor $r_q^{-1}$ y los tensores de colocación son invariantes, de modo que podemos permutar el orden de las sumas y aislar la parte que no cambia:
+
+\begin{equation}
+\label{eq:factorizacion-W}
+  b_\mu = \sum_{\alpha, \beta} P_{\alpha\beta} \underbrace{ \qty[ \sum_{q=1}^{Q} w_q\, \frac{E_{\mu q} E_{\alpha q} E_{\beta q}}{r_q} ] }_{\text{invariante geométrico}}.
+\end{equation}
+
+El término entre corchetes no depende del estado del sistema. Lo definimos como el \textbf{tensor de interacción de Coulomb}:
+
+\begin{equation}
+\label{eq:inter-tensor}
+  W_{\mu\alpha\beta} \equiv \sum_{q=1}^{Q} w_q\, E_{\mu q} E_{\alpha q} E_{\beta q}\, r_q^{-1},
+\end{equation}
+
+con lo cual la construcción del término fuente se reduce a una contracción puramente algebraica entre geometría y estado:
+
+\begin{equation}
+\label{eq:b-contraction}
+  b_\mu = \sum_{\alpha,\beta} W_{\mu\alpha\beta}\, P_{\alpha\beta}.
+\end{equation}
+
+La lectura física de la Ec. (\ref{eq:b-contraction}) es transparente: $\mathbf{W}$ contiene la geometría de la base y el operador de Coulomb, mientras que $\bm{P}$ contiene el estado electrónico del átomo; la interacción es lineal en el objeto geométrico y bilineal en la densidad. Además, el soporte compacto de los B-splines vuelve a $\mathbf{W}$ un tensor disperso: $W_{\mu\alpha\beta}$ es no nulo si y solo si las tres funciones base involucradas son simultáneamente activas sobre al menos un intervalo de la malla.
+\todo{anadir comentario sobre como programar W con mapeos do hash (o solo decir eficientemente) es un reto interesante y una de las razones principales por las que mi implementacion corre tan bien como lo hace.}
+\subsection{El operador de Poisson y sus condiciones de frontera}
+
+Construido el término fuente, resta invertir el operador diferencial. Como se estableció en la Ec. (\ref{eq:poisson-linear-metodo}), la representación matricial del operador de Poisson para el multipolo de orden $k$ es
+
+\begin{equation}
+  \bm{A}^{(k)} = 2\bm{T} + k(k+1)\bm{V}^{(2)},
+\end{equation}
+
+donde $\bm{V}^{(2)}$ es la matriz del operador $r^{-2}$. Esta matriz depende exclusivamente de la secuencia de nudos y del orden multipolar, y es por tanto invariante a lo largo del ciclo. Para las condiciones de frontera físicas del átomo, $\bm{A}^{(k)}$ es simétrica definida positiva, lo que admite su descomposición de Cholesky
+
+\begin{equation}
+  \bm{A}^{(k)} = \bm{L}_k \bm{L}_k^{T},
+\end{equation}
+
+que se calcula una sola vez para cada multipolo $k$ requerido. En las iteraciones subsecuentes, obtener el potencial se reduce a dos sustituciones triangulares sobre la factorización ya conocida.
+
+\todo{seguro?}
+Resta imponer las condiciones de frontera. El potencial satisface condiciones de Dirichlet $y(0) = 0$ y $y(R_{\text{max}}) = q_{\text{enc}}$, donde $q_{\text{enc}}$ es la carga encerrada dada por la Ec. (\ref{eq:bc-metodo}). Aquí resulta útil una propiedad de la base: con un vector de nudos apretado, el primer y el último spline son los únicos con valor no nulo en los extremos del dominio, de modo que el valor de frontera queda asociado a un único coeficiente. Esto permite particionar el sistema entre los índices internos $\Omega_{\text{in}}$ y el índice de frontera $N$, y pasar el término conocido al lado derecho:
+
+\begin{equation}
+\label{eq:lifting}
+  \bm{A}_{\text{in},\text{in}}\, \bm{y}_{\text{in}} = \bm{b}_{\text{in}} - \bm{A}_{\text{in},N}\, q_{\text{enc}}.
+\end{equation}
+
+\todo{buscar una cita}
+Esta técnica, conocida en elementos finitos como \textit{lifting} o condensación estática, garantiza que la solución cumpla exactamente la condición asintótica, sin recurrir a términos de penalización ni modificar el tamaño del sistema.
+
+Con estos elementos, cada iteración del ciclo autoconsistente se reduce a contraer $\mathbf{W}$ con la matriz de densidad para formar los términos fuente, resolver los sistemas de Poisson mediante sustitución triangular sobre las factorizaciones precalculadas, ensamblar la matriz de Fock y diagonalizarla. El detalle algorítmico de esta arquitectura ---el kernel de evaluación de la base, el ensamblaje por elementos finitos y la organización de los precálculos en memoria--- se documenta en el Apéndice \ref{ap:bsplines}.
+
+\section{Implementación de Correcciones y Post-HF}
+
+Una vez superado el cuello de botella iterativo y con los orbitales convergidos del SCF a nuestra disposición, implementamos las correcciones adicionales que dictan la separación de estructura fina y la correlación estática y dinámica.
+
+\subsection{Implementación de Interacción de Configuraciones (CI) y Acoplamiento Espín-Órbita (SO)}
+\label{sec:ci_method}
+
+El procedimiento aísla las dos perturbaciones dominantes —la correlación de valencia y el acoplamiento espín-órbita— y las proyecta sobre el subespacio de estados de valencia, evitando así una expansión CI completa que sería inviable para el germanio y el estaño. La implementación se realiza en dos etapas sucesivas.
+
+En la primera se corrige la parte electrostática. Se construye el operador de Fock de core congelado, se extraen de su diagonalización los orbitales virtuales, y se forma un espacio activo de configuraciones doblemente excitadas del tipo $nl^2$ que conservan la simetría del término. La matriz de interacción de configuraciones se ensambla evaluando los elementos $\langle l^2\,LS|1/r_{12}|l'^2\,LS\rangle$ mediante la expresión de álgebra de Racah del Apéndice \ref{ap:operadores-tensoriales}, que reduce cada elemento a una combinación de símbolos $6j$ e integrales radiales $R^k$ ya disponibles del ciclo SCF. Su diagonalización arroja las energías correlacionadas $E_{\text{CI}}(^3P)$, $E_{\text{CI}}(^1D)$ y $E_{\text{CI}}(^1S)$. El efecto neto de esta etapa es una compresión del espectro: la correlación reduce el valor efectivo de $F^2$ respecto al de Hartree-Fock, acercando entre sí los términos.
+
+En la segunda etapa se introduce la relatividad. Las energías correlacionadas de la etapa anterior se inyectan como elementos diagonales de las matrices de Breit-Pauli \eqref{eq:bp_j0}, \eqref{eq:bp_j2} y \eqref{eq:bp_j1} deducidas en la Sección \ref{sec:matrices_bp}, cuyos elementos fuera de la diagonal se construyen con el parámetro $\zeta_{np}$ evaluado sobre los orbitales convergidos según la Ecuación \eqref{eq:zeta_spin_orbit}. Cada bloque de $J$ se diagonaliza por separado. Este orden importa: aplicar el espín-órbita sobre energías ya correlacionadas, y no sobre las de Hartree-Fock puro, incrementa la mezcla singlete-triplete, precisamente porque la compresión electrostática de la primera etapa reduce el denominador que separa los estados acoplados.
+
+De la diagonalización se extraen dos productos. Los eigenvalores conforman el espectro multiplete que se contrasta contra el NIST en el Capítulo \ref{ch:resultados}. Los eigenvectores proporcionan los coeficientes de mezcla entre los términos puros, con los que se calcula el factor de Landé efectivo que se analiza en el Capítulo \ref{ch:discusion} y que cuantifica hasta qué punto las etiquetas $LS$ conservan sentido físico en cada elemento de la secuencia.
+
+\subsection{Implementación Empírica del Potencial de Polarización}
+\label{sec:impl_polarizacion}
+
+Como se elaboró en el marco teórico, el modelo de Hartree-Fock adolece de la falta de correlación con las capas internas. Tratar este problema desde primeros principios requeriría invocar Teoría de Perturbaciones de Muchos Cuerpos (MBPT) o expandir el espacio activo en nuestro algoritmo CI para incluir masivamente excitaciones del core. En la práctica, someter a los pesados átomos de la configuración $np^2$ (como el Germanio o el Estaño) a un régimen MBPT completo resulta en un escalamiento de costo computacional abismal $\sim \mathcal{O}(N^6)$, lo cual yace fuera del alcance y propósito de este trabajo.
+
+En su lugar, hemos optado por una aproximación semiemprírica altamente efectiva. La física de las excitaciones del core se subsume en el potencial local $V_{\text{pol}}(r)$. Numéricamente, su implementación en nuestro marco de B-splines es notablemente directa y elegante. Al ser un operador local que depende puramente de la coordenada radial $r$, $V_{\text{pol}}$ simplemente se adiciona de manera aditiva a la interacción nuclear Coulombiana desnuda $V_{\text{nuc}}(r) = -Z/r$ para formar un \textbf{potencial central efectivo}:
+
+\begin{equation}
+    \label{eq:vpol_efectivo}
+    V_{\text{eff}}(r) = -\frac{Z}{r} - \frac{\alpha_d}{2 r^4} \left( 1 - e^{-(r/r_c)^6} \right).
+\end{equation}
+
+Esta redefinición impacta el cálculo desde su cimiento más bajo. Durante la construcción inicial de la matriz del Hamiltoniano de un cuerpo $\hat{h}$, el término de energía potencial clásico se sustituye por la integración sobre $V_{\text{eff}}(r)$:
+\begin{equation}
+    h_{ij} = \int_0^{R_{\text{max}}} B_i(r) \left[ -\frac{1}{2}\frac{d^2}{dr^2} + \frac{l(l+1)}{2r^2} + V_{\text{eff}}(r) \right] B_j(r) \dd{r}.
+\end{equation}
+
+En consecuencia, el ciclo SCF entero converge hacia una nueva solución donde los orbitales de valencia ya sienten la repulsión apantallada. 
+
+\todo{creo que voy a quitar esto, en realidad lo que hice fue poner en un bucle el scf hasta obtener buenas energias, como se muestra en el capitulo de resultados}
+Para operar este modelo, es necesario proveer los parámetros empíricos $\alpha_d$ y $r_c$. La constante de polarizabilidad escalar dipolar $\alpha_d$ se extrae típicamente de mediciones experimentales espectroscópicas de los iones análogos correspondientes o de cálculos teóricos paralelos altamente precisos de especies con core cerrado. El radio de corte $r_c$ está delimitado espacialmente y suele definirse en el entorno del valor esperado del radio exterior del último orbital ocupado del core, $\langle r \rangle_{\text{core}}$, sirviendo como una frontera suave que previene la divergencia no física de $1/r^4$ cerca del núcleo. 
+
+\section{La Base de Datos de Espectros Atómicos del NIST (ASD)}
+\label{sec:nist_asd}
+
+\todo{me falta poner la cita al citio web}
+Para validar la precisión predictiva de nuestro modelo de Campo Autoconsistente y la diagonalización del Hamiltoniano de Breit-Pauli, es imperativo contrastar nuestros autovalores teóricos con mediciones observacionales exactas. A lo largo de esta tesis, la referencia empírica absoluta proviene del \textit{NIST Atomic Spectra Database (ASD)}, mantenido por el Instituto Nacional de Estándares y Tecnología de los Estados Unidos.
+
+El NIST ASD recopila, evalúa críticamente y tabula exhaustivamente datos experimentales de espectroscopía de alta resolución provenientes de literatura revisada por pares durante el último siglo. Proporciona niveles de energía empíricos para casi todos los elementos de la tabla periódica y sus iones, asignando a cada nivel de energía medido su término de Russell-Saunders dominante ($^{2S+1}L_J$), la configuración electrónica a la que pertenece, y su energía referenciada al estado fundamental. 
+
+La relevancia de esta base de datos es invaluable, pues constituye el cimiento metodológico de la astrofísica observacional y la física de plasmas. Permite a los astrónomos identificar líneas de emisión o absorción estelar, y a nosotros, fungir como el juez definitivo de nuestro código numérico. En el capítulo de resultados, los niveles reportados como "NIST" fueron extraídos directamente de esta base de datos (versión 6.1) para los átomos neutros de Carbono (C I), Silicio (Si I), Germanio (Ge I) y Estaño (Sn I).
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

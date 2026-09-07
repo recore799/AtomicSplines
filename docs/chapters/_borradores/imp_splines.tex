@@ -1,0 +1,493 @@
+\chapter{Implementación Eficiente de B-splines}
+\label{ch:imp_splines}
+
+
+\section{Introducción}
+
+En la implementación de métodos de estructura electrónica, el conjunto de funciones base actúa como la interfaz crítica que traduce el espacio continuo de Hilbert a la memoria discreta del computador. Por consiguiente, la eficiencia del solucionador no está limitada únicamente por el álgebra lineal final (la diagonalización de la matriz), sino por el costo acumulativo de esta traducción: la evaluación de la base y el ensamblaje de los operadores.
+
+Los B-splines, aunque matemáticamente superiores por sus propiedades de continuidad y completitud, presentan un desafío algorítmico particular. Su definición canónica -la fórmula de recurrencia de Cox-de Boor- es elegante en teoría, pero computacionalmente exigente si se implementa de manera literal. Una traducción directa conlleva una complejidad que escala ineficientemente con el orden del polinomio y el tamaño del sistema.
+
+Para superar esta barrera y hacer viable el método de Campo Autoconsistente (SCF), este capítulo presenta una arquitectura de evaluación que trasciende en tres niveles de abstracción jerárquica:
+
+\begin{enumerate}
+\item \textbf{Micro-optimización (algorítmica):} Pasamos de traducir directamente la recursion (top-down) al evaluar B-splines, por un esquema de Programación Dinámica \textit{bottom-up}.
+\item \textbf{Meso-optimización (estructural):} Un cambio de paradigma en el ensamblaje, desplazando el enfoque de la iteración sobre funciones a la iteración sobre elementos finitos definidos por el vector de nudos. Este enfoque ”basado en elementos” alinea el acceso a memoria con el soporte compacto de la base, generando naturalmente matrices banda y evitando el almacenamiento de ceros.
+\item \textbf{Macro-optimización (estructural):} El desacoplamiento de la malla espacial respecto a la física dinámica. Al identificar los valores de la base en los puntos de cuadratura como invariantes de la malla, es posible pre-calcular las integrales fundamentales en tensores de interacción. Esto permite reducir el ciclo SCF a una serie de contracciones tensoriales de alto rendimiento, un concepto que detallaremos matemáticamente más adelante.
+\end{enumerate}
+
+A continuación, detallamos la implementación de cada nivel, comenzando por la unidad fundamental de cálculo: el kernel de evaluación.
+
+\section{El kernel de evaluación}
+
+La unidad fundamental de costo en nuestro solucionador es la evaluación de una base de B-splines no nula en un punto arbitrario \( r \). Matemáticamente, los B-splines se definen mediante la relación de recurrencia de Cox-de Boor. Sea \( B_{i,k}(r) \) el i-ésimo B-spline de orden \( k \) definido sobre una secuencia de nudos no decreciente \( \{t_i\} \). La definición recursiva es:
+
+\begin{equation}
+\label{eq:cox-deboor2}
+B_{i,k}(r) = \omega_{i,k}(r) B_{i,k-1}(r) + (1-\omega_{i+1,k}(r))B_{i+1,k-1}(r),
+\end{equation}
+
+donde los pesos \( \omega_{i,k}(r) \) son funciones lineales de \( r \):
+
+\begin{equation}
+\label{eq:cdb-weights}
+\omega_{i,k}(r) = \frac{r-t_i}{t_{i+k-1}-t_i}.
+\end{equation}
+
+Aunque esta fórmula es numéricamente estable, su estructura sugiere un grafo de dependencias que, si se recorre ingenuamente desde el orden \( k \) hasta el 1 (top-down), genera un árbol de llamadas con redundancia exponencial debido a la constante reevaluación de los mismos sub-problemas.
+
+En la práctica computacional estándar, esta redundancia se resuelve mediante técnicas de memoización, lo que reduce la complejidad asintótica a \( \mathcal{O}(k^2) \). Nuestra implementación mantiene la misma complejidad asintótica, pero se distingue por la arquitectura de su ejecución: en lugar de una recursión simplemente memoizada, aplicamos un esquema constructivo que genera un flujo de datos triangular (con memoización implícita).
+
+\subsection{Inversión del flujo de control: Esquema Triangular}
+
+Aunque la fórmula de Cox-de Boor es numéricamente estable, su implementación recursiva directa (top-down) conlleva una sobrecarga computacional significativa debido a la gestión de las llamadas a función y la reevaluación de subproblemas. Para mitigar esto, nuestra implementación adopta un esquema constructivo iterativo (bottom-up).
+
+Observemos que para cualquier punto de evaluación \( r \in [t_{\mu}, t_{\mu + 1}) \), la propiedad de soporte compacto garantiza que solo existen \( k \) funciones base con valor no nulo. En lugar de solicitar el valor de una función aislada, el kernel calcula simultáneamente el vector completo de las funciones activas, incrementando progresivamente el orden del polinomio.
+
+Este procedimiento define un flujo de datos triangular:
+
+\begin{enumerate}
+    \item \textbf{Inicialización (Orden 1):} Se identifica el índice \( \mu \) del intervalo activo. El único valor no nulo es trivialmente \( B_{\mu,1}(r) = 1 \).
+    
+    \item \textbf{Inducción (Orden \( j \to j+1 \)):} Se utilizan los \( j \) valores calculados en el paso anterior para generar los \( j+1 \) valores del nuevo orden, aplicando la relación lineal de los pesos \( \omega(r) \).
+\end{enumerate}
+
+La ventaja de este enfoque frente a la recursión estándar no es solo la complejidad temporal de \( \order{k^2} \), sino la eficiencia de hardware. Al eliminar la jerarquía de llamadas recursivas, transformamos el algoritmo en una secuencia plana de operaciones aritméticas. Esto maximiza la localidad de datos, permitiendo que los valores intermedios residan casi exclusivamente en los registros del procesador (CPU) y minimizando la latencia de acceso a la memoria principal.
+
+\subsection{Implementación de alto rendimiento}
+
+La implementación del kernel en el lenguaje Julia se diseñó para maximizar la localidad temporal en los registros de la CPU y asegurar la cero asignación de memoria (zero-allocation) dentro de los bucles críticos.
+
+Se destacan cuatro optimizaciones de bajo nivel que definen la eficiencia del kernel:
+
+\begin{enumerate}[label=\textbf{\Alph*.}, leftmargin=*]
+    \item \textbf{Memoización implícita (tabulación):} Utilizamos programación dinámica para almacenar únicamente los resultados del paso anterior. Dado que el cálculo del orden \( j+1 \) solo requiere los valores del orden \( j \), no es necesario mantener el historial completo de la recursión. Esto permite reducir el requerimiento de memoria auxiliar a un único vector de tamaño \( k \).
+    
+    \item \textbf{Operaciones in-place y seguridad de memoria:} El algoritmo utiliza un único buffer pre-asignado (pila o registros) para esta memoización. En cada paso de la iteración triangular, los valores del orden \( j \) se sobrescriben ordenadamente con los valores del orden \( j+1 \). Al no solicitar memoria al sistema operativo (heap allocation) durante la evaluación, eliminamos la fragmentación de memoria y la latencia del recolector de basura (garbage collection).
+
+    \item \textbf{Desenrollado de bucles (loop unrolling):} Dado que el orden \( k \) es una constante física conocida al inicio, utilizamos el sistema de tipos de Julia para pasar \( k \) como un parámetro de valor (\texttt{Val\{K\}}). Esto instruye al compilador (LLVM) a desenrollar completamente los bucles internos, eliminando el costo de los contadores y facilitando la vectorización SIMD automática por parte del compilador.
+
+    \item \textbf{Cálculo entrelazado de derivadas:} Aprovechamos que la derivada de un B-spline de orden \( k \) se expresa linealmente en función de los B-splines de orden \( k-1 \) (ver Apéndice). En lugar de realizar dos pasadas independientes, el kernel detiene la iteración justo al alcanzar el orden \( k-1 \). En ese estado intermedio, calcula las derivadas utilizando el buffer actual y, posteriormente, realiza la última iteración para obtener los valores finales del spline, todo en una única llamada a la función.
+\end{enumerate}
+
+El siguiente fragmento de código ilustra esta lógica segmentada, donde el uso de tipos \texttt{Val} permite eliminar ramas muertas en tiempo de compilación si solo se requieren valores o derivadas:
+
+\begin{lstlisting}[language=Julia, caption={Kernel de evaluación de B-splines}]
+@inline function eval_bspline_kernel!(
+    ...,
+    ::Val{CompVal},
+    ::Val{CompDeriv},
+    ::Val{K}
+) where {CompVal, CompDeriv, K}
+
+    # Inicialización (Orden 1)
+    @inbounds out_vals[1] = 1.0
+
+    # Bucle Cox-de Boor principal: Ejecutar solo hasta orden K-1
+    # Nos detenemos en j = K-2 para que out_vals contenga los splines de orden K-1
+    for j in 1:(K-2)
+        saved = 0.0
+        for r in 1:j
+            left  = knots[i - j + r]
+            right = knots[i + r]
+            # Cálculo seguro evitando división por cero (nudos repetidos)
+            term = (right == left) ? 0.0 : out_vals[r] / (right - left)
+            
+            out_vals[r] = saved + (right - t) * term
+            saved = (t - left) * term
+        end
+        out_vals[j+1] = saved
+    end
+
+    # Inyección del cálculo de derivadas (Orden K)
+    # Usamos los valores de orden K-1 actualmente en el buffer
+    if CompDeriv
+        for r in 1:K
+            val_im1 = (r == 1) ? 0.0 : out_vals[r-1]
+            val_i   = (r == K) ? 0.0 : out_vals[r]
+
+            denom1 = knots[i+r-1] - knots[i-K+r]
+            denom2 = knots[i+r]   - knots[i-K+r+1]
+
+            term1 = (denom1 == 0.0) ? 0.0 : val_im1 / denom1
+            term2 = (denom2 == 0.0) ? 0.0 : val_i   / denom2
+
+            out_derivs[r] = (K - 1) * (term1 - term2)
+        end
+    end
+
+    # Finalización de valores (Orden K)
+    # Sobrescribimos out_vals con el último paso de la recursión
+    if CompVal
+        j = K - 1
+        saved = 0.0
+        for r in 1:j
+            left  = knots[i - j + r]
+            right = knots[i + r]
+            term = (right == left) ? 0.0 : out_vals[r] / (right - left)
+            
+            out_vals[r] = saved + (right - t) * term
+            saved = (t - left) * term
+        end
+        out_vals[j+1] = saved
+    end
+end
+\end{lstlisting}
+
+Esta rutina garantiza consistencia numérica: al derivar los valores de orden \( k-1 \) calculados en el mismo flujo de ejecución, se minimiza la deriva de errores de punto flotante que ocurriría si se calcularan las derivadas mediante una rutina separada.
+
+\section{Meso-optimización: Ensamblaje basado en elementos}
+
+La propiedad computacional definitoria de los B-splines es su soporte compacto: una función base \( B_{i,k}(r) \) es estrictamente cero fuera de un rango acotado de nudos \( [t_i,t_{i+k}) \). Un algoritmo de ensamblaje ingenuo que itere sobre los índices globales de las funciones (\( i = 1...N \)) resulta ineficiente, pues obliga al procesador a verificar regiones nulas o a realizar accesos a memoria discontinuos para encontrar las zonas de superposición no triviales.
+
+Para mitigar esta latencia, nuestra implementación invierte la lógica del bucle principal. En lugar de preguntar ”¿en qué regiones del espacio es válida esta función?”, formulamos la pregunta inversa: ”¿qué funciones son válidas en este intervalo del espacio?”. Esto redefine la unidad fundamental de trabajo: pasamos de iterar sobre el ”spline” a iterar sobre el elemento finito (el intervalo entre nudos consecutivos \( [t_j, t_{j+1}) \)).
+
+\subsection{Densidad local y uso del Kernel}
+
+Al fijar nuestra atención en un elemento activo específico, la topología del problema se simplifica drásticamente. Sabemos, de manera determinista, que en cualquier intervalo \( [t_j, t_{j+1}) \) existen exactamente \( k \) funciones base con valor no nulo. Es decir, hay una segmentación espacial, que debemos considerar porque, aunque los B-splines son continuos globalmente hasta la derivada \( k-2 \) (clase \( C^{k-2} \)), las derivadas superiores presentan discontinuidades justo en los nudos.
+
+Las reglas de cuadratura gaussiana asumen que el integrando es una función analítica (clase \( C^{\infty} \)) dentro del dominio de integración para garantizar convergencia exponencial. Los B-splines, sin embargo, son funciones definidas a trozos: aunque son continuos globalmente, sus derivadas superiores presentan discontinuidades en los nudos (\( C^{k-2} \)).
+
+Si integráramos a través de múltiples nodos, i.e. ignorando la estructura de elementos, estaríamos aproximando una función con discontinuidades internas mediante un único polinomio global. Esto rompe la condición de analiticidad, degradando la convergencia del error de una tasa exponencial a una tasa algebraica (polinómica). Al restringir la integración estrictamente a los límites del elemento \( [t_j,t_{j+1}) \), aseguramos que el integrando sea un polinomio puro (\( C^{\infty} \) localmente), recuperando así la precisión de máquina con el mínimo número de puntos.
+
+Es en este punto donde se conecta la arquitectura jerárquica: para cada elemento, invocamos el kernel de evaluación (descrito en la sección anterior) sobre los puntos de cuadratura de Gauss-Legendre mapeados al intervalo. Esto nos permite construir bloques de interacción local (por ejemplo, sub-matrices de solapamiento o energía cinética) de dimensiones \( k \times k \). A diferencia de la matriz global dispersa, este bloque local es denso: cada entrada representa una integral numérica significativa entre funciones que se solapan fuertemente. De esta manera, garantizamos que no se desperdicien operaciones de punto flotante (FLOPs) procesando ceros estructurales.
+
+\subsection{Mapeo global y estructura de banda}
+
+El paso final del ensamblaje es la dispersión (scattering) de las contribuciones locales hacia el sistema global. Cada elemento \( (a,b) \) del bloque denso local \( k\times k \) se suma acumulativamente a la posición global \( (I,J) \) determinada por el mapa de conectividad de la malla.
+Dado que los índices de las funciones activas dentro de un elemento son consecutivos por definición, los índices globales siempre satisfacen la condición de proximidad \( |I-J| < k \). Esta restricción de conectividad tiene una consecuencia principal para la escalabilidad del método: garantiza matemáticamente que las matrices resultantes poseen una estructura de banda estricta, con un ancho de banda que depende únicamente del orden \( k \) del polinomio, y no del tamaño total del sistema N.
+
+Esta propiedad permite utilizar estructuras de almacenamiento comprimido (como las implementadas en \texttt{BandedMatrices.jl}), reduciendo la complejidad espacial de memoria RAM de \( \order{N^2} \) a una escala lineal \( \order{Nk} \).
+
+La transformación de la interacción local densa a la estructura de banda global se puede visualizar esquemáticamente de la siguiente manera:
+
+\begin{equation}
+\label{eq:matrix_scattering}
+\underbrace{
+\begin{pmatrix}
+x & x & x \\
+x & x & x \\
+x & x & x
+\end{pmatrix}
+}_{\text{Bloque Local } k \times k}
+\xrightarrow{\text{Scatter}}
+\begin{pmatrix}
+\mathbf{+} & \mathbf{+} & \mathbf{+} & \vdots & \vdots & \vdots & \vdots & \vdots & \reflectbox{$\ddots$} \\
+\mathbf{+} & \mathbf{+} & \mathbf{+} & \vdots & \vdots & \vdots & \vdots & \reflectbox{$\ddots$} & \dots \\
+\mathbf{+} & \mathbf{+} & \mathbf{+} & \vdots & \vdots & \vdots & \reflectbox{$\ddots$} & \dots & \dots \\
+\dots & \dots & \dots & x & x & x & \dots & \dots & \dots \\
+\dots & \dots & \dots & x & x & x & \dots & \dots & \dots \\
+\dots & \dots & \dots & x & x & x & \dots & \dots & \dots \\
+\dots & \dots & \reflectbox{$\ddots$} & \vdots & \vdots & \vdots & \mathbf{+} & \mathbf{+} & \mathbf{+}\\
+\dots & \reflectbox{$\ddots$} & \vdots & \vdots & \vdots & \vdots & \mathbf{+} & \mathbf{+} & \mathbf{+}\\
+\reflectbox{$\ddots$} & \vdots & \vdots & \vdots & \vdots & \vdots & \mathbf{+} & \mathbf{+} & \mathbf{+}\\
+\end{pmatrix}
+_{\text{Matriz Global (Banda)}}
+\end{equation}
+
+Esta reducción en el almacenamiento es lo que permite simular sistemas grandes que, de otro modo, desbordarían la memoria en una representación matricial densa convencional. Sin embargo, aunque hemos optimizado el acceso a memoria y el almacenamiento, seguimos realizando la integración numérica explícita en cada paso del SCF. Esto nos lleva al tercer y último nivel de optimización.
+
+\section{Geometría de B-splines}
+
+Hasta ahora, la optimización se ha centrado en la evaluación eficiente del kernel y el acceso a memoria. Sin embargo, al analizar el ciclo de Campo Autoconsistente (SCF) globalmente, persiste un cuello de botella que las mejoras de bajo nivel no pueden resolver: la redundancia algorítmica. Para escalar el solucionador a sistemas más complejos, debemos elevar el nivel de abstracción y reorganizar la estructura aritmética del problema.
+
+En la implementación estándar de Hartree-Fock, existe una distinción operativa entre los términos del Hamiltoniano. Las integrales de un cuerpo (solapamiento y energía cinética) se calculan una sola vez, reconociendo su naturaleza estática. En contraste, el potencial de interacción electrónica se trata como una variable dinámica dentro del espacio iterativo, recalculándose mediante cuadratura numérica en cada paso bajo la premisa de que la densidad de carga evoluciona constantemente.
+
+Sin embargo, esta dependencia es solo parcial. Si bien la densidad cambia, las integrales se evalúan sobre funciones base y operadores (como el potencial de Coulomb) que son fijos. Nuestra estrategia explota esta invarianza: factorizamos la interacción en una componente estática pre-calculable y una componente algebraica dinámica. Esto redefine el ciclo SCF, sustituyendo la integración continua repetitiva por contracciones tensoriales de álgebra lineal.
+
+\subsection{El Mapa Fundamental: Tensor de Colocación}
+
+Para formalizar esta factorización, definimos primero el operador que conecta el espacio funcional continuo con la discretización numérica. En el contexto de los Métodos de Residuos Ponderados (MWR), aunque la formulación variacional sea de tipo Galerkin, la aproximación de integrales mediante cuadratura requiere evaluar la base en un conjunto discreto de puntos.
+
+La operación resultante es algebraicamente equivalente a la matriz de evaluación utilizada en los métodos de colocación. Por consiguiente, definimos los operadores que proyectan la base y sus derivadas sobre los puntos de cuadratura:
+
+\begin{definition}[Tensores de Colocación]
+
+  Sea \( \mathcal{S}_k \) el espacio de B-splines de orden \( k \) definidos sobre una secuencia de nudos \( t \), con base \( \{ B_i(r) \}_{i=1}^N \).
+  Sea \( \mathcal{Q} = \{ (r_q,w_q) \}_{q=1}^Q \) el conjunto de puntos y pesos de cuadratura.
+
+  Definimos el \textbf{Tensor de Colocación}, \( \bm{E} \), y su \textbf{Tensor Diferencial}, \( \bm{E}' \), como las evaluaciones puntuales:
+
+  \begin{equation}
+    \label{eq:collocation-tensor}
+    E_{iq} = B_i(r_q) \quad \text{y} \quad E'_{iq} = \dv{B_i(r)}{r} \eval_{r=r_q}
+  \end{equation}
+
+\end{definition}
+
+Estos tensores encapsulan la topología de la base y actúan como generadores comunes para los observables físicos. Por ejemplo, la matriz de solapamiento \( \mathbf{S} \), que define la métrica del espacio de Hilbert, se construye simplemente contrayendo el tensor \( \bm{E} \) con los pesos de cuadratura:
+
+\begin{equation}
+S_{ij} = \sum_{q \in \mathcal{Q}} w_q E_{iq} E_{jq}
+\end{equation}
+
+Bajo este lente, cualquier operador local puede expresarse como una contracción de \( \bm{E} \) (o \( \bm{E}' \)) sobre la variedad de integración, eliminando la necesidad de re-evaluar los polinomios B-spline durante el ciclo iterativo.
+
+\subsection{Invarianza en Operadores de un Cuerpo}
+
+La utilidad de este formalismo se hace evidente al construir los operadores estáticos del Hamiltoniano. Dado que \( \bm{E} \) y \( \bm{E}' \) están pre-calculados en la memoria rápida, la construcción de matrices físicas se reduce a operaciones de ensamblaje vectorial. Podemos representar cualquier operador local de un cuerpo \( \hat{O} \) como una contracción generalizada sobre la malla de cuadratura:
+
+\begin{equation}
+O_{ij} = \sum_{q=1}^Q w_q E_{iq} \cdot \Omega(r_q) \cdot E_{jq}
+\end{equation}
+
+donde \( \Omega(r_q) \) es el valor local del operador en la malla. Esta abstracción unifica el cálculo de las integrales fundamentales:
+
+\begin{itemize}
+    \item \textbf{Energía Cinética (\( \mathbf{T} \)):}
+    Es importante notar que, al operar en el marco de Galerkin, utilizamos la forma débil (simétrica) del operador obtenida mediante integración por partes. Esto transforma el Laplaciano (\( \nabla^2 \)) en un producto escalar de gradientes, lo que permite usar directamente el tensor de derivadas \( \bm{E}' \):
+    \begin{equation}
+    T_{ij} = \frac{1}{2} \langle \nabla i | \nabla j \rangle = \frac{1}{2} \sum_q w_q E'_{iq} E'_{jq}
+    \end{equation}
+    
+    \item \textbf{Potencial Nuclear (\( \mathbf{V}_{nuc} \)):}
+    Para un núcleo con carga \( Z \), el operador local es \( -Z/r \). La matriz se obtiene ponderando el tensor de colocación original:
+    \begin{equation}
+    (V_{nuc})_{ij} = -Z \sum_q w_q E_{iq} \left( \frac{1}{r_q} \right) E_{jq}
+    \end{equation}
+\end{itemize}
+
+\subsection{Factorización de la Interacción Electrónica}
+
+El desafío computacional surge con la interacción electrón-electrón. A diferencia de los operadores estáticos, el potencial directo de Hartree (\( V_H \)) depende de la densidad electrónica \( \rho(r) \), la cual evoluciona en cada iteración.
+
+En la formulación de Galerkin, la proyección del término fuente de la ecuación de Poisson sobre una función de prueba \( B_\mu \) requiere evaluar:
+
+\begin{equation}
+\label{eq:poisson_continuous}
+b_\mu = \int \frac{B_\mu(r)}{r} \rho(r) \, dr
+\end{equation}
+
+Sustituyendo la expansión de la densidad \( \rho(r) = \sum_{\alpha \beta} P_{\alpha \beta} B_\alpha(r) B_\beta(r) \) y discretizando la integral mediante nuestra cuadratura, podemos reescribir esta operación en términos del tensor de colocación:
+
+\begin{equation}
+\label{eq:poisson_discrete}
+b_\mu \approx \sum_{q=1}^Q w_q \frac{E_{\mu q}}{r_q} \left[ \sum_{\alpha, \beta} P_{\alpha \beta} E_{\alpha q} E_{\beta q} \right]
+\end{equation}
+
+Aquí es donde la notación tensorial revela la ineficiencia del método estándar. En la ecuación (\ref{eq:poisson_discrete}), los índices de la suma sobre la cuadratura (\( q \)) están entrelazados con los índices de la densidad (\( \alpha, \beta \)). Una implementación ingenua recalcularía toda la expresión entre corchetes (la densidad en la malla) y luego realizaría la integral externa en cada iteración.
+
+\subsubsection{El Tensor de Interacción \( \mathbf{W} \)}
+
+Sin embargo, observamos que los términos \( w_q \), \( r_q^{-1} \) y los tensores de colocación \( \bm{E} \) son invariantes. Podemos permutar las sumatorias para aislar los componentes dinámicos de los estáticos:
+
+\begin{equation}
+b_\mu = \sum_{\alpha, \beta} P_{\alpha \beta} \underbrace{ \left[ \sum_{q=1}^Q w_q \frac{E_{\mu q} E_{\alpha q} E_{\beta q}}{r_q} \right] }_{\text{Invariante de la malla}}
+\end{equation}
+
+El término entre corchetes es independiente del estado del sistema, i.e. no cambia dentro del ciclo SCF. Definimos así el Tensor de Interacción de Coulomb, \( \mathbf{W} \):
+
+\begin{definition}[Tensor de Interacción W]
+Es la contracción de tres tensores de colocación ponderados por el potencial de Coulomb inverso sobre la malla de cuadratura:
+\begin{equation}
+  \label{eq:inter-tensor}
+W_{\mu \alpha \beta} \equiv \sum_{q=1}^Q w_q E_{\mu q} E_{\alpha q} E_{\beta q} r_q^{-1}
+\end{equation}
+\end{definition}
+
+Esta definición transforma el problema de Poisson. Ya no es necesario realizar integración numérica durante el ciclo SCF; la construcción del término fuente se reduce a una contracción tensorial puramente algebraica:
+
+\begin{equation}
+b_\mu = \sum_{\alpha, \beta} W_{\mu \alpha \beta} P_{\alpha \beta}
+\end{equation}
+
+Es importante hacer una distinción entre la definición algebraica global y la implementación computacional. Si bien la Ecuación (\ref{eq:inter-tensor}) define \( W_{\mu\alpha\beta} \) con índices globales \( \mu,\alpha,\beta \in \{1,...,N\} \), la propiedad de soporte compacto de los B-splines implica que este tensor es disperso. \( W_{\mu\alpha\beta} \) es no nulo si y solo si las tres funciones base involucradas están activas en al menos un intervalo de la malla.
+
+Computacionalmente, no construimos el tensor global. En su lugar, almacenamos una colección de Tensores de Interacción Locales, \( W^{(e)} \), asociados a cada elemento finito \( e \) (el intervalo entre nudos \( [t_e, t_{e+1} ) \)).
+
+\begin{equation}
+  \label{eq:inter-tensor-local}
+  W_{ijk}^{(e)} = \sum_{q\in \mathcal{Q}_e} w_q E_{iq}^{(e)}E_{jq}^{(e)}E_{kq}^{(e)} r_q^{-1},
+\end{equation}
+
+donde los índices \( i,j,k \) corren localmente de 1 a \( K \) (el orden del spline). Durante el ensamblaje, el algoritmo mapea estos índices locales al espacio global mediante un desplazamiento determinado por la estructura de la malla: \( \mu(e,i) = \textrm{offset}(e) + i \). Esta estrategia reduce el almacenamiento de \( \order{N^3} \) a \( \order{N\cdot K^3} \), haciendo viable el cálculo.
+
+
+
+\subsection{Implementación: Ensamblaje Estático Unificado}
+
+Con las definiciones tensoriales establecidas, la implementación se reduce a una rutina de ensamblaje monolítica. Esta estrategia integra la construcción de los operadores de un cuerpo (\(\mathbf{S}, \mathbf{T}, \mathbf{V}\)) y el tensor de interacción de dos cuerpos (\(\mathbf{W}\)) en un único recorrido sobre los elementos finitos, maximizando la intensidad aritmética del solucionador.
+
+A continuación, se presenta el núcleo de la rutina \texttt{assemble\_geometry}, la cual traduce las sumatorias sobre la cuadratura a código de alto rendimiento en Julia:
+
+\begin{lstlisting}[language=Julia, caption={Ensamblaje unificado de operadores estáticos}]
+function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
+
+    # Bucle sobre Elementos Finitos (Intervalos de nudos)
+    for i in 1:(length(basis.knots) - 1)
+        
+        # Geometría del elemento actual
+        t_a = basis.knots[i]; t_b = basis.knots[i+1]
+        if t_b == t_a; continue; end # Intervalo nulo
+        
+        mid = (t_a + t_b)/2; scale = (t_b - t_a)/2
+        first_global = i - K + 1
+
+        # Cuadratura Gauss-Legendre local (nodos y pesos pre-calculados)
+        for q in 1:length(basis.gl_nodes)
+            r = scale * basis.gl_nodes[q] + mid
+            w = scale * basis.gl_weights[q]
+            inv_r = (r > 1e-12) ? 1.0/r : 0.0
+            inv_r2 = inv_r * inv_r
+
+            # EVALUACION UNICA DEL KERNEL
+            # Obtenemos B_i(r) y B'_i(r) para las K funciones activas
+            eval_bspline_kernel!(vals, derivs, Val(true), Val(true), 
+                                 i, r, basis.knots, Val(K))
+
+            # ACUMULACION
+            for a in 1:K
+                g_a = first_global + a - 1
+                
+                # Pre-fetch en registros
+                Na = vals[a]; dNa = derivs[a]
+                
+                # Factor común para el tensor W: (w * B_a(r) / r)
+                # Esto reduce las multiplicaciones en el bucle más profundo
+                wa_tensor_factor = Na * w * inv_r 
+
+                # Bucle triangular (Simetría A_ab = A_ba)
+                for b in a:K
+                    g_b = first_global + b - 1
+                    
+                    Nb = vals[b]; dNb = derivs[b]
+                    
+                    # Construcción de matrices de 1-cuerpo
+                    if g_a >= 1 && g_a <= n && g_b >= 1 && g_b <= n
+                        term_S = w * Na * Nb
+                        term_T = w * 0.5 * dNa * dNb
+                        term_V = -Z * term_S * inv_r 
+                        term_V2 = term_S * inv_r2
+                        
+                        S[g_a, g_b] += term_S
+                        T[g_a, g_b] += term_T
+                        V[g_a, g_b] += term_V
+                        V2[g_a, g_b] += term_V2
+                        
+                        if g_a != g_b
+                            # Scatter simetrico
+                            S[g_b, g_a] += term_S
+                            T[g_b, g_a] += term_T
+                            V[g_b, g_a] += term_V
+                            V2[g_b, g_a] += term_V2
+                        end
+                    end
+                    
+                    # Construcción del Tensor W (usando los mismos vals)
+                    # W[k, a, b] += B_k * (B_a * B_b * w / r)
+                    term_tensor_base = wa_tensor_factor * Nb
+                    
+                    for k in 1:K
+                        val = vals[k] * term_tensor_base
+                        W_local[k, a, b] += val
+                        
+                        if a != b
+                           W_local[k, b, a] += val
+                        end
+                    end
+                end
+            end
+        end
+        # Almacenamiento del tensor local para el elemento i
+        tensors[i] = W_local
+    end
+    
+    return S, T, V, V2, tensors
+end
+\end{lstlisting}
+
+Se destacan tres aspectos de eficiencia en este diseño:
+
+\begin{enumerate}
+    \item \textbf{Localidad Temporal:} Los valores de la base (\texttt{vals}) y sus derivadas (\texttt{derivs}) se calculan una sola vez y residen en los registros de la CPU mientras se distribuyen a cinco destinos diferentes (\(\mathbf{S}, \mathbf{T}, \mathbf{V}, \mathbf{V}^{(2)}, \mathbf{W}\)). Esto amortiza completamente el costo de la evaluación de B-splines.
+    
+    \item \textbf{Eliminación de Subexpresiones Comunes:} Términos como \( w \cdot B_a(r) \cdot B_b(r) \) aparecen tanto en la matriz de solapamiento como en el potencial nuclear y el tensor de interacción. Al calcular \texttt{term\_S} y \texttt{wa\_tensor\_factor} explícitamente, evitamos multiplicaciones redundantes en el bucle interno.
+    
+    \item \textbf{Simetría Explícita:} Tanto las matrices como el tensor \( W_{\mu \alpha \beta} \) poseen simetría de intercambio en los índices \( \alpha, \beta \). El bucle itera sobre \( b \geq a \), reduciendo el espacio de iteración casi a la mitad y realizando asignaciones simétricas directas.
+\end{enumerate}
+
+Este procedimiento encapsula toda la discretización espacial de la base. Al finalizar esta rutina, el solucionador posee todos los ingredientes estáticos necesarios para iniciar el ciclo SCF sin volver a evaluar un solo polinomio.
+
+La eficiencia de este fragmento descansa en tres decisiones de diseño específicas:
+
+\begin{enumerate}
+    \item \textbf{Localidad Temporal y Registros:} Los valores de la base (\texttt{vals}) y sus derivadas (\texttt{derivs}) se calculan una única vez por punto de cuadratura. Estos valores residen en los registros de la CPU (o en la caché L1) mientras se distribuyen simultáneamente a cinco destinos diferentes (\(\mathbf{S}, \mathbf{T}, \mathbf{V}, \mathbf{V}^{(2)}, \mathbf{W}\)), amortizando el costo computacional de la evaluación de B-splines.
+    
+    \item \textbf{Factorización de Términos Comunes:} Se observa que el producto \( w \cdot B_a(r) \cdot r^{-1} \) es un factor común tanto para el potencial nuclear como para el tensor de interacción. Al pre-calcular este término (\texttt{wa\_tensor\_factor}), reducimos el número de multiplicaciones dentro del bucle más profundo (el bucle sobre \( k \) del tensor \(\mathbf{W}\)), que es la sección crítica (hotspot) del ensamblaje.
+    
+    \item \textbf{Manejo Explícito de Simetría y Estructuras de Banda:} 
+    Aunque la biblioteca estándar de Julia (\texttt{LinearAlgebra}) ofrece el tipo envoltorio (type wrapper) \texttt{Symmetric()} para optimizar el almacenamiento, este no es compatible nativamente con las estructuras de \texttt{BandedMatrices.jl}. Dado que el uso de matrices banda es innegociable para garantizar la escalabilidad de memoria (\(\order{N}\) vs \(\order{N^2}\)), optamos por la asignación simétrica explícita (\texttt{A[j,i] = A[i,j]}). 
+    
+    Si bien en arquitecturas con unidades vectoriales muy anchas (AVX-512) podría ser preferible iterar el bloque cuadrado completo (\texttt{1:K}) para evitar bifurcaciones, en este contexto la reducción de operaciones de punto flotante del bucle triangular (\texttt{a:K}) y la escritura directa en el almacenamiento de banda comprimido ofrecen el mejor compromiso entre overhead para sistemas pequeños y escalabilidad para sistemas complejos.
+\end{enumerate}
+
+\subsection{Resolución Generalizada de la Ecuación de Poisson}
+
+Una vez construido el término fuente \( b_\mu \) mediante la contracción del tensor \( \mathbf{W} \), el problema se reduce a invertir el operador diferencial. En el contexto de cálculos atómicos, y anticipando la necesidad de calcular integrales de intercambio (que involucran potenciales multipolares \( Y^k \)), generalizamos la ecuación de Poisson radial para un multipolo de orden \( k \):
+
+\begin{equation}
+\label{eq:gen_poisson}
+\left( -\frac{d^2}{dr^2} + \frac{k(k+1)}{r^2} \right) y_k(r) = S_k(r)
+\end{equation}
+
+En nuestra base de B-splines, el operador diferencial del lado izquierdo tiene una representación matricial estática, \(\mathbf{A}^{(k)}\), compuesta por la matriz de energía cinética (escalada por un factor de 2 debido a la definición \( T = -\frac{1}{2}\nabla^2 \)) y la matriz del potencial centrífugo:
+
+\begin{equation}
+\mathbf{A}^{(k)} = 2\mathbf{T} + k(k+1)\mathbf{V}^{(2)}
+\end{equation}
+
+Donde \( \mathbf{V}^{(2)} \) es la matriz del operador \( r^{-2} \). Es crucial observar que \(\mathbf{A}^{(k)}\) depende exclusivamente de la secuencia de nudos y del orden del multipolo \( k \), siendo totalmente independiente de la densidad electrónica cambiante.
+
+\subsubsection{Estrategia de Caché y Factorización}
+
+La matriz \(\mathbf{A}^{(k)}\) es simétrica definida positiva (SPD) para las condiciones de frontera físicas del átomo. Esto permite utilizar la descomposición de Cholesky, que es numéricamente más estable y dos veces más rápida que la descomposición LU.
+En la primera iteración que requiere un multipolo \( k \), calculamos la factorización:
+
+\begin{equation}
+\mathbf{A}^{(k)} = \mathbf{L}_k \mathbf{L}_k^T
+\end{equation}
+
+Este objeto de factorización se almacena en el espacio de trabajo de memoria preparado para alocar todos los pre-calculos. En todas las iteraciones subsiguientes, la resolución del sistema \(\mathbf{A}^{(k)}\mathbf{y} = \mathbf{b}\) se reduce a dos sustituciones triangulares (hacia adelante y hacia atrás) de costo \( \order{N^2} \), en lugar del costo cúbico de la factorización.
+
+\subsubsection{Imposición de Condiciones de Frontera (Lifting)}
+
+La ecuación de Poisson para el potencial de Hartree está sujeta a condiciones de frontera de Dirichlet: \( y(0) = 0 \) y \( y(R) = q_{enc} \), donde \( q_{enc} \) es la carga encerrada (generalmente la carga total del sistema para el potencial directo \( k=0 \)).
+
+En la base de B-splines, el primer y último spline son los únicos con valores no nulos en los extremos del intervalo \( [0, R] \). Esto nos permite particionar el sistema lineal. Si denotamos los índices internos como \( \Omega_{in} = \{2, \dots, N-1\} \) y el índice de frontera como \( N \), el sistema matricial se puede reescribir aislando el valor conocido \( y_N = q_{enc} \):
+
+\begin{equation}
+\begin{pmatrix}
+\mathbf{A}_{in,in} & \mathbf{A}_{in,N} \\
+\mathbf{A}_{N,in} & A_{N,N}
+\end{pmatrix}
+\begin{pmatrix}
+\mathbf{y}_{in} \\
+q_{enc}
+\end{pmatrix}
+=
+\begin{pmatrix}
+\mathbf{b}_{in} \\
+b_N
+\end{pmatrix}
+\end{equation}
+
+Para resolver las incógnitas \( \mathbf{y}_{in} \), pasamos el término de frontera al lado derecho (una técnica conocida en elementos finitos como \textit{lifting} o condensación estática):
+
+\begin{equation}
+\mathbf{A}_{in,in} \mathbf{y}_{in} = \mathbf{b}_{in} - \mathbf{A}_{in,N} \cdot q_{enc}
+\end{equation}
+
+Nuestra función \texttt{solve\_generalized\_poisson} implementa esta corrección vectorizada antes de llamar al solucionador de Cholesky. Esto garantiza que la solución cumpla exactamente las condiciones de frontera asintóticas sin introducir penalizaciones numéricas ni aumentar el tamaño de la matriz.
+
+\section{Conclusión}
+
+En este capítulo, hemos desglosado una arquitectura que resuelve esta discrepancia a través de tres estrategias jerárquicas:
+
+\begin{itemize}
+    \item A nivel \textbf{algorítmico}, el kernel de evaluación iterativo elimina la recursión y explota la localidad de la caché, reduciendo la complejidad de evaluación de la base.
+    \item A nivel \textbf{estructural}, el ensamblaje basado en elementos finitos garantiza el acceso contiguo a memoria y genera naturalmente matrices banda, reduciendo el almacenamiento de \( \order{N^2} \) a \( \order{N \cdot k} \).
+    \item A nivel \textbf{espacial}, la introducción de los tensores de colocación (\(\bm{E}\)) e interacción (\(\mathbf{W}\)) desacopla la discretización de la malla de la física del SCF.
+\end{itemize}
+
+El resultado es un solucionador donde el ciclo autoconsistente está dominado casi exclusivamente por operaciones BLAS de nivel 2 y 3. Esta infraestructura no solo permite alcanzar la precisión numérica característica de los B-splines, sino que lo hace con un costo computacional que escala favorablemente para sistemas atómicos de gran tamaño, estableciendo una base robusta para los cálculos multiconfiguracionales (MCHF) que se discutirán en los capítulos siguientes.
+

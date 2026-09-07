@@ -1,0 +1,72 @@
+\chapter{Unidades atómicas}
+\label{ap:unidades-atomicas}
+
+Para obtener la forma adimensional del Hamiltoniano, partimos de la ecuación de Schrödinger independiente del tiempo en el Sistema Internacional (SI) para un sistema de $N$ electrones y un núcleo de carga $Z$:
+
+\begin{equation}
+    \hat{H}_{\text{SI}} \Psi = E \Psi
+\end{equation}
+
+El operador Hamiltoniano en unidades del SI está dado por:
+
+\begin{equation}
+    \hat{H}_{\text{SI}} = \sum_{i=1}^N \qty( -\frac{\hbar^2}{2m_e} \nabla_i^2 - \frac{Ze^2}{4\pi\epsilon_0 r_i} ) + \sum_{i<j}^N \frac{e^2}{4\pi\epsilon_0 \abs{\bm{r}_i - \bm{r}_j}}
+\end{equation}
+
+Para adimensionalizar la ecuación, realizamos un cambio de escala en las coordenadas espaciales utilizando el \textbf{radio de Bohr} ($a_0$) como unidad natural de longitud:
+
+\begin{equation}
+    \bm{r}_i = a_0 \bm{r}'_i \quad \text{donde} \quad a_0 = \frac{4\pi\epsilon_0 \hbar^2}{m_e e^2}
+\end{equation}
+
+Esto transforma el operador Laplaciano según la regla de la cadena ($\nabla_i = \frac{1}{a_0}\nabla'_i$):
+
+\begin{equation}
+    \nabla_i^2 = \frac{1}{a_0^2} \nabla'^2_i
+\end{equation}
+
+Sustituyendo estas expresiones en el Hamiltoniano original:
+
+\begin{equation}
+    \hat{H} = \sum_{i=1}^N \qty( -\frac{\hbar^2}{2m_e a_0^2} \nabla'^2_i - \frac{Ze^2}{4\pi\epsilon_0 a_0 r'_i} ) + \sum_{i<j}^N \frac{e^2}{4\pi\epsilon_0 a_0 \abs{\bm{r}'_i - \bm{r}'_j}}
+\end{equation}
+
+Identificamos la unidad atómica de energía, el \textbf{Hartree} ($E_h$), definido como:
+
+\begin{equation}
+    E_h = \frac{\hbar^2}{m_e a_0^2} = \frac{e^2}{4\pi\epsilon_0 a_0}
+\end{equation}
+
+Factorizando $E_h$ en la expresión del Hamiltoniano:
+
+\begin{equation}
+    \hat{H} = E_h \left[ \sum_{i=1}^N \qty( -\frac{1}{2} \nabla'^2_i - \frac{Z}{r'_i} ) + \sum_{i<j}^N \frac{1}{\abs{\bm{r}'_i - \bm{r}'_j}} \right]
+\end{equation}
+
+Al dividir la ecuación de Schrödinger por $E_h$, la energía y el Hamiltoniano quedan expresados en unidades atómicas (a.u.). Eliminando las primas ($'$) por convención para simplificar la notación, obtenemos finalmente el Hamiltoniano adimensional:
+
+\begin{equation}
+  \label{eq:hamiltonian1}
+  H = \sum_i^N \qty(- \frac{1}{2}\nabla_i^2 - \frac{Z}{r_i}) + \sum_{i<j}^N \frac{1}{\abs{\bm{r}_i-\bm{r}_j}}
+\end{equation}
+
+\todo{Se documentó la relación entre Hartrees, eV y $cm^{-1}$ para el capítulo de resultados}
+\section{Conversión a Unidades Observacionales}
+
+Aunque el cálculo numérico \textit{ab initio} se realiza nativamente en Hartrees ($E_h$), la espectroscopía experimental y la astrofísica reportan las mediciones en unidades derivadas más convenientes, habitualmente electronvoltios (eV) para energías de ionización, y números de onda ($\text{cm}^{-1}$) para los desdoblamientos de estructura fina y niveles espectroscópicos. 
+
+Para transitar entre nuestro laboratorio virtual y la literatura (como el NIST), utilizamos los siguientes factores estandarizados por CODATA:
+
+\begin{itemize}
+    \item \textbf{Electronvoltio (eV):} Representa la energía cinética ganada por un electrón al ser acelerado por una diferencia de potencial de 1 voltio. La equivalencia es:
+    \begin{equation}
+        1 \, E_h \approx 27.211386 \, \text{eV}.
+    \end{equation}
+    
+    \item \textbf{Número de onda ($\text{cm}^{-1}$):} En espectroscopía óptica, es costumbre expresar la energía de un fotón en términos del inverso de su longitud de onda en el vacío ($1/\lambda$). La conversión canónica desde la unidad atómica de energía es:
+    \begin{equation}
+        1 \, E_h \approx 219474.63 \, \text{cm}^{-1}.
+    \end{equation}
+\end{itemize}
+
+Por lo tanto, la resolución milimétrica requerida para describir el acoplamiento espín-órbita en el Carbono ($\sim 30 \, \text{cm}^{-1}$) exige que nuestro modelo autoconsistente numérico converja con precisiones del orden de $10^{-4}$ Hartrees.

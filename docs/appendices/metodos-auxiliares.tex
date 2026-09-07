@@ -1,0 +1,127 @@
+\chapter{Métodos Numéricos Auxiliares}
+\label{ap:metodos-auxiliares}
+
+\section{Ortogonalización de Gram-Schmidt}
+\label{sec:gram-schmidt}
+
+En un cálculo Hartree-Fock estándar para configuraciones de capas cerradas, los orbitales espaciales radiales $P_{nl}(r)$ que comparten el mismo momento angular $l$ pero difieren en el número cuántico principal $n$ emergen automáticamente ortogonales, es decir, $\langle P_{nl} | P_{n'l} \rangle = \delta_{nn'}$. Esto ocurre porque, matemáticamente, dichos orbitales son los autovectores correspondientes a autovalores distintos ($\epsilon_{nl} \neq \epsilon_{n'l}$) de un \textit{mismo} operador hermitiano (la matriz de Fock $\mathbf{F}$). El teorema espectral garantiza su ortogonalidad intrínseca.
+
+Sin embargo, en el esquema de Hartree-Fock Restringido para Capas Abiertas (ROHF) que implementamos para abordar configuraciones como $np^2$, la simetría esférica del potencial colapsa. Para mantener la forma central de los orbitales, el operador de Fock se divide en Hamiltonianos efectivos disjuntos para las diferentes capas. Específicamente, en nuestro motor computacional, las capas cerradas (core) se optimizan bajo un operador $\mathbf{F}_c$, mientras que la capa de valencia abierta obedece a un operador distinto $\mathbf{F}_v$.
+
+Al provenir de diagonalizaciones de operadores numéricos diferentes, se pierde la garantía espectral estricta: un orbital de valencia $P_{v}$ no será perfectamente ortogonal a un orbital del core $P_{c}$ con el mismo momento angular, provocando solapamientos espurios $S_{vc} = \langle P_v | P_c \rangle \neq 0$. Si este cruce no nulo entra al ciclo SCF, la matriz de densidad se contamina y el sistema diverge en espiral.
+
+Para imponer coercitivamente el requerimiento físico del Principio de Exclusión de Pauli, implementamos un proceso de proyección en cada iteración, conocido como el método de \textbf{Ortogonalización de Gram-Schmidt}. Después de que el solucionador de eigenvalores obtiene el vector de la capa de valencia $| \tilde{P}_v \rangle$ expandido en la base B-spline, calculamos su superposición con todos los orbitales del core previamente fijados $| P_{c_i} \rangle$:
+
+\begin{equation}
+    | P_v \rangle = | \tilde{P}_v \rangle - \sum_{i \in \text{core}} \langle \tilde{P}_v | P_{c_i} \rangle | P_{c_i} \rangle.
+\end{equation}
+
+Computacionalmente, en el espacio discreto gobernado por la matriz de solapamiento $\mathbf{B}$, la operación se ejecuta mediante vectores columna expandidos:
+
+\begin{equation}
+    \mathbf{c}_v^{\text{ortogonal}} = \tilde{\mathbf{c}}_v - \sum_{i \in \text{core}} \left( \tilde{\mathbf{c}}_v^T \mathbf{B} \mathbf{c}_{c_i} \right) \mathbf{c}_{c_i}.
+\end{equation}
+
+Posterior a esta sustracción escalar, el orbital de valencia purificado es renormado $\mathbf{c}_v \leftarrow \mathbf{c}_v / \sqrt{\mathbf{c}_v^T \mathbf{B} \mathbf{c}_v}$ y reintegrado al ciclo SCF, asegurando convergencia incondicional \cite{Roothaan1960}.
+
+\section{Cuadratura de Gauss-Legendre en B-splines}
+\label{sec:gauss-legendre}
+
+La evaluación de los elementos matriciales de Galerkin $\int B_i(r) \mathcal{L} B_j(r) dr$ en la Ecuación de Poisson y el Hamiltoniano exige un esquema de integración numérica impecable \cite{Bachau2001}. Dado que los B-splines de orden $k$ son funciones polinómicas por partes de grado $p = k-1$, el integrando para la matriz de solapamiento es un polinomio exacto de grado $2p$. 
+
+Para evitar cualquier error de truncamiento en la aproximación integral, empleamos la \textbf{Cuadratura de Gauss-Legendre}. Un teorema fundamental del análisis numérico dicta que una cuadratura gaussiana de $N_q$ puntos evalúa exactamente la integral de cualquier polinomio de grado hasta $2N_q - 1$. Por ende, la selección estricta $N_q = k$ garantiza la integración exacta de polinomios de grado $2k - 1 > 2k - 2$.
+
+Las reglas de cuadratura canónicas están definidas sobre el dominio estándar $[-1, 1]$ mediante la sumatoria ponderada:
+\begin{equation}
+    \int_{-1}^{1} f(x) dx \approx \sum_{q=1}^{N_q} w_q f(x_q),
+\end{equation}
+donde las raíces $x_q$ son los ceros del polinomio de Legendre $P_{N_q}(x)$ y $w_q$ son los pesos asociados.
+
+Debido a que nuestros polinomios B-spline están definidos en los subintervalos nodales locales $[t_i, t_{i+1}]$ generados por nuestra malla no lineal discreta, procedemos a realizar un mapeo de transformación afín unidimensional. El cambio de variable para transferir la cuadratura del espacio estándar $x \in [-1, 1]$ al espacio físico $r \in [t_i, t_{i+1}]$ está dado por:
+
+\begin{equation}
+    r(x) = \frac{t_{i+1} - t_i}{2} x + \frac{t_{i+1} + t_i}{2}, \quad \text{con diferencial } dr = \frac{t_{i+1} - t_i}{2} dx.
+\end{equation}
+
+Sustituyendo el diferencial de transformación o Jacobiano unidimensional $J_i = \frac{t_{i+1} - t_i}{2}$, la integral exacta sobre un subdominio local colapsa en la forma vectorial pura que computa nuestro motor matricial:
+
+\begin{equation}
+    \int_{t_i}^{t_{i+1}} f(r) dr = J_i \sum_{q=1}^{N_q} w_q f(r(x_q)).
+\end{equation}
+
+Esta evaluación exacta permite inyectar el tensor espacial $\mathbf{E}$ de colocación geométrica sin pérdida de propiedades de conservación, encapsulando así toda la métrica en un operador lineal hermítico esparcido y ultraeficiente.
+
+\section{Reducción del Potencial de Polarización del Core al Caso Atómico}
+\label{sec:cpp-muller}
+
+El potencial de polarización empleado en el Capítulo \ref{ch:correlacion-estructura-fina} se presenta allí a partir de un argumento electrostático elemental: un electrón de valencia induce un dipolo en el core y se estabiliza al interactuar con él. Esa derivación es suficiente para justificar la forma $-\alpha_d/2r^4$, pero conviene mostrar que coincide con la formulación general del \textit{Core Polarization Potential} (CPP) de Müller, Flesch y Meyer \cite{Muller1984}, concebida para moléculas y agregados, cuando se le imponen las condiciones de un átomo aislado. El ejercicio deja explícito, además, un término de dos cuerpos que la derivación elemental no hace visible.
+
+\subsection{La formulación general}
+
+En su forma original, el potencial de polarización del sistema completo se escribe como una suma sobre centros polarizables $c$,
+\begin{equation}
+    \label{eq:cpp_general}
+    V_{\text{CPP}} = -\frac{1}{2}\sum_c \left( \alpha_c\, \bm{f}_c \cdot \bm{f}_c - 2\,\bm{f}_c \cdot \bm{\mu}_c^{\circ} + \bm{f}_c^{\circ}\cdot\bm{\mu}_c^{\circ} \right),
+\end{equation}
+donde el campo eléctrico efectivo que actúa sobre el centro $c$ recibe contribuciones de todos los electrones y de todos los demás núcleos,
+\begin{equation}
+    \label{eq:cpp_campo}
+    \bm{f}_c = \sum_i \frac{\bm{r}_{ci}}{r_{ci}^3}\,C(r_{ci}, \rho_c) - \sum_{c' \neq c} \frac{\bm{R}_{cc'}}{R_{cc'}^3}\,Z_{c'} .
+\end{equation}
+Aquí $\alpha_c$ es el tensor de polarizabilidad del centro, $\bm{\mu}_c^{\circ}$ su momento dipolar estático, y $C(r,\rho)$ una función de corte que regulariza el campo a distancias cortas.
+
+\subsection{Imposición de la simetría atómica}
+
+Tres condiciones reducen \eqref{eq:cpp_general} al caso que nos interesa.
+
+En primer lugar, un átomo aislado posee un solo centro polarizable, de modo que la suma externa sobre $c$ desaparece y el segundo sumando de \eqref{eq:cpp_campo}, que representa el campo generado por los demás núcleos, se anula de manera idéntica. El vector $\bm{r}_{ci}$ se reduce al radio vector del electrón medido desde el núcleo, y el campo efectivo queda
+\begin{equation}
+    \label{eq:cpp_campo_atomico}
+    \bm{f} = \sum_i \frac{\bm{r}_i}{r_i^3}\,W(r_i),
+\end{equation}
+donde hemos escrito $W(r)$ por la función de corte, que en nuestra implementación adopta la forma $W_6(r/r_c) = 1 - e^{-(r/r_c)^6}$ de la Ecuación \eqref{eq:vpol_cutoff}.
+
+En segundo lugar, el core de nuestros sistemas es una capa cerrada y por tanto esféricamente simétrico, según el teorema de Unsöld de la Sección \ref{sec:unsold}. Una distribución de carga esférica no admite momento dipolar permanente, de manera que $\bm{\mu}^{\circ} = \bm{0}$ y los dos últimos términos de \eqref{eq:cpp_general} se desvanecen. Esta es la diferencia esencial con el caso molecular, donde los enlaces deforman la nube electrónica de forma permanente.
+
+En tercer lugar, la isotropía de un core esférico reduce el tensor de polarizabilidad a un escalar, $\alpha_c \to \alpha_d$. Con estas tres condiciones,
+\begin{equation}
+    \label{eq:cpp_colapsado}
+    V_{\text{pol}} = -\frac{1}{2}\alpha_d \,(\bm{f}\cdot\bm{f}).
+\end{equation}
+
+\subsection{Los términos de uno y de dos cuerpos}
+
+Sustituir \eqref{eq:cpp_campo_atomico} en \eqref{eq:cpp_colapsado} produce un producto de dos sumatorias que conviene separar según los índices coincidan o no,
+\begin{equation}
+    V_{\text{pol}} = -\frac{1}{2}\alpha_d \left( \sum_i \frac{\bm{r}_i}{r_i^3}W(r_i) \right)\cdot\left( \sum_j \frac{\bm{r}_j}{r_j^3}W(r_j) \right).
+\end{equation}
+
+Los términos diagonales, con $i=j$, involucran el producto de un vector consigo mismo. Usando $\bm{r}_i\cdot\bm{r}_i = r_i^2$, la potencia se simplifica a $r_i^2/r_i^6 = 1/r_i^4$ y queda un operador estrictamente de un cuerpo,
+\begin{equation}
+    \label{eq:cpp_un_cuerpo}
+    V_{\text{pol}}^{(1)} = -\frac{1}{2}\alpha_d \sum_i \frac{W^2(r_i)}{r_i^4},
+\end{equation}
+que es exactamente el potencial central que se suma a la atracción nuclear en la Ecuación \eqref{eq:vpol_efectivo} y el que interviene en el ciclo SCF. La dependencia $r^{-4}$, introducida en el Capítulo \ref{ch:correlacion-estructura-fina} por vía electrostática, emerge aquí como consecuencia puramente algebraica del producto punto.
+
+Los términos cruzados, con $i \neq j$, sobreviven en cambio como un operador de dos cuerpos. Para la capa de valencia $np^2$ solo hay dos electrones y por tanto dos combinaciones cruzadas, $(1,2)$ y $(2,1)$, que al ser el producto punto conmutativo se suman y cancelan el factor $1/2$ frontal:
+\begin{equation}
+    \label{eq:cpp_dos_cuerpos}
+    V_{\text{pol}}^{(2)} = -\alpha_d\,\frac{\bm{r}_1 \cdot \bm{r}_2}{r_1^3 r_2^3}\,W(r_1)W(r_2).
+\end{equation}
+
+Este término tiene una interpretación física propia y no es un residuo despreciable: describe el apantallamiento dieléctrico que el core interpone entre los dos electrones de valencia, ya que el dipolo inducido por uno de ellos es sentido por el otro. Se suma al operador de repulsión $1/r_{12}$ y, al depender del ángulo entre ambos radios vectores, contribuye a la parte anisótropa de la interacción, reduciendo la separación entre los términos del multiplete. Su omisión en un tratamiento que retenga únicamente \eqref{eq:cpp_un_cuerpo} constituye, por tanto, una aproximación que conviene tener presente al interpretar los desdoblamientos calculados.
+
+\section{Arquitectura Computacional y Repositorio de Código}
+\label{sec:repositorio}
+
+Para salvaguardar la pureza teórica del manuscrito y mantener el rigor físico, se ha omitido la inclusión directa de código fuente a lo largo de esta tesis. Sin embargo, todos los métodos, derivaciones y algoritmos descritos (generación de mallas nodales, ortogonalización de Gram-Schmidt, rutinas de Campo Autoconsistente y resolución de la ecuación de Poisson por Galerkin) fueron programados y ensamblados desde cero en una librería de desarrollo propio bautizada como \textbf{AtomicSplines}.
+
+La arquitectura del motor numérico fue construida utilizando \textbf{Julia} como lenguaje de cómputo científico de alto rendimiento, aprovechando el poder de paralelización y velocidad que ofrece. Inicialmente se exploró el uso de estructuras de datos esparsas especializadas (como las provistas por \texttt{BandedMatrices.jl}) debido a que el método de Galerkin con B-splines produce naturalmente matrices diagonales por bandas. No obstante, se determinó empíricamente que el sobrecosto de gestión de memoria (\textit{overhead}) de estas estructuras era prohibitivo para la escala de nuestras discretizaciones. Por lo tanto, se optó por una arquitectura mucho más veloz basada en el ecosistema básico de \texttt{LinearAlgebra.jl} auxiliado en ciertas rutinas críticas por \texttt{StaticArrays.jl}, lo que acelera drásticamente las operaciones algebraicas en memoria contigua.
+
+Para las diagonalizaciones críticas del ciclo SCF y de Interacción de Configuraciones (CI), el motor se enlaza nativamente con \textbf{ARPACK}, lo que permite extraer numéricamente solo los vectores propios físicos del extremo inferior del espectro, ignorando miles de estados virtuales que residen en el continuo matemático, haciendo que el cálculo de átomos pesados sea altamente eficiente. Además, se implementó la librería \texttt{WignerSymbols.jl} para proveer un marco analítico y exacto del álgebra de Racah, garantizando una línea de acción sólida para aplicaciones futuras donde el cálculo de Coeficientes de Parentesco Fraccional (CFP) y factores matriciales $F^k$ adquieran mayor complejidad.
+
+Fomentando el paradigma de ciencia abierta y reproducibilidad, el código fuente completo, junto con los módulos de álgebra de tensores y la documentación técnica, se encuentra versionado y disponible públicamente en el siguiente repositorio de GitHub:
+
+\begin{center}
+    \url{https://github.com/recore799/AtomicSplines.git}
+\end{center}

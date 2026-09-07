@@ -121,7 +121,7 @@ function assemble_and_diagonalize_J_block(J_target::Int, terms::Vector{LSTerm}, 
 end
 
 function get_levels(filepath::String, n_val::Int, F2_val::Float64)
-    archive = jldopen(filepath, "r")
+    archive = jldopen(joinpath(@__DIR__, filepath), "r")
     E_total = archive["E_total"]
     R_grid = archive["R_grid"]
     V_eff = archive["V_eff"]

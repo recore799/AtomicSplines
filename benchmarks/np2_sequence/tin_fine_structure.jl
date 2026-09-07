@@ -232,7 +232,7 @@ function execute_np2_fine_structure(element::String, filepath::String, F2_val::F
     n_val = element_n_map[element]
     orbital_key = "P_$(n_val)p"
     
-    archive = jldopen(filepath, "r")
+    archive = jldopen(joinpath(@__DIR__, filepath), "r")
     E_total   = archive["E_total"]
     R_grid    = archive["R_grid"]
     V_eff     = archive["V_eff"]

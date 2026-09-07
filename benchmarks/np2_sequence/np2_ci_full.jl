@@ -382,7 +382,8 @@ function run_full_ci(element_name::String, result_file::String;
     haskey(NP2_VALENCE_N, element_name) || error("Elemento no soportado: $element_name")
     n_val = NP2_VALENCE_N[element_name]
 
-    data = load(result_file)
+    # Los .jld2 de resultado viven junto a este script.
+    data = load(joinpath(@__DIR__, result_file))
     R_max = data["R_max"]
     orbitals = data["orbitals"]
     alpha_d = get(data, "alpha_d", 0.0)

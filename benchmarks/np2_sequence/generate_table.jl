@@ -59,7 +59,7 @@ const TERMS = ["^3P_0", "^3P_1", "^3P_2", "^1D_2", "^1S_0"]
 function collect_results(cases; n_per_l = ACTIVE_SPACE)
     out = Dict{String,Any}()
     for c in cases
-        isfile(c.file_hf) || error("No existe $(c.file_hf). Corre antes el script ROHF de $(c.element).")
+        isfile(joinpath(@__DIR__, c.file_hf)) || error("No existe $(c.file_hf). Corre antes el script ROHF de $(c.element).")
         println("### $(c.element): HF+CI desde $(c.file_hf)")
         # selftest = true en la primera llamada de cada elemento: T1-T4 abortan si el
         # motor angular no reproduce al legado ni a Condon-Shortley, de modo que la
@@ -69,7 +69,7 @@ function collect_results(cases; n_per_l = ACTIVE_SPACE)
 
         res_vp = res_hf
         if c.file_vpol !== nothing
-            isfile(c.file_vpol) || error("No existe $(c.file_vpol).")
+            isfile(joinpath(@__DIR__, c.file_vpol)) || error("No existe $(c.file_vpol).")
             println("### $(c.element): +V_pol desde $(c.file_vpol)")
             res_vp = run_full_ci(c.element, c.file_vpol;
                                  n_per_l = n_per_l, selftest = false, verbose = false)

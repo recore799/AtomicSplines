@@ -8,7 +8,7 @@ using LinearAlgebra
 
 function validate_tin_orbitals(filename::String)
     # 1. Load the strictly optimized HF-t data
-    data = jldopen(filename, "r")
+    data = jldopen(joinpath(@__DIR__, filename), "r")
     orbitals = data["orbitals"]
     E_total = data["E_total"]
     R_max = data["R_max"]
@@ -85,9 +85,9 @@ function validate_tin_orbitals(filename::String)
 end
 
 if !isinteractive()
-    if isfile("tin_rohf_results_3P_R30.0.jld2")
+    if isfile(joinpath(@__DIR__, "tin_rohf_results_3P_R30.0.jld2"))
         validate_tin_orbitals("tin_rohf_results_3P_R30.0.jld2")
-    elseif isfile("tin_rohf_results_av_R30.0.jld2")
+    elseif isfile(joinpath(@__DIR__, "tin_rohf_results_av_R30.0.jld2"))
         validate_tin_orbitals("tin_rohf_results_av_R30.0.jld2")
     else
         println("Could not find Tin ROHF results. Please run tin_rohf.jl first.")

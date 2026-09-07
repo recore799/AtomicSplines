@@ -291,7 +291,9 @@ function solve_germanium_rohf(R_max; verbose::Bool=true, estado=nothing,
             V_eff = compute_effective_central_potential(ws, orbitals, dense_grid, Z)
             P_4p = evaluate_orbital(ws.basis, orbitals[8].coeffs, dense_grid)
 
-            filename = "germanium_rohf_results_$(estado)_R$(R_max).jld2"
+            # Anclado al directorio del script: el .jld2 va junto a el, no al
+            # directorio desde el que se lanzo julia.
+            filename = joinpath(@__DIR__, "germanium_rohf_results_$(estado)_R$(R_max).jld2")
             
             # Corrected export assignment mapping the geometric coordinates
             jldsave(filename;

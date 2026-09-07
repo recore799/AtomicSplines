@@ -117,7 +117,7 @@ function execute_carbon_spin_orbit()
     filepath = "carbon_rohf_results_R30.0.jld2"
     println("Loading SCF Configuration Average data from: $filepath")
     
-    archive = jldopen(filepath, "r")
+    archive = jldopen(joinpath(@__DIR__, filepath), "r")
     E_total   = archive["E_total"]
     orbitals  = archive["orbitals"]
     R_max     = archive["R_max"]

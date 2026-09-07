@@ -322,7 +322,9 @@ function solve_tin_rohf(R_max; verbose::Bool=true, estado=nothing,
             V_eff = compute_effective_central_potential(ws, orbitals, dense_grid, Z)
             P_5p = evaluate_orbital(ws.basis, orbitals[11].coeffs, dense_grid)
 
-            filename = "tin_rohf_results_$(estado)_R$(R_max).jld2"
+            # Anclado al directorio del script: el .jld2 va junto a el, no al
+            # directorio desde el que se lanzo julia.
+            filename = joinpath(@__DIR__, "tin_rohf_results_$(estado)_R$(R_max).jld2")
             
             jldsave(filename;
                 orbitals = orbitals, E_total = E_total, R_max = R_max,

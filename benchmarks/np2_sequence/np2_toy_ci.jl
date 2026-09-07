@@ -136,7 +136,7 @@ function run_toy_ci(element_name::String, result_file::String, zeta_np::Float64)
     println(" Toy CI for $(element_name) (Valence correlation only) ")
     println("==================================================")
     
-    data = load(result_file)
+    data = load(joinpath(@__DIR__, result_file))
     R_max = data["R_max"]
     orbitals = data["orbitals"]
     
@@ -418,7 +418,7 @@ zeta literal el barrido no mueve la estructura fina y parece que V_pol no hace n
 function run_toy_ci(element_name::String, result_file::String)
     haskey(NP2_VALENCE_N, element_name) || error("Element not supported: $element_name")
     n_val = NP2_VALENCE_N[element_name]
-    data = load(result_file)
+    data = load(joinpath(@__DIR__, result_file))
     key = "P_$(n_val)p"
     haskey(data, key) || error("$(result_file) no contiene la clave $(key); regenera el .jld2 con el script ROHF correspondiente.")
     zeta_np = compute_zeta(data["R_grid"], data["V_eff"], data[key])

@@ -35,7 +35,7 @@ function run_tin_calibration(alpha_range; r_c = 1.0)
         filename = @sprintf("tin_rohf_results_av_R30.0_ad%.3f.jld2", alpha_d)
         
         # Load the newly saved effective potential and orbital to compute zeta
-        data = load(filename)
+        data = load(joinpath(@__DIR__, filename))
         V_eff = data["V_eff"]
         P_5p = data["P_5p"]
         dense_grid = data["R_grid"]

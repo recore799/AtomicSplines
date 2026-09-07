@@ -149,7 +149,7 @@ function execute_silicon_spin_orbit()
     filepath = "silicon_rohf_results_R30.0.jld2"
     println("Loading SCF Configuration Average data from: $filepath")
     
-    archive = jldopen(filepath, "r")
+    archive = jldopen(joinpath(@__DIR__, filepath), "r")
     E_total   = archive["E_total"]
     R_grid    = archive["R_grid"]
     V_eff     = archive["V_eff"]

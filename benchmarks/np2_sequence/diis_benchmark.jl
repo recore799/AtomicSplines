@@ -38,7 +38,8 @@ const ORDER = ["Carbon", "Silicon", "Germanium", "Tin"]
 
 function run_case(name::String; verbose::Bool = false)
     solver, reffile, max_iter = CASES[name]
-    E_ref = isfile(reffile) ? load(reffile, "E_total") : NaN
+    ref = joinpath(@__DIR__, reffile)
+    E_ref = isfile(ref) ? load(ref, "E_total") : NaN
 
     rows = Dict{Bool,Any}()
     for use_diis in (false, true)

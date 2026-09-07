@@ -30,7 +30,16 @@ end
 
 function cached_init_scf_workspace(R_max::Float64, N_elems::Int, ::Val{K}, Z::Float64; γ::Float64=2.0, calc_R_matrices::Bool=true, alpha_d::Float64=0.0, r_c::Float64=1.0) where {K}
 
-    filename = @sprintf("geometry_Z%.1f_R%.1f_N%d_K%d_g%.2f_ad%.3f_rc%.3f.jld2", Z, R_max, N_elems, K, γ, alpha_d, r_c)
+    # Las cachés de geometría son puramente derivadas y no dependen de quién las
+    # pidió, así que viven en un solo lugar —<raíz del repo>/.geometry_cache/—
+    # anclado al código y no al directorio de trabajo desde el que se lanzó julia.
+    # Antes se escribían en el cwd, y por eso acabaron duplicadas en la raíz, en
+    # benchmarks/np2_sequence/ y en examples/scratch/. Ver benchmarks/README.md.
+    cache_dir = joinpath(dirname(@__DIR__), ".geometry_cache")
+    isdir(cache_dir) || mkpath(cache_dir)
+    filename = joinpath(cache_dir,
+                        @sprintf("geometry_Z%.1f_R%.1f_N%d_K%d_g%.2f_ad%.3f_rc%.3f.jld2",
+                                 Z, R_max, N_elems, K, γ, alpha_d, r_c))
     
     basis = generate_basis(R_max, N_elems, Val(K); γ=γ)
     n = basis.num_splines

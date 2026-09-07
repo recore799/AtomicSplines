@@ -1,0 +1,295 @@
+# RESULTS.toml - manifiesto de los resultados SCF que alimentan la tesis.
+#
+# GENERADO por benchmarks/verificar_resultados.jl --emitir. No editar a mano:
+# los metadatos viven en el CATALOGO de ese script.
+#
+# Cada entrada fija el sha256 del .jld2, su energia total y los parametros
+# fisicos con los que se genero. Un `git diff` sobre este archivo dice que
+# resultado se movio y en cuanto, aunque el binario no diga nada legible.
+#
+# Emitido el 2026-09-07 desde el commit 8254aa9.
+
+[[resultado]]
+archivo       = "np2_sequence/carbon_rohf_results_av_R30.0.jld2"
+elemento      = "C"
+estado        = "av"
+sha256        = "8c5f1141bafd5fda971d81bfb44deb019bdff73601ba3a26cc7ab1e79e4e80ca"
+bytes         = 339859
+E_total       = -37.659698065252954
+num_splines   = 106
+Z             = 6.0
+R_max         = 30.0
+N             = 100
+K             = 7
+gamma         = 2.5
+alpha_d       = 0.0
+r_c           = 1.0
+script        = "np2_sequence/carbon_rohf.jl"
+commit_codigo = "37b83ae"
+nota          = "Promedio de configuracion. coeff_k2 = +2/25, correcto desde siempre."
+
+[[resultado]]
+archivo       = "np2_sequence/carbon_rohf_results_3P_R30.0.jld2"
+elemento      = "C"
+estado        = "3P"
+sha256        = "e8c5884b0f5c8a4df4510f00a233b0b001651d5a003e1c367a8e64f33bd47829"
+bytes         = 339411
+E_total       = -37.6886189635015
+num_splines   = 106
+Z             = 6.0
+R_max         = 30.0
+N             = 100
+K             = 7
+gamma         = 2.5
+alpha_d       = 0.0
+r_c           = 1.0
+script        = "np2_sequence/carbon_rohf.jl"
+commit_codigo = "37b83ae"
+nota          = "Limite HF: coincide con Froese Fischer y con resultados.tex:25. Reemplazo al archivo contaminado por el signo de f2 (ver HALLAZGOS-2026-09-06). PENDIENTE: se escribio a mano, le faltan las claves active_s y active_p; regenerar con el script actual (segundos) para completar el esquema."
+
+[[resultado]]
+archivo       = "np2_sequence/silicon_rohf_results_av_R30.0.jld2"
+elemento      = "Si"
+estado        = "av"
+sha256        = "5789405672fba2c333555d4622a30dad4e3feca9af350b436bdff9eeb3759731"
+bytes         = 341987
+E_total       = -288.8346060601259
+num_splines   = 106
+Z             = 14.0
+R_max         = 30.0
+N             = 100
+K             = 7
+gamma         = 2.5
+alpha_d       = 0.0
+r_c           = 1.0
+script        = "np2_sequence/silicon_rohf.jl"
+commit_codigo = "37b83ae"
+nota          = "Promedio de configuracion. coeff_k2 = +2/25, correcto desde siempre."
+
+[[resultado]]
+archivo       = "np2_sequence/silicon_rohf_results_3P_R30.0.jld2"
+elemento      = "Si"
+estado        = "3P"
+sha256        = "09adeb32091b5c8b62a178898f98921fd90a26403e6a3c7aaffb7a2bedd025e8"
+bytes         = 341539
+E_total       = -288.8543571529098
+num_splines   = 106
+Z             = 14.0
+R_max         = 30.0
+N             = 100
+K             = 7
+gamma         = 2.5
+alpha_d       = 0.0
+r_c           = 1.0
+script        = "np2_sequence/silicon_rohf.jl"
+commit_codigo = "37b83ae"
+nota          = "Limite HF: coincide con Froese Fischer y con resultados.tex:30. Reemplazo al archivo contaminado por el signo de f2 (ver HALLAZGOS-2026-09-06). PENDIENTE: le faltan las claves active_s y active_p, igual que en carbono."
+
+[[resultado]]
+archivo       = "np2_sequence/germanium_rohf_results_av_R30.0.jld2"
+elemento      = "Ge"
+estado        = "av"
+sha256        = "2aa0e8e3548c8f796a55d1630b798c5eb2d5534b921b7d19710b1aa4a2ca4377"
+bytes         = 1022252
+E_total       = -2075.340369758861
+num_splines   = 307
+Z             = 32.0
+R_max         = 30.0
+N             = 300
+K             = 8
+gamma         = 3.0
+alpha_d       = 0.0
+r_c           = 1.0
+script        = "np2_sequence/germanium_rohf.jl"
+commit_codigo = "37b83ae"
+nota          = "Promedio de configuracion."
+
+[[resultado]]
+archivo       = "np2_sequence/germanium_rohf_results_3P_R30.0.jld2"
+elemento      = "Ge"
+estado        = "3P"
+sha256        = "7567c491027ef4de1ce4cc6a338bae4477ada81a69d54230dcf9fe43338a95ae"
+bytes         = 1022252
+E_total       = -2075.359733018755
+num_splines   = 307
+Z             = 32.0
+R_max         = 30.0
+N             = 300
+K             = 8
+gamma         = 3.0
+alpha_d       = 0.0
+r_c           = 1.0
+script        = "np2_sequence/germanium_rohf.jl"
+commit_codigo = "37b83ae"
+nota          = "Nunca afectado por el signo de f2: germanio siempre uso +5/25."
+
+[[resultado]]
+archivo       = "np2_sequence/germanium_rohf_results_av_R30.0_ad0.500.jld2"
+elemento      = "Ge"
+estado        = "av"
+sha256        = "c274ee3439b062fd534d5089bfface669d61ca481fc0c5cf2c33504518013212"
+bytes         = 1022464
+E_total       = -2077.1175646440656
+num_splines   = 307
+Z             = 32.0
+R_max         = 30.0
+N             = 300
+K             = 8
+gamma         = 3.0
+alpha_d       = 0.5
+r_c           = 1.0
+script        = "np2_sequence/germanium_rohf_vpol.jl"
+commit_codigo = "37b83ae"
+nota          = "Con potencial de polarizacion del core. Es la columna CI+V_pol del Cuadro tab:niveles_energia_pesados (resultados.tex:248)."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_3P_R30.0.jld2"
+elemento      = "Sn"
+estado        = "3P"
+sha256        = "7db46b8f54a0b94a6cd635840a575507714b360fc5af1140d91609253adb2512"
+bytes         = 2350268
+E_total       = -6022.931694095824
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 0.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf.jl"
+commit_codigo = "37b83ae"
+nota          = "Limite HF del estanio. Nunca afectado por el signo de f2."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_3P_R30.0_ad1.000.jld2"
+elemento      = "Sn"
+estado        = "3P"
+sha256        = "76bcc8e69dacd7559e1c7641d5f718241890985bd9fff4620a81f49f0d7704d2"
+bytes         = 2350480
+E_total       = -6028.099505604365
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 1.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf_vpol.jl"
+commit_codigo = "37b83ae"
+nota          = "Entrada de tin_fine_structure.jl:252."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_av_R30.0_ad1.000.jld2"
+elemento      = "Sn"
+estado        = "av"
+sha256        = "aba88fbce549b88776f23b3db001a556bd02da208a899eb67d1db741736ae945"
+bytes         = 2350480
+E_total       = -6028.081676912578
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 1.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf_vpol.jl"
+commit_codigo = "37b83ae"
+nota          = "Barrido de alpha_d del estanio. Este valor quedo fuera del Cuadro tab:estanio_ci, que arranca en alpha_d = 2."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_av_R30.0_ad2.000.jld2"
+elemento      = "Sn"
+estado        = "av"
+sha256        = "cb00ade0a6ab931f2f4de3969dbb9043aa39fe33e024bd80c02e24d56b4a3fc2"
+bytes         = 2350480
+E_total       = -6033.292967326346
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 2.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf_vpol.jl"
+commit_codigo = "37b83ae"
+nota          = "Renglon alpha_d = 2.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_av_R30.0_ad3.000.jld2"
+elemento      = "Sn"
+estado        = "av"
+sha256        = "32b8eed37f5e93f64d38fd67265f6319d62f632acc1653dc6ce399994a07a11a"
+bytes         = 2350480
+E_total       = -6038.545725293616
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 3.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf_vpol.jl"
+commit_codigo = "37b83ae"
+nota          = "Renglon alpha_d = 3.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_av_R30.0_ad4.000.jld2"
+elemento      = "Sn"
+estado        = "av"
+sha256        = "bacd15ce4781727dc5f252ae34382a553fae0da282822c08b791ac1c57d90831"
+bytes         = 2350480
+E_total       = -6043.837971572429
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 4.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf_vpol.jl"
+commit_codigo = "37b83ae"
+nota          = "Renglon alpha_d = 4.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_av_R30.0_ad5.000.jld2"
+elemento      = "Sn"
+estado        = "av"
+sha256        = "d82c948c7792954badbc61f82e6314c911e7fba88cdbf272f8c5a4b337a6cd12"
+bytes         = 2350480
+E_total       = -6049.168023160656
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 5.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf_vpol.jl"
+commit_codigo = "37b83ae"
+nota          = "Renglon alpha_d = 5.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_av_R30.0_ad6.000.jld2"
+elemento      = "Sn"
+estado        = "av"
+sha256        = "fed46caeb4dbffae82b9cd36195a718bdfa9c9fc94b6b6cc1e7bf3250560c091"
+bytes         = 2350480
+E_total       = -6054.534458705762
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 6.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf_vpol.jl"
+commit_codigo = "37b83ae"
+nota          = "Renglon alpha_d = 6.0 del Cuadro tab:estanio_ci (resultados.tex:281)."

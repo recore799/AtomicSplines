@@ -39,7 +39,23 @@ docs/auto/
 *.run.xml
 *.xdv
 
-*.jld2
+# ---------------------------------------------------------------------------
+# Datos binarios (.jld2)
+#
+# Las cachés de geometría son puramente derivadas: se regeneran desde
+# assemble_geometry con la clave (Z, R_max, N, K, γ, alpha_d, r_c). Viven en
+# .geometry_cache/ y NO se versionan.
+/.geometry_cache/
+geometry_*.jld2
+#
+# Todo lo demás —los *_rohf_results_*.jld2— SÍ se versiona: son la entrada de
+# las tablas del capítulo de resultados y su historial es la única forma de
+# detectar una regresión numérica. Ver benchmarks/README.md.
+#
+# Excepción: examples/scratch/ es un cajón de pruebas cuyos .jld2 solo alimentan
+# sus propios scripts de graficado, no el manuscrito.
+examples/scratch/*.jld2
+# ---------------------------------------------------------------------------
 
 # AUCTeX caches (regenerables)
 auto/

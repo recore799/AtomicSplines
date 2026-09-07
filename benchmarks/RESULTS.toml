@@ -7,7 +7,12 @@
 # fisicos con los que se genero. Un `git diff` sobre este archivo dice que
 # resultado se movio y en cuanto, aunque el binario no diga nada legible.
 #
-# Emitido el 2026-09-07 desde el commit 8254aa9.
+# La emision es reproducible: no lleva fecha ni sello de commit, asi que
+#
+#     julia --project=. benchmarks/verificar_resultados.jl --emitir | diff - benchmarks/RESULTS.toml
+#
+# sale vacio mientras nada haya cambiado de verdad. Cuando se reemitio y desde
+# que commit lo dice el historial de git de este mismo archivo.
 
 [[resultado]]
 archivo       = "np2_sequence/carbon_rohf_results_av_R30.0.jld2"
@@ -293,3 +298,4 @@ r_c           = 1.0
 script        = "np2_sequence/tin_rohf_vpol.jl"
 commit_codigo = "37b83ae"
 nota          = "Renglon alpha_d = 6.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
+

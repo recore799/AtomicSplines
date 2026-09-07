@@ -24,7 +24,7 @@
 # CATALOGO de abajo, no en el .toml: asi regenerar el manifiesto no borra lo que
 # se sabe de cada archivo. Al registrar un resultado nuevo, agregalo aqui.
 
-using SHA, TOML, Printf, Dates
+using SHA, TOML, Printf
 
 const BENCH      = @__DIR__
 const RAIZ       = normpath(joinpath(BENCH, ".."))
@@ -200,7 +200,6 @@ end
 # Emision del manifiesto
 # --------------------------------------------------------------------------
 function emitir()
-    commit = git(`git rev-parse --short HEAD`)
     println("""
     # RESULTS.toml - manifiesto de los resultados SCF que alimentan la tesis.
     #
@@ -211,7 +210,12 @@ function emitir()
     # fisicos con los que se genero. Un `git diff` sobre este archivo dice que
     # resultado se movio y en cuanto, aunque el binario no diga nada legible.
     #
-    # Emitido el $(Dates.format(now(), "yyyy-mm-dd")) desde el commit $commit.
+    # La emision es reproducible: no lleva fecha ni sello de commit, asi que
+    #
+    #     julia --project=. benchmarks/verificar_resultados.jl --emitir | diff - benchmarks/RESULTS.toml
+    #
+    # sale vacio mientras nada haya cambiado de verdad. Cuando se reemitio y desde
+    # que commit lo dice el historial de git de este mismo archivo.
     """)
 
     for e in CATALOGO

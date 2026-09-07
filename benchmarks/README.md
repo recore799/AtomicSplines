@@ -76,6 +76,15 @@ Los metadatos (parámetros, notas, script generador) viven en el `CATALOGO` de
 `verificar_resultados.jl`, no en el `.toml`; reemitir no los pierde. Un resultado
 nuevo se registra agregándolo a ese catálogo.
 
+La emisión es reproducible —no lleva fecha ni sello de commit—, así que reemitir
+contra el archivo guardado sirve como comprobación más estricta que el sha256:
+
+```bash
+julia --project=. benchmarks/verificar_resultados.jl --emitir | diff - benchmarks/RESULTS.toml
+```
+
+Sale vacío mientras nada haya cambiado de verdad.
+
 ## Dónde corren los scripts
 
 Los `*_rohf.jl` escriben su `.jld2` con ruta relativa **al directorio del

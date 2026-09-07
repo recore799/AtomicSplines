@@ -146,7 +146,9 @@ function assemble_and_diagonalize_J_block(J_target::Int, terms::Vector{LSTerm}, 
 end
 
 function execute_silicon_spin_orbit()
-    filepath = "silicon_rohf_results_R30.0.jld2"
+    # Antes decia silicon_rohf_results_R30.0.jld2; era el promedio de configuracion
+    # con nombre sin sufijo de estado. Mismo contenido, nombre explicito.
+    filepath = "silicon_rohf_results_av_R30.0.jld2"
     println("Loading SCF Configuration Average data from: $filepath")
     
     archive = jldopen(joinpath(@__DIR__, filepath), "r")
@@ -182,9 +184,12 @@ function execute_silicon_spin_orbit()
     terms_J1 = [term_3P]
     terms_J2 = [term_3P, term_1D]
     
-    # The term-dependent SCF gives us the ^3P energy, not the Configuration Average energy!
-    # Because E_total in silicon_rohf_results_R30.0.jld2 is the E(³P) energy, we need to shift it
-    # to be the E_avg, or we just adjust the F2 coefficients relative to ³P instead of relative to E_avg.
+    # OJO, CONTRADICCION SIN RESOLVER: este bloque supone que E_total es la energia
+    # del ³P y la desplaza a E_avg. Pero el archivo que carga arriba es el promedio de
+    # configuracion —lo dice el println de la linea 150 y lo confirma el numero:
+    # E = -288.83460606, que es el del _av_, no el del ³P (-288.85435715)—. Si el archivo
+    # ya es el promedio, este desplazamiento sobra y E_avg queda alto en (5/25)*F2.
+    # No se toca aqui porque cambiaria numeros; hay que decidirlo aparte.
     # In the matrix elements:
     # E(³P) = E_avg - (5/25)*F2  => E_avg = E(³P) + (5/25)*F2
     E_avg = E_total + (5.0 / 25.0) * F2_val

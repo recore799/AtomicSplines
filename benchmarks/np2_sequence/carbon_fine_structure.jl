@@ -114,7 +114,10 @@ function assemble_and_diagonalize_J_block(J_target::Int, terms::Vector{LSTerm}, 
 end
 
 function execute_carbon_spin_orbit()
-    filepath = "carbon_rohf_results_R30.0.jld2"
+    # Antes decia carbon_rohf_results_R30.0.jld2, un nombre sin sufijo de estado que
+    # resulto ser el promedio de configuracion regenerado. Mismo contenido, nombre
+    # explicito: orbitales identicos salvo el signo global de cada uno.
+    filepath = "carbon_rohf_results_av_R30.0.jld2"
     println("Loading SCF Configuration Average data from: $filepath")
     
     archive = jldopen(joinpath(@__DIR__, filepath), "r")

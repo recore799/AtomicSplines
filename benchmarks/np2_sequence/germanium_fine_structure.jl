@@ -250,8 +250,8 @@ end
 
 # Example Execution
 # Carbon was optimized as HF-av
-# execute_np2_fine_structure("C", "carbon_rohf_results_R30.0.jld2", 0.243302, false)
+# execute_np2_fine_structure("C", "carbon_rohf_results_av_R30.0.jld2", 0.243302, false)
 # Silicon and Germanium were optimized as HF-t (^3P)
-# execute_np2_fine_structure("Si", "silicon_rohf_results_R30.0.jld2", 0.165948, true)
-# execute_np2_fine_structure("Ge", "germanium_rohf_results_R30.0.jld2", 0.162724, true)
+# execute_np2_fine_structure("Si", "silicon_rohf_results_av_R30.0.jld2", 0.165948, true)
+# execute_np2_fine_structure("Ge", "germanium_rohf_results_av_R30.0.jld2", 0.162724, true)
 

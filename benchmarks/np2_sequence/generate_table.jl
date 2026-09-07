@@ -4,7 +4,17 @@ using AtomicSplines
 using JLD2
 using Printf
 
-include("np2_toy_ci.jl")
+# np2_ci_full.jl arrastra a np2_toy_ci.jl, asi que get_h_core, compute_zeta y
+# NP2_VALENCE_N siguen disponibles. El CI de pares de np2_toy_ci.jl quedo como legado:
+# solo admitia CSFs (nl)^2 y recuperaba el 1-5% de la correlacion de valencia.
+include("np2_ci_full.jl")
+
+# Espacio activo del CI, en n_per_l por cada l hasta lmax = 3. El estudio de
+# convergencia (docs/claude/PLAN.md, fase 1) muestra que E_corr sigue bajando hasta
+# m ~ 20; con m = 20 la tabla completa tarda del orden de 40 minutos, dominada por el
+# estanio. Bajarlo acelera pero deja los desdoblamientos sin converger: si se cambia,
+# hay que decirlo junto a la tabla.
+const ACTIVE_SPACE = Dict(l => 20 for l in 0:3)
 
 # -----------------------------------------------------------------------------
 # CONFIGURACION -- rellenar a mano y a conciencia.
@@ -27,6 +37,13 @@ const CASES = [
      file_hf = "silicon_rohf_results_3P_R30.0.jld2",    file_vpol = nothing),
     (element = "Germanium", label = "Germanio (Ge I)", Z = 32,
      file_hf = "germanium_rohf_results_3P_R30.0.jld2",  file_vpol = nothing),
+    # El estanio faltaba, y es por eso que su columna en tab:niveles_energia_pesados
+    # esta con "{-}". El SCF 3P existe desde siempre; lo que faltaba era un CI que
+    # hiciera algo. file_vpol sigue en nothing: elegir el alpha_d del estanio es parte
+    # de la fase 3, no de esta tabla (existe un ..._ad1.000.jld2 pero el barrido de la
+    # tesis recorre alpha_d en [2.0, 6.0], asi que 1.0 no es el valor calibrado).
+    (element = "Tin",       label = "Estaño (Sn I)",   Z = 50,
+     file_hf = "tin_rohf_results_3P_R30.0.jld2",        file_vpol = nothing),
 ]
 
 # NIST (cm^-1, referidos a 3P_0): [3P0, 3P1, 3P2, 1D2, 1S0]
@@ -39,36 +56,57 @@ const NIST = Dict(
 
 const TERMS = ["^3P_0", "^3P_1", "^3P_2", "^1D_2", "^1S_0"]
 
-function collect_results(cases)
+"""
+    corrected_file(path)
+
+Prefiere `<nombre>_f2fix.jld2` si existe. Los `.jld2` de C y Si en disco se generaron con
+el signo viejo de `coeff_k2` y NO son consistentes con el codigo actual; el `_f2fix` si.
+Ver docs/claude/HALLAZGOS-2026-09-06.md. Cuando se regeneren los originales, esta
+preferencia deja de tener efecto por si sola.
+"""
+function corrected_file(path::String)
+    fixed = replace(path, ".jld2" => "_f2fix.jld2")
+    return isfile(fixed) ? fixed : path
+end
+
+function collect_results(cases; n_per_l = ACTIVE_SPACE)
     out = Dict{String,Any}()
-    for c in cases
+    for c0 in cases
+        c = merge(c0, (file_hf = corrected_file(c0.file_hf),
+                       file_vpol = c0.file_vpol === nothing ? nothing : corrected_file(c0.file_vpol)))
         isfile(c.file_hf) || error("No existe $(c.file_hf). Corre antes el script ROHF de $(c.element).")
         println("### $(c.element): HF+CI desde $(c.file_hf)")
-        res_hf = run_toy_ci(c.element, c.file_hf)
-        res_hf.angular_ok || error("$(c.element): el test de consistencia angular fallo. " *
-                                   "No se genera tabla con numeros que no reproducen 0.24/0.60 F^2.")
+        # selftest = true en la primera llamada de cada elemento: T1-T4 abortan si el
+        # motor angular no reproduce al legado ni a Condon-Shortley, de modo que la
+        # tabla no se puede generar con numeros que no se validan a si mismos.
+        res_hf = run_full_ci(c.element, c.file_hf;
+                             n_per_l = n_per_l, selftest = true, verbose = false)
 
         res_vp = res_hf
         if c.file_vpol !== nothing
             isfile(c.file_vpol) || error("No existe $(c.file_vpol).")
             println("### $(c.element): +V_pol desde $(c.file_vpol)")
-            res_vp = run_toy_ci(c.element, c.file_vpol)
-            res_vp.angular_ok || error("$(c.element) (V_pol): test angular fallido.")
+            res_vp = run_full_ci(c.element, c.file_vpol;
+                                 n_per_l = n_per_l, selftest = false, verbose = false)
         end
         out[c.element] = (hf = res_hf, vpol = res_vp)
     end
     return out
 end
 
+space_label(npl) = join(["l=$l:$(npl[l])" for l in sort(collect(keys(npl)))], " ")
+
 function print_provenance(cases, results)
     println("\n===== PROCEDENCIA (pegar como comentario junto a la tabla) =====")
     for c in cases
         r = results[c.element]
-        @printf("%% %-10s HF+CI  : %s | zeta = %.8f Ha | F2 = %.8f Ha | E_corr = %.6e Ha\n",
-                c.element, c.file_hf, r.hf.zeta, r.hf.F2, r.hf.E_corr)
+        @printf("%% %-10s HF+CI  : %s | espacio %s | %d orb, %d CSF(3P), %d R^k | zeta = %.8f Ha | F2 = %.8f Ha | E_corr = %.6e Ha\n",
+                c.element, corrected_file(c.file_hf), space_label(r.hf.n_per_l),
+                r.hf.n_orb, r.hf.n_csf[1], r.hf.n_rk, r.hf.zeta, r.hf.F2, r.hf.E_corr)
         if c.file_vpol !== nothing
-            @printf("%% %-10s +Vpol  : %s | zeta = %.8f Ha | F2 = %.8f Ha | E_corr = %.6e Ha\n",
-                    c.element, c.file_vpol, r.vpol.zeta, r.vpol.F2, r.vpol.E_corr)
+            @printf("%% %-10s +Vpol  : %s | espacio %s | %d orb, %d CSF(3P), %d R^k | zeta = %.8f Ha | F2 = %.8f Ha | E_corr = %.6e Ha\n",
+                    c.element, corrected_file(c.file_vpol), space_label(r.vpol.n_per_l),
+                    r.vpol.n_orb, r.vpol.n_csf[1], r.vpol.n_rk, r.vpol.zeta, r.vpol.F2, r.vpol.E_corr)
         end
     end
 end

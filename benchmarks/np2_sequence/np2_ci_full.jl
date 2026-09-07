@@ -376,7 +376,8 @@ end
 function run_full_ci(element_name::String, result_file::String;
                      n_per_l::Dict{Int,Int} = Dict(0 => 6, 1 => 6, 2 => 6, 3 => 4),
                      zeta_np::Union{Nothing,Float64} = nothing,
-                     selftest::Bool = true, verbose::Bool = true)
+                     selftest::Bool = true, verbose::Bool = true,
+                     ws = nothing)
 
     haskey(NP2_VALENCE_N, element_name) || error("Elemento no soportado: $element_name")
     n_val = NP2_VALENCE_N[element_name]
@@ -402,9 +403,16 @@ function run_full_ci(element_name::String, result_file::String;
     else
         (50.0, 500, 8, 4.0)
     end
-    ws = K_ord == 7 ?
-        cached_init_scf_workspace(R_max, N_el, Val(7), Z; γ = gamma, alpha_d = alpha_d, r_c = r_c) :
-        cached_init_scf_workspace(R_max, N_el, Val(8), Z; γ = gamma, alpha_d = alpha_d, r_c = r_c)
+    # El workspace se puede compartir a lo largo de un estudio de convergencia: los pools
+    # de tamanos crecientes estan ANIDADOS (Gram-Schmidt es secuencial y extract_virtuals
+    # asigna el mismo pseudo_n independientemente de cuantos virtuales se pidan), y la
+    # clave del cache es (n, l, k). Asi el espacio grande no recalcula los R^k del chico,
+    # y length(ws.rk_cache) sigue siendo el numero de R^k distintos que ese espacio pide.
+    if ws === nothing
+        ws = K_ord == 7 ?
+            cached_init_scf_workspace(R_max, N_el, Val(7), Z; γ = gamma, alpha_d = alpha_d, r_c = r_c) :
+            cached_init_scf_workspace(R_max, N_el, Val(8), Z; γ = gamma, alpha_d = alpha_d, r_c = r_c)
+    end
 
     val_orb = orbitals[end]
     core_orbs = orbitals[1:end-1]
@@ -466,7 +474,10 @@ function run_full_ci(element_name::String, result_file::String;
     return (levels = levels, E_3P = E3P, E_1D = E1D, E_1S = E1S,
             E_corr = E_corr, zeta = zeta_np, C = (C3P, C1D, C1S),
             g_eff = g_eff, n_csf = (results["3P"].n, results["1D"].n, results["1S"].n),
-            n_per_l = n_per_l, n_rk = length(ws.rk_cache))
+            roots = (results["3P"].root, results["1D"].root, results["1S"].root),
+            F2 = get_cached_Rk!(ws, pool[val_idx], pool[val_idx],
+                                pool[val_idx], pool[val_idx], 2),
+            n_orb = length(pool), n_per_l = n_per_l, n_rk = length(ws.rk_cache), ws = ws)
 end
 
 """
@@ -478,21 +489,33 @@ llevar a la tesis: no "el CI da X", sino "E_corr converge a X con este espacio".
 function convergence_study(element::String, result_file::String;
                            sizes = [3, 4, 6, 8], lmax::Int = 3)
     rows = []
+    times = Float64[]
+    ws = nothing
     for m in sizes
         npl = Dict(l => (l == lmax ? max(2, m - 2) : m) for l in 0:lmax)
         @printf("\n\n##### %s -- espacio activo m = %d, lmax = %d #####\n", element, m, lmax)
+        t0 = time()
         r = run_full_ci(element, result_file; n_per_l = npl,
-                        selftest = (m == first(sizes)), verbose = false)
+                        selftest = (m == first(sizes)), verbose = false, ws = ws)
+        push!(times, time() - t0)
         push!(rows, r)
+        ws = r.ws          # cache de R^k compartida con el siguiente tamano
     end
 
-    println("\n\n===== Convergencia de E_corr -- $element =====")
-    @printf("%6s %8s %10s %14s %12s %10s\n", "m", "CSF 3P", "R^k", "E_corr (Ha)", "E_corr(cm-1)", "3P_2")
-    for r in rows
-        @printf("%6d %8d %10d %14.8f %12.1f %10.2f\n",
-                r.n_per_l[1], r.n_csf[1], r.n_rk, r.E_corr,
-                r.E_corr * AU2CM, r.levels[3])
+    println("\n\n===== Convergencia de E_corr -- $element (lmax = $lmax) =====")
+    @printf("%4s %6s %8s %9s %14s %12s %10s %9s %s\n",
+            "m", "orb", "CSF 3P", "R^k", "E_corr (Ha)", "E_corr(cm-1)", "3P_2", "t (s)", "raices")
+    for (r, t) in zip(rows, times)
+        @printf("%4d %6d %8d %9d %14.8f %12.1f %10.2f %9.1f  %d/%d/%d\n",
+                r.n_per_l[1], r.n_orb, r.n_csf[1], r.n_rk, r.E_corr,
+                r.E_corr * AU2CM, r.levels[3], t,
+                r.roots[1], r.roots[2], r.roots[3])
     end
+    # Las raices son el indice del autovector con mayor peso np^2 dentro de su bloque.
+    # Que dejen de ser 1/1/1 no es un bug: significa que el espacio activo ya mete
+    # estados s^2 o Rydberg por debajo de la referencia, y hay que decirlo en la tesis.
+    any(r -> r.roots != (1, 1, 1), rows) &&
+        println("\n  AVISO: en algun tamano la raiz de mayor peso np^2 dejo de ser la mas baja")
     return rows
 end
 

@@ -18,7 +18,8 @@ enciende el C-DIIS por bloques de `rohf_diis.jl`; `save = false` corre sin escri
 function solve_carbon_rohf(R_max; verbose::Bool=true, estado=nothing,
                            use_diis::Bool=false, tol::Float64=1e-9,
                            max_iter::Int=100, diis_thresh::Float64=1e-2,
-                           save::Bool=true)
+                           save::Bool=true,
+                           coeff_k2_override::Union{Nothing,Float64}=nothing)
     if estado === nothing
         print("¿A qué estado desea optimizar? (av / 3P): ")
         estado = strip(readline())
@@ -27,7 +28,19 @@ function solve_carbon_rohf(R_max; verbose::Bool=true, estado=nothing,
         println("Estado no reconocido. Usando 'av' por defecto.")
         estado = "av"
     end
-    coeff_k2 = (estado == "av") ? (2.0 / 25.0) : (-5.0 / 25.0)
+    # f_2(3P) = -5/25 por Slater-Condon (lo confirma el test T3 de np2_ci_full.jl: las
+    # diferencias valen 0.24 y 0.60 F^2). El ensamblado de abajo RESTA K_intra, asi que
+    # la convencion es coeff_k2 = -f_2 y el 3P exige +5/25, igual que en germanio y
+    # estanio. Con el -5/25 anterior el 3P salia 0.094 Ha (C) / 0.065 Ha (Si) POR ENCIMA
+    # del limite Hartree-Fock y por encima del promedio de configuracion, que es
+    # imposible para el termino fundamental. Corregido reproduce a Froese Fischer y a
+    # tab:resultados_energia_global del manuscrito a 8 cifras.
+    # OJO: los *_rohf_results_3P_R30.0.jld2 de C y Si en disco se generaron con el signo
+    # viejo y NO son consistentes con este codigo. Hay que regenerarlos.
+    coeff_k2 = (estado == "av") ? (2.0 / 25.0) : (5.0 / 25.0)
+    # Solo para verificacion: permite forzar el coeficiente de intercambio intra-capa
+    # sin tocar la fisica por defecto. El valor por defecto (nothing) no cambia nada.
+    coeff_k2_override === nothing || (coeff_k2 = coeff_k2_override)
 
     println("=== Carbon ROHF Optimización: $estado (Z=6) ===")
     

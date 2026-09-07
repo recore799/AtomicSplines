@@ -19,7 +19,8 @@ de ser permanente: se mantiene mientras el residual del conmutador siga por enci
 function solve_germanium_rohf(R_max; verbose::Bool=true, estado=nothing,
                               use_diis::Bool=false, tol::Float64=1e-9,
                               max_iter::Int=1000, diis_thresh::Float64=1e-2,
-                              save::Bool=true)
+                              save::Bool=true,
+                              coeff_k2_override::Union{Nothing,Float64}=nothing)
     if estado === nothing
         print("¿A qué estado desea optimizar? (av / 3P): ")
         estado = strip(readline())
@@ -29,6 +30,9 @@ function solve_germanium_rohf(R_max; verbose::Bool=true, estado=nothing,
         estado = "av"
     end
     coeff_k2 = (estado == "av") ? (2.0 / 25.0) : (5.0 / 25.0)
+    # Solo para verificacion: permite forzar el coeficiente de intercambio intra-capa
+    # sin tocar la fisica por defecto. El valor por defecto (nothing) no cambia nada.
+    coeff_k2_override === nothing || (coeff_k2 = coeff_k2_override)
 
     println("=== Germanium ROHF Optimización: $estado (Z=32) ===")
     

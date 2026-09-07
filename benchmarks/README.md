@@ -109,16 +109,9 @@ historial de git guarda el anterior.
 
 ## Estado abierto
 
-- **Falta `tin_rohf_results_av_R30.0.jld2`** (estaño, promedio de configuración,
-  sin `V_pol`). Su ausencia es la razón de que la columna del estaño de
-  `tab:niveles_energia_pesados` esté vacía, y de que `tin_validate.jl` caiga
-  siempre a la rama del ³P. No es intencional: hay que generarlo.
-
-  ```bash
-  julia --project=. -e 'include("benchmarks/np2_sequence/tin_rohf.jl"); solve_tin_rohf(30.0; estado="av", use_diis=true)'
-  ```
-
-  Son ~10-15 minutos. Después, reemitir el manifiesto.
+- ~~Falta `tin_rohf_results_av_R30.0.jld2`~~. **Generado y registrado el
+  2026-09-07.** Con él, la columna del estaño de `tab:niveles_energia_pesados`
+  ya se puede llenar y `tin_validate.jl` deja de caer siempre a la rama del ³P.
 
 - **`carbon_rohf_results_3P_R30.0.jld2` y su equivalente de silicio** se
   escribieron a mano en la sesión de la corrección y les faltan las claves

@@ -167,6 +167,25 @@ commit_codigo = "37b83ae"
 nota          = "Limite HF del estanio. Nunca afectado por el signo de f2."
 
 [[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_av_R30.0.jld2"
+elemento      = "Sn"
+estado        = "av"
+sha256        = "b023e2fbdc2d6463b39b4fa70936a7966b10dae4ac14e6ae58b99452b0e10698"
+bytes         = 2350268
+E_total       = -6022.914162770887
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 0.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf.jl"
+commit_codigo = "37b83ae"
+nota          = "Promedio de configuracion del estanio, el que faltaba en toda la secuencia. E(3P) - E(av) = -0.017531 Ha contra la prediccion -0.12*F2 = -0.017668, un 0.8% de diferencia por relajacion orbital, igual que en germanio. Es la columna vacia del estanio en tab:niveles_energia_pesados."
+
+[[resultado]]
 archivo       = "np2_sequence/tin_rohf_results_3P_R30.0_ad1.000.jld2"
 elemento      = "Sn"
 estado        = "3P"

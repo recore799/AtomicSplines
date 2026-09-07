@@ -87,6 +87,15 @@ const CATALOGO = [
      script = "np2_sequence/tin_rohf.jl",
      nota = "Limite HF del estanio. Nunca afectado por el signo de f2."),
 
+    (archivo = "np2_sequence/tin_rohf_results_av_R30.0.jld2",
+     elemento = "Sn", Z = 50.0, estado = "av", R_max = 30.0, N = 500, K = 8,
+     gamma = 4.0, alpha_d = 0.0, r_c = 1.0,
+     script = "np2_sequence/tin_rohf.jl",
+     nota = "Promedio de configuracion del estanio, el que faltaba en toda la secuencia. " *
+            "E(3P) - E(av) = -0.017531 Ha contra la prediccion -0.12*F2 = -0.017668, " *
+            "un 0.8% de diferencia por relajacion orbital, igual que en germanio. " *
+            "Es la columna vacia del estanio en tab:niveles_energia_pesados."),
+
     (archivo = "np2_sequence/tin_rohf_results_3P_R30.0_ad1.000.jld2",
      elemento = "Sn", Z = 50.0, estado = "3P", R_max = 30.0, N = 500, K = 8,
      gamma = 4.0, alpha_d = 1.0, r_c = 1.0,

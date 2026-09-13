@@ -1,3 +1,9 @@
+# LEGADO. Genero los tin_rohf_results_*_ad*.jld2 registrados en benchmarks/RESULTS.toml y se
+# conserva como su procedencia. Para corridas nuevas usar solve_tin_rohf(R_max; estado, alpha_d,
+# r_c, use_diis = true) de tin_rohf.jl, que reproduce tin_rohf_results_3P_R30.0_ad1.000.jld2 a
+# 1.4e-8 Ha en 41 iteraciones (tesis/etapa1_scf.jl --prueba-vpol). Este usa level shift
+# permanente; el barrido del 01-08 tomo unos 20 min por punto, CI legado incluido.
+
 using Pkg
 Pkg.activate(joinpath(@__DIR__, "../.."))
 

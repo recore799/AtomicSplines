@@ -1,3 +1,11 @@
+# LEGADO. Genero germanium_rohf_results_av_R30.0_ad0.500.jld2, registrado en
+# benchmarks/RESULTS.toml, y se conserva como su procedencia. Para corridas nuevas usar
+# solve_germanium_rohf(R_max; estado, alpha_d, r_c, use_diis = true) de germanium_rohf.jl, que
+# reproduce ese archivo a 1.4e-8 Ha con C-DIIS (tesis/etapa1_scf.jl --prueba-vpol).
+# La rama 3P tenia invertido el signo de f_2 (-5/25), el mismo error que carbon_rohf.jl y
+# silicon_rohf.jl (HALLAZGOS-2026-09-06); corregido el 2026-09-13, nunca produjo un resultado
+# registrado.
+
 using Pkg
 Pkg.activate(joinpath(@__DIR__, "../.."))
 
@@ -10,7 +18,7 @@ using JLD2
 function solve_germanium_rohf(R_max, alpha_d, r_c, estado; verbose::Bool=true)
     print("¿A qué estado desea optimizar? (av / 3P): ")
     
-    coeff_k2 = (estado == "av") ? (2.0 / 25.0) : (-5.0 / 25.0)
+    coeff_k2 = (estado == "av") ? (2.0 / 25.0) : (5.0 / 25.0)
 
     println("=== Germanium ROHF Optimización: $estado (Z=32) ===")
     

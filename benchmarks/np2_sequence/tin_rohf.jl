@@ -9,17 +9,23 @@ using JLD2
 isdefined(Main, :DIISState) || include(joinpath(@__DIR__, "rohf_diis.jl"))
 
 """
-    solve_tin_rohf(R_max; estado, use_diis, tol, max_iter, diis_thresh, save)
+    solve_tin_rohf(R_max; estado, use_diis, tol, max_iter, diis_thresh, save, alpha_d, r_c)
 
 `estado = nothing` conserva el prompt interactivo. Con `use_diis` el level shift deja
 de ser permanente: se mantiene mientras el residual del conmutador siga por encima de
 `diis_thresh` y se apaga en cuanto se enciende la extrapolacion de Pulay.
+
+`alpha_d > 0` agrega el potencial de polarizacion del core (radio de corte `r_c`) a la
+geometria y a `V_eff`, y el archivo lleva el sufijo `_ad<alpha_d>`. Sustituye a
+`tin_rohf_vpol.jl`, que no tiene C-DIIS. Con `alpha_d = 0`, el valor por defecto, el
+camino numerico es exactamente el de siempre.
 """
 function solve_tin_rohf(R_max; verbose::Bool=true, estado=nothing,
                         use_diis::Bool=false, tol::Float64=1e-9,
                         max_iter::Int=1000, diis_thresh::Float64=1e-2,
                         save::Bool=true,
-                        coeff_k2_override::Union{Nothing,Float64}=nothing)
+                        coeff_k2_override::Union{Nothing,Float64}=nothing,
+                        alpha_d::Float64=0.0, r_c::Float64=1.0)
     if estado === nothing
         print("¿A qué estado desea optimizar? (av / 3P): ")
         estado = strip(readline())
@@ -38,7 +44,9 @@ function solve_tin_rohf(R_max; verbose::Bool=true, estado=nothing,
     N_elems = 500
     Z = 50.0
 
-    ws = cached_init_scf_workspace(R_max, N_elems, Val(8), Z; γ=4.0, calc_R_matrices=true)
+    alpha_d > 0.0 && @printf("  V_pol: alpha_d = %.3f, r_c = %.3f\n", alpha_d, r_c)
+    ws = cached_init_scf_workspace(R_max, N_elems, Val(8), Z; γ=4.0, calc_R_matrices=true,
+                                   alpha_d=alpha_d, r_c=r_c)
     basis = ws.basis
 
     n = basis.num_splines
@@ -319,19 +327,24 @@ function solve_tin_rohf(R_max; verbose::Bool=true, estado=nothing,
             end
 
             dense_grid = exp.(range(log(1e-8), log(R_max), length=10000))
-            V_eff = compute_effective_central_potential(ws, orbitals, dense_grid, Z)
+            V_eff = compute_effective_central_potential(ws, orbitals, dense_grid, Z;
+                                                        alpha_d=alpha_d, r_c=r_c)
             P_5p = evaluate_orbital(ws.basis, orbitals[11].coeffs, dense_grid)
 
             # Anclado al directorio del script: el .jld2 va junto a el, no al
             # directorio desde el que se lanzo julia.
-            filename = joinpath(@__DIR__, "tin_rohf_results_$(estado)_R$(R_max).jld2")
+            # alpha_d y r_c solo se guardan con V_pol: los archivos sin V_pol conservan su
+            # esquema, y run_full_ci los lee con get(data, "alpha_d", 0.0).
+            sufijo = alpha_d > 0.0 ? @sprintf("_ad%.3f", alpha_d) : ""
+            extra = alpha_d > 0.0 ? (alpha_d = alpha_d, r_c = r_c) : NamedTuple()
+            filename = joinpath(@__DIR__, "tin_rohf_results_$(estado)_R$(R_max)$(sufijo).jld2")
             
             jldsave(filename;
                 orbitals = orbitals, E_total = E_total, R_max = R_max,
                 R_grid = dense_grid, 
                 V_nuclear = ws.V, num_splines = n, active_s = active_s,
                 active_p = active_p, active_d = active_d,
-                V_eff = V_eff, P_5p = P_5p
+                V_eff = V_eff, P_5p = P_5p, extra...
             )
             println("Saved Term-Dependent ROHF data and SO coupling prerequisites to $filename")
             println("===== END =====")

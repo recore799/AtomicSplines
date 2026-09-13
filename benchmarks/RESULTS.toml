@@ -106,7 +106,7 @@ gamma         = 3.0
 alpha_d       = 0.0
 r_c           = 1.0
 script        = "np2_sequence/germanium_rohf.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Promedio de configuracion."
 
 [[resultado]]
@@ -125,7 +125,7 @@ gamma         = 3.0
 alpha_d       = 0.0
 r_c           = 1.0
 script        = "np2_sequence/germanium_rohf.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Nunca afectado por el signo de f2: germanio siempre uso +5/25."
 
 [[resultado]]
@@ -144,8 +144,8 @@ gamma         = 3.0
 alpha_d       = 0.5
 r_c           = 1.0
 script        = "np2_sequence/germanium_rohf_vpol.jl"
-commit_codigo = "37b83ae"
-nota          = "Con potencial de polarizacion del core. Es la columna CI+V_pol del Cuadro tab:niveles_energia_pesados (resultados.tex:248)."
+commit_codigo = "eb5753c"
+nota          = "Con potencial de polarizacion del core. Es la columna CI+V_pol del Cuadro tab:niveles_energia_pesados (resultados.tex:248). germanium_rohf.jl con alpha_d = 0.5 y C-DIIS lo reproduce a 1.4e-8 Ha."
 
 [[resultado]]
 archivo       = "np2_sequence/tin_rohf_results_3P_R30.0.jld2"
@@ -163,7 +163,7 @@ gamma         = 4.0
 alpha_d       = 0.0
 r_c           = 1.0
 script        = "np2_sequence/tin_rohf.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Limite HF del estanio. Nunca afectado por el signo de f2."
 
 [[resultado]]
@@ -182,7 +182,7 @@ gamma         = 4.0
 alpha_d       = 0.0
 r_c           = 1.0
 script        = "np2_sequence/tin_rohf.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Promedio de configuracion del estanio, el que faltaba en toda la secuencia. E(3P) - E(av) = -0.017531 Ha contra la prediccion -0.12*F2 = -0.017668, un 0.8% de diferencia por relajacion orbital, igual que en germanio. Es la columna vacia del estanio en tab:niveles_energia_pesados."
 
 [[resultado]]
@@ -201,8 +201,8 @@ gamma         = 4.0
 alpha_d       = 1.0
 r_c           = 1.0
 script        = "np2_sequence/tin_rohf_vpol.jl"
-commit_codigo = "37b83ae"
-nota          = "Entrada de tin_fine_structure.jl:252."
+commit_codigo = "eb5753c"
+nota          = "Generado por tin_rohf_vpol.jl (rama 3P con +5/25, correcta). tin_rohf.jl con alpha_d = 1 y C-DIIS lo reproduce a 1.4e-8 Ha. Es el punto alpha_d = 1 del barrido 3P de tesis/config.jl y la entrada de tin_fine_structure.jl:252."
 
 [[resultado]]
 archivo       = "np2_sequence/tin_rohf_results_av_R30.0_ad1.000.jld2"
@@ -220,7 +220,7 @@ gamma         = 4.0
 alpha_d       = 1.0
 r_c           = 1.0
 script        = "np2_sequence/tin_rohf_vpol.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Barrido de alpha_d del estanio. Este valor quedo fuera del Cuadro tab:estanio_ci, que arranca en alpha_d = 2."
 
 [[resultado]]
@@ -239,7 +239,7 @@ gamma         = 4.0
 alpha_d       = 2.0
 r_c           = 1.0
 script        = "np2_sequence/tin_rohf_vpol.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Renglon alpha_d = 2.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
 
 [[resultado]]
@@ -258,7 +258,7 @@ gamma         = 4.0
 alpha_d       = 3.0
 r_c           = 1.0
 script        = "np2_sequence/tin_rohf_vpol.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Renglon alpha_d = 3.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
 
 [[resultado]]
@@ -277,7 +277,7 @@ gamma         = 4.0
 alpha_d       = 4.0
 r_c           = 1.0
 script        = "np2_sequence/tin_rohf_vpol.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Renglon alpha_d = 4.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
 
 [[resultado]]
@@ -296,7 +296,7 @@ gamma         = 4.0
 alpha_d       = 5.0
 r_c           = 1.0
 script        = "np2_sequence/tin_rohf_vpol.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Renglon alpha_d = 5.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
 
 [[resultado]]
@@ -315,6 +315,6 @@ gamma         = 4.0
 alpha_d       = 6.0
 r_c           = 1.0
 script        = "np2_sequence/tin_rohf_vpol.jl"
-commit_codigo = "37b83ae"
+commit_codigo = "eb5753c"
 nota          = "Renglon alpha_d = 6.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
 

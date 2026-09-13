@@ -79,7 +79,8 @@ const CATALOGO = [
      gamma = 3.0, alpha_d = 0.5, r_c = 1.0,
      script = "np2_sequence/germanium_rohf_vpol.jl",
      nota = "Con potencial de polarizacion del core. Es la columna CI+V_pol del " *
-            "Cuadro tab:niveles_energia_pesados (resultados.tex:248)."),
+            "Cuadro tab:niveles_energia_pesados (resultados.tex:248). germanium_rohf.jl con " *
+            "alpha_d = 0.5 y C-DIIS lo reproduce a 1.4e-8 Ha."),
 
     (archivo = "np2_sequence/tin_rohf_results_3P_R30.0.jld2",
      elemento = "Sn", Z = 50.0, estado = "3P", R_max = 30.0, N = 500, K = 8,
@@ -100,7 +101,9 @@ const CATALOGO = [
      elemento = "Sn", Z = 50.0, estado = "3P", R_max = 30.0, N = 500, K = 8,
      gamma = 4.0, alpha_d = 1.0, r_c = 1.0,
      script = "np2_sequence/tin_rohf_vpol.jl",
-     nota = "Entrada de tin_fine_structure.jl:252."),
+     nota = "Generado por tin_rohf_vpol.jl (rama 3P con +5/25, correcta). tin_rohf.jl con alpha_d = 1 " *
+            "y C-DIIS lo reproduce a 1.4e-8 Ha. Es el punto alpha_d = 1 del barrido 3P de " *
+            "tesis/config.jl y la entrada de tin_fine_structure.jl:252."),
 
     (archivo = "np2_sequence/tin_rohf_results_av_R30.0_ad1.000.jld2",
      elemento = "Sn", Z = 50.0, estado = "av", R_max = 30.0, N = 500, K = 8,
@@ -138,6 +141,62 @@ const CATALOGO = [
      gamma = 4.0, alpha_d = 6.0, r_c = 1.0,
      script = "np2_sequence/tin_rohf_vpol.jl",
      nota = "Renglon alpha_d = 6.0 del Cuadro tab:estanio_ci (resultados.tex:281)."),
+
+    # Planeados por benchmarks/np2_sequence/tesis/config.jl. Hasta que la etapa 1 los genere,
+    # --emitir los omite con un aviso.
+    (archivo = "np2_sequence/germanium_rohf_results_3P_R30.0_ad0.250.jld2",
+     elemento = "Ge", Z = 32.0, estado = "3P", R_max = 30.0, N = 300, K = 8,
+     gamma = 3.0, alpha_d = 0.25, r_c = 1.0,
+     script = "np2_sequence/germanium_rohf.jl",
+     nota = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. germanium_rohf.jl con alpha_d y C-DIIS."),
+
+    (archivo = "np2_sequence/germanium_rohf_results_3P_R30.0_ad0.500.jld2",
+     elemento = "Ge", Z = 32.0, estado = "3P", R_max = 30.0, N = 300, K = 8,
+     gamma = 3.0, alpha_d = 0.5, r_c = 1.0,
+     script = "np2_sequence/germanium_rohf.jl",
+     nota = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. germanium_rohf.jl con alpha_d y C-DIIS."),
+
+    (archivo = "np2_sequence/germanium_rohf_results_3P_R30.0_ad0.750.jld2",
+     elemento = "Ge", Z = 32.0, estado = "3P", R_max = 30.0, N = 300, K = 8,
+     gamma = 3.0, alpha_d = 0.75, r_c = 1.0,
+     script = "np2_sequence/germanium_rohf.jl",
+     nota = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. germanium_rohf.jl con alpha_d y C-DIIS."),
+
+    (archivo = "np2_sequence/germanium_rohf_results_3P_R30.0_ad1.000.jld2",
+     elemento = "Ge", Z = 32.0, estado = "3P", R_max = 30.0, N = 300, K = 8,
+     gamma = 3.0, alpha_d = 1.0, r_c = 1.0,
+     script = "np2_sequence/germanium_rohf.jl",
+     nota = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. germanium_rohf.jl con alpha_d y C-DIIS."),
+
+    (archivo = "np2_sequence/tin_rohf_results_3P_R30.0_ad2.000.jld2",
+     elemento = "Sn", Z = 50.0, estado = "3P", R_max = 30.0, N = 500, K = 8,
+     gamma = 4.0, alpha_d = 2.0, r_c = 1.0,
+     script = "np2_sequence/tin_rohf.jl",
+     nota = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."),
+
+    (archivo = "np2_sequence/tin_rohf_results_3P_R30.0_ad3.000.jld2",
+     elemento = "Sn", Z = 50.0, estado = "3P", R_max = 30.0, N = 500, K = 8,
+     gamma = 4.0, alpha_d = 3.0, r_c = 1.0,
+     script = "np2_sequence/tin_rohf.jl",
+     nota = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."),
+
+    (archivo = "np2_sequence/tin_rohf_results_3P_R30.0_ad4.000.jld2",
+     elemento = "Sn", Z = 50.0, estado = "3P", R_max = 30.0, N = 500, K = 8,
+     gamma = 4.0, alpha_d = 4.0, r_c = 1.0,
+     script = "np2_sequence/tin_rohf.jl",
+     nota = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."),
+
+    (archivo = "np2_sequence/tin_rohf_results_3P_R30.0_ad5.000.jld2",
+     elemento = "Sn", Z = 50.0, estado = "3P", R_max = 30.0, N = 500, K = 8,
+     gamma = 4.0, alpha_d = 5.0, r_c = 1.0,
+     script = "np2_sequence/tin_rohf.jl",
+     nota = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."),
+
+    (archivo = "np2_sequence/tin_rohf_results_3P_R30.0_ad6.000.jld2",
+     elemento = "Sn", Z = 50.0, estado = "3P", R_max = 30.0, N = 500, K = 8,
+     gamma = 4.0, alpha_d = 6.0, r_c = 1.0,
+     script = "np2_sequence/tin_rohf.jl",
+     nota = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."),
 ]
 
 sha_de(ruta) = open(ruta, "r") do io; bytes2hex(sha256(io)); end

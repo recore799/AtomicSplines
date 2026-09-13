@@ -21,19 +21,25 @@ tesis de licenciatura del usuario; el manuscrito vive en `docs/`.
 ## Cómo correr
 
 ```bash
-julia --project=. benchmarks/np2_sequence/np2_toy_ci.jl      # CI de pares (legado, verificado)
-julia --project=. benchmarks/np2_sequence/np2_ci_full.jl     # CI general
-julia --project=. benchmarks/np2_sequence/tin_rohf.jl        # SCF del estaño (~200 iteraciones)
-julia benchmarks/verificar_resultados.jl                     # los .jld2 siguen siendo los de las tablas
+julia benchmarks/verificar_resultados.jl                              # los .jld2 siguen siendo los registrados
+julia --project=. benchmarks/np2_sequence/tesis/etapa1_scf.jl         # qué SCF faltan (--correr los corre)
+julia --project=. benchmarks/np2_sequence/tesis/etapa2_ci.jl --lista  # qué CI faltan (sin --lista, ~2.5 h)
+julia --project=. benchmarks/np2_sequence/tesis/etapa3_tablas.jl      # docs/tablas/, segundos
+julia --project=. benchmarks/np2_sequence/tesis/etapa4_figuras.jl     # docs/figures/, ~1 min
+julia --project=. benchmarks/np2_sequence/np2_ci_full.jl              # CI general, prueba sobre carbono
 ```
+
+Las decisiones de la regeneración (orbitales, `alpha_d`, espacio activo, fórmula de la energía) y
+los datos de literatura (NIST, Froese Fischer) viven solo en `benchmarks/np2_sequence/tesis/config.jl`.
+El orden completo, los tiempos y qué revisar están en `docs/claude/PLAN-REGENERACION.md`.
 
 Las rutas de datos están ancladas al directorio del script, no al de trabajo: da igual desde dónde
 se lance `julia`.
 
 Los `.jld2` de geometría se cachean por `(Z, R_max, N, K, γ, alpha_d, r_c)` en `.geometry_cache/`
 en la raíz, ignorada por git; borrar solo si cambia la malla. Los `*_rohf_results_*.jld2` guardan
-`orbitals`, `E_total`, `R_grid`, `V_eff`, `P_np`, y **sí** se versionan: son la entrada de las
-tablas del capítulo 6.
+`orbitals`, `E_total`, `R_grid`, `V_eff`, `P_np` (y `alpha_d`, `r_c` cuando llevan V_pol), y **sí**
+se versionan: son la entrada de las tablas del capítulo 6.
 
 ## Mapa
 
@@ -51,13 +57,18 @@ benchmarks/
   verificar_resultados.jl  compara los .jld2 contra el manifiesto (--emitir lo regenera)
   closed_shell/         átomos de capa cerrada; 11_radon.jl tiene el prototipo de C-DIIS que funciona
   np2_sequence/         la secuencia C, Si, Ge, Sn de la tesis
-                        <el>_rohf.jl y <el>_rohf_vpol.jl producen los *_rohf_results_*.jld2
-                        np2_ci_full.jl es el motor de CI (T1-T4 se autoverifican); el de pares
-                        en np2_toy_ci.jl quedó como legado
-                        generate_table.jl arma tab:niveles_energia_pesados (~40 min)
+                        <el>_rohf.jl producen los *_rohf_results_*.jld2; Ge y Sn aceptan alpha_d
+                        np2_ci_full.jl es el motor de CI (T1-T4 se autoverifican)
+                        resultados_ci.toml: los CI que alimentan las tablas (lo escribe la etapa 2)
+                        tesis/  config.jl y las cuatro etapas de la regeneración
+                        legado, ya sin números en la tesis: el CI de pares de np2_toy_ci.jl (sus
+                        utilidades, como compute_zeta, las usa np2_ci_full.jl), <el>_rohf_vpol.jl,
+                        generate_table.jl, calibrate_*.jl, *_fine_structure.jl, scaling_law.jl,
+                        plot_energy_levels.jl y examples/scratch/plot_*.jl
 .geometry_cache/        cachés de geometría, derivadas e ignoradas por git
 docs/
   main.tex, chapters/, appendices/, claude/   manuscrito y notas de trabajo
+  tablas/               fragmentos tabular de la etapa 3; no se editan a mano
 ```
 
 ## Registro de redacción (para cualquier cosa que toque `docs/*.tex`)

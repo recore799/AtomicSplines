@@ -3,6 +3,10 @@
 Escrito 2026-09-08, después de las fases 0, 1 y 2. Este documento define **cuándo se congela el
 código**. Todo lo que no esté en la lista de bloqueantes es redacción, no programación.
 
+> **Nota del 2026-09-13.** El estado real de B1–B6 está en `FALTANTES-2026-09-13.md`, y el código y
+> las corridas que los cierran, en `PLAN-REGENERACION.md`. Este documento se conserva por las
+> decisiones de alcance, que siguen vigentes.
+
 ## Lo que ya está resuelto y no se vuelve a tocar
 
 - **Motor de CI verificado.** T1 (hermiticidad), T2 (reproduce al motor legado sobre parejas

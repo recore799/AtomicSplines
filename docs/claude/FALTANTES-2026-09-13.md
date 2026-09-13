@@ -6,6 +6,10 @@ repo tal como está hoy. La verificación del LaTeX fue estática, sin compilar.
 resultados registrados, con el `compute_zeta` de `np2_toy_ci.jl`, que reproduce los ζ del log
 del 07-09 a menos de 2×10⁻⁹ Ha. No se tocó ningún número de la tesis ni ningún `.jld2`.
 
+> **Actualización del mismo día.** Para el lado del código (secciones 2 y 4, y las fases A y B de
+> la sección 5) manda `PLAN-REGENERACION.md`, que además cambia la recomendación de §4.1: ahora
+> los orbitales son ³P en todo. La sección 3, el manuscrito, sigue vigente.
+
 ---
 
 ## 0. En corto

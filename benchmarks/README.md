@@ -107,6 +107,29 @@ core. **Un archivo por elemento y estado**: no se acumulan sufijos de parche
 (`_f2fix` y compañía). Si un resultado se corrige, se reemplaza el archivo y el
 historial de git guarda el anterior.
 
+## Regenerar las tablas y figuras de la tesis
+
+`np2_sequence/tesis/` regenera en cuatro etapas todo lo que reporta el capítulo
+de resultados. Las decisiones (qué orbitales, qué `alpha_d`, qué espacio activo)
+y los datos de literatura (NIST, Froese Fischer) viven solo en
+`tesis/config.jl`. El orden de ejecución, los tiempos y qué revisar están en
+`docs/claude/PLAN-REGENERACION.md`.
+
+| etapa | produce | se versiona |
+|---|---|---|
+| `etapa1_scf.jl` | los `*_rohf_results_*.jld2` que pide `config.jl` y faltan | sí, registrados aquí |
+| `etapa2_ci.jl` | `np2_sequence/resultados_ci.toml`: una entrada por corrida de CI, atada al sha256 de su `.jld2` | sí |
+| `etapa3_tablas.jl` | `docs/tablas/*.tex` (fragmentos `tabular` con su procedencia) y `valores_texto.md` | sí |
+| `etapa4_figuras.jl` | `docs/figures/*.pdf` | no (`*.pdf`); la primera vez que pisa una figura copia la anterior a `docs/figures/anteriores/` |
+
+Tres reglas sostienen la procedencia:
+
+- La etapa 2 no usa un `.jld2` sin registrar o cuyo sha256 cambió.
+- Si un `.jld2` cambia, sus entradas de `resultados_ci.toml` dejan de valer y la
+  etapa 2 las recalcula.
+- La etapa 3 no inventa números: una celda sin dato sale como `--` y aparece en
+  la lista final de faltantes.
+
 ## Estado abierto
 
 - ~~Falta `tin_rohf_results_av_R30.0.jld2`~~. **Generado y registrado el
@@ -119,7 +142,15 @@ historial de git guarda el anterior.
   consumidor de `np2_sequence/` las lee, pero el esquema quedó incompleto.
   Regenerarlos con el script actual cuesta segundos y lo cierra.
 
-- **`np2_toy_ci.jl` corre sobre los archivos `_3P_`** mientras su propio
-  comentario dice que el CI se hace mejor sobre los de promedio de
-  configuración. El comentario y el código se contradicen; hay que decidir cuál
-  gana.
+- ~~`np2_toy_ci.jl` corre sobre los `_3P_` y su comentario pide los de
+  promedio~~. **Decidido el 2026-09-13:** la regeneración usa `np2_ci_full.jl`
+  sobre los orbitales de `ESTADO` en `tesis/config.jl`, y el CI de pares de
+  `np2_toy_ci.jl` ya no alimenta ningún número.
+
+- **El `CATALOGO` de `verificar_resultados.jl` lista 9 SCF planeados** (barridos
+  de V_pol sobre ³P) que todavía no existen. `--emitir` los omite con un aviso
+  hasta que la etapa 1 los genere.
+
+- **`germanium_rohf_vpol.jl` y `tin_rohf_vpol.jl` son legado.** Se conservan como
+  procedencia de los archivos `_ad` que generaron; `germanium_rohf.jl` y
+  `tin_rohf.jl` con `alpha_d` y C-DIIS los reproducen a 1.4×10⁻⁸ Ha.

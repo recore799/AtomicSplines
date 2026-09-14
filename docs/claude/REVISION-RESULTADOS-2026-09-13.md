@@ -257,3 +257,34 @@ entrada `NIST_ASD` quedó en `docs/bib/bibliografia.bib`.
     Mitroy, Safronova y Clark (2010), *J. Phys. B* 43, 202001.
   - Al compararlas con α_d hay que recordar que el valor ajustado depende de r_c y de qué capas se
     tratan como core (con o sin ns²).
+
+---
+
+## 7. Casi-degeneración ns² ↔ np²: tamaño del efecto y por qué no se puede sumar
+
+`tesis/diagnostico_casi_degeneracion.jl` (segundos) mide la mezcla ns²np² ↔ np⁴ con dos
+configuraciones por término LS, orbitales HF y core interno congelados. Sus controles reproducen
+las energías de orbital guardadas: ns a ≤ 6×10⁻¹⁰ Ha y np a ≤ 1.7×10⁻⁶ Ha.
+
+| | G¹(ns,np) (Ha) | Δ (Ha) | peso de np⁴ en ³P | en ¹S | baja ¹S − ³P (cm⁻¹) | residuo ¹S₀ del CI | si se sumara |
+|---|---|---|---|---|---|---|---|
+| C | 0.3437 | 0.746 | 2.2 % | 7.4 % | 10 444 | +2 246 | −8 198 |
+| Si | 0.2344 | 0.588 | 1.7 % | 5.9 % | 6 315 | −720 | −7 035 |
+| Ge | 0.2259 | 0.628 | 1.4 % | 4.9 % | 5 566 | −587 | −6 154 |
+| Ge, α_d = 0.75 | 0.2321 | 0.660 | 1.3 % | 4.7 % | 5 599 | +96 | −5 503 |
+| Sn | 0.1997 | 0.512 | 1.6 % | 5.7 % | 5 277 | −1 117 | −6 394 |
+| Sn, α_d = 3.0 | 0.2110 | 0.566 | 1.5 % | 5.2 % | 5 359 | +368 | −4 991 |
+
+- **El efecto es grande y exclusivo del ¹S.** En este modelo el ¹D − ³P no cambia, porque el
+  acoplamiento y la separación Δ son iguales para ³P y ¹D.
+- **No se puede sumar al CI de pareja.** Sumado, sobrecorrige el ¹S₀ del carbono por un factor
+  ~4 y deja a Si, Ge y Sn entre 5 000 y 7 000 cm⁻¹ por debajo del NIST. El CI de pareja con el ns²
+  congelado ya baja el ¹S − ³P del carbono 8 146 cm⁻¹ (de 0.6 F² = 32 040 a 23 894); eso sugiere
+  que parte de ese descenso describe, con orbitales peores, la misma física.
+- **Sola, sobre HF, arregla el ¹S pero no el ¹D.** La separación ¹S − ³P queda en 21 595 cm⁻¹ en
+  carbono (NIST 21 648) y 15 538 en silicio (NIST 15 394), sin estructura fina. El ¹D − ³P se queda
+  en el valor HF, 0.24 F²: +26 % en carbono y +39 % en silicio.
+- **Conclusión.** La casi-degeneración y la correlación de la pareja np² son complementarias pero
+  no aditivas. Tratarlas juntas exige un CI de cuatro electrones con ns y np activos
+  (multirreferencia), que el motor actual no hace: es un motor nuevo, no una corrección.
+

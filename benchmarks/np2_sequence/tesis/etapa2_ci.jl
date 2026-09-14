@@ -6,10 +6,10 @@
 #  interrumpe no se pierde lo ya calculado, y al relanzarla se salta lo que ya esta.
 #
 #  Grupos:
-#    convergencia  ESTADO, alpha_d = 0, m en TAMANOS_CONVERGENCIA. El ultimo tamano es el
-#                  de produccion: el HF+CI de las tablas.
-#    sensibilidad  ESTADO_SENSIBILIDAD, alpha_d = 0, m = M_PRODUCCION.
-#    barrido       ESTADO, cada alpha_d de BARRIDO_ALPHA, m = M_PRODUCCION.
+#    convergencia  ESTADO, alpha_d = 0, m en TAMANOS_CONVERGENCIA[elemento]. El ultimo tamano
+#                  es el de produccion: el HF+CI de las tablas.
+#    sensibilidad  ESTADO_SENSIBILIDAD, alpha_d = 0, m = M_SENSIBILIDAD.
+#    barrido       ESTADO, cada alpha_d de BARRIDO_ALPHA, al m de produccion del elemento.
 #
 #  Uso, desde la raiz del repo (del orden de 2-3 h en total):
 #    julia --project=. benchmarks/np2_sequence/tesis/etapa2_ci.jl --lista
@@ -21,12 +21,15 @@
 include(joinpath(@__DIR__, "comun.jl"))
 include(joinpath(NP2, "np2_ci_full.jl"))
 
-# Tiempo de pared a m = 20, lmax = 3 (HALLAZGOS-2026-09-06 §4); solo para --lista.
-const SEGUNDOS_M20 = Dict("C" => 92.0, "Si" => 83.0, "Ge" => 390.0, "Sn" => 609.0)
+# Tiempo de pared incremental de m = 16 a m = 20 con lmax = 3 (resultados_ci.toml del
+# 2026-09-13); solo para la estimacion de --lista.
+const SEGUNDOS_M20 = Dict("C" => 70.0, "Si" => 68.0, "Ge" => 316.0, "Sn" => 598.0)
 
 const PRUEBA  = "--prueba" in ARGS
-const TAMANOS = PRUEBA ? [2, 3] : TAMANOS_CONVERGENCIA
-const M_PROD  = last(TAMANOS)
+# Con --prueba todos los grupos usan el espacio minimo, sin importar config.jl.
+tamanos(el)   = PRUEBA ? [2, 3] : TAMANOS_CONVERGENCIA[el]
+m_prod(el)    = last(tamanos(el))
+const M_SENS  = PRUEBA ? 3 : M_SENSIBILIDAD
 const SALIDA  = argumento("--salida", PRUEBA ? joinpath(tempdir(), "resultados_ci_prueba.toml") :
                                                RESULTADOS_CI)
 const SOLO    = split(argumento("--solo", join(ELEMENTOS, ",")), ",")
@@ -37,12 +40,12 @@ function casos()
     cs = Tuple{String,String,String,Float64,Vector{Int}}[]
     for el in ELEMENTOS
         el in SOLO || continue
-        "convergencia" in GRUPOS && push!(cs, ("convergencia", el, ESTADO, 0.0, TAMANOS))
+        "convergencia" in GRUPOS && push!(cs, ("convergencia", el, ESTADO, 0.0, tamanos(el)))
         ("sensibilidad" in GRUPOS && ESTADO_SENSIBILIDAD != ESTADO) &&
-            push!(cs, ("sensibilidad", el, ESTADO_SENSIBILIDAD, 0.0, [M_PROD]))
+            push!(cs, ("sensibilidad", el, ESTADO_SENSIBILIDAD, 0.0, [M_SENS]))
         if "barrido" in GRUPOS
             for a in get(BARRIDO_ALPHA, el, Float64[])
-                push!(cs, ("barrido", el, ESTADO, a, [M_PROD]))
+                push!(cs, ("barrido", el, ESTADO, a, [m_prod(el)]))
             end
         end
     end
@@ -81,7 +84,9 @@ function main_etapa2()
         archivo = archivo_scf(el, estado, a)
         faltan = [m for m in ms if buscar_ci(entradas, archivo, m) === nothing]
         ok = registrado(archivo, man)
-        seg = isempty(faltan) ? 0.0 : SEGUNDOS_M20[el] * (length(faltan) > 1 ? 1.15 : 1.0)
+        # Relanzar recalcula todas las R^k hasta el mayor m que falta, y su numero crece como m^4:
+        # desde cero cuesta ~1.8 veces el ultimo incremento.
+        seg = isempty(faltan) ? 0.0 : 1.8 * SEGUNDOS_M20[el] * (maximum(faltan) / 20)^4
         ok && (pendiente += seg)
         estado_txt = !ok ? "SIN REGISTRAR (etapa 1 y reemitir el manifiesto)" :
                      isempty(faltan) ? "listo" : @sprintf("~%.0f min", seg / 60)

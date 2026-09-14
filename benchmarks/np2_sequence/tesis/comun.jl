@@ -165,3 +165,31 @@ function escribir_tabla(nombre, cuerpo, procedencia; dir = DIR_TABLAS)
     println("  tabla -> ", startswith(ruta, REPO) ? relpath(ruta, REPO) : ruta)
     return ruta
 end
+
+# -----------------------------------------------------------------------------
+#  Seleccion de alpha_d y curvas de convergencia (las usan las etapas 3 y 4)
+# -----------------------------------------------------------------------------
+error_3P(niv, el) = (niv[2:3] .- NIST_NIVELES[el][2:3]) ./ NIST_NIVELES[el][2:3]
+costo_alpha(niv, el) = CRITERIO_ALPHA == :solo_3P2 ? abs(error_3P(niv, el)[2]) :
+                                                     sqrt(sum(abs2, error_3P(niv, el)) / 2)
+
+"""
+    alpha_elegido(el, ci) -> (alpha_d, entrada) o nothing
+
+alpha_d del barrido con menor costo segun CRITERIO_ALPHA. `ci(el, estado, alpha_d)` devuelve la
+entrada de resultados_ci.toml que corresponde, o nothing.
+"""
+function alpha_elegido(el, ci)
+    cands = [(a, ci(el, ESTADO, a)) for a in get(BARRIDO_ALPHA, el, Float64[])]
+    filter!(c -> c[2] !== nothing, cands)
+    isempty(cands) && return nothing
+    return argmin(c -> costo_alpha(c[2]["niveles_cm"], el), cands)
+end
+
+"""Entradas vigentes de la curva de convergencia (ESTADO, alpha_d = 0) del elemento, por m."""
+function curva_convergencia(ci, man, el)
+    archivo = archivo_scf(el, ESTADO, 0.0)
+    registrado(archivo, man) || return Dict{String,Any}[]
+    sha = sha256_de(ruta_np2(archivo))
+    return sort([e for e in ci if e["archivo"] == archivo && e["sha256_entrada"] == sha]; by = e -> e["m"])
+end

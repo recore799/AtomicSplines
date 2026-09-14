@@ -19,12 +19,17 @@ include(joinpath(@__DIR__, "diagnostico_rayleigh.jl"))
 include(joinpath(@__DIR__, "analisis_zeta.jl"))
 
 const CI     = leer_ci(argumento("--ci", RESULTADOS_CI))
-const M      = parse(Int, argumento("--m", string(M_PRODUCCION)))
+# --m fuerza un mismo tamano para todo (pruebas). Sin el, cada elemento usa su m de produccion y
+# la sensibilidad se compara a M_SENSIBILIDAD (config.jl).
+const M_ARG  = argumento("--m", nothing)
+m_tabla(el)  = M_ARG === nothing ? m_produccion(el) : parse(Int, M_ARG)
+m_sens()     = M_ARG === nothing ? M_SENSIBILIDAD : parse(Int, M_ARG)
 const SALIDA = argumento("--salida", DIR_TABLAS)
 const MAN    = manifiesto()
 const FALTAS = Set{String}()
 
 const TERMINOS = [raw"$^3P_0$", raw"$^3P_1$", raw"$^3P_2$", raw"$^1D_2$", raw"$^1S_0$"]
+const TERM_TXT = ["3P_0", "3P_1", "3P_2", "1D_2", "1S_0"]
 
 fmt(x, d) = x === nothing ? "--" : @sprintf("%.*f", d, x)
 fmtS(x, d) = x === nothing ? "{--}" : @sprintf("%.*f", d, x)     # columnas S de siunitx
@@ -35,10 +40,10 @@ etiqueta_Z(el) = "$(INFO[el].etiqueta) (\$Z=$(Int(INFO[el].Z))\$)"
 proc_scf(archivo) = "$archivo (sha256 $(corto(sha256_de(ruta_np2(archivo)))))"
 proc_ci(e) = "CI $(e["archivo"]) m=$(e["m"]) (sha256 $(corto(e["sha256_entrada"])), commit $(e["commit"]))"
 
-function ci_de(el, estado, a)
+function ci_de(el, estado, a; m::Int = estado == ESTADO ? m_tabla(el) : m_sens())
     archivo = archivo_scf(el, estado, a)
-    e = registrado(archivo, MAN) ? buscar_ci(CI, archivo, M) : nothing
-    e === nothing && push!(FALTAS, "CI de $archivo con m = $M")
+    e = registrado(archivo, MAN) ? buscar_ci(CI, archivo, m) : nothing
+    e === nothing && push!(FALTAS, "CI de $archivo con m = $m")
     return e
 end
 
@@ -67,17 +72,8 @@ function propiedades_hf(el, estado = ESTADO, a = 0.0)
 end
 
 
-error_3P(niv, el) = (niv[2:3] .- NIST_NIVELES[el][2:3]) ./ NIST_NIVELES[el][2:3]
-costo_alpha(niv, el) = CRITERIO_ALPHA == :solo_3P2 ? abs(error_3P(niv, el)[2]) :
-                                                     sqrt(sum(abs2, error_3P(niv, el)) / 2)
-
-"""alpha_d del barrido con menor costo segun CRITERIO_ALPHA, o nothing si no hay CI."""
-function alpha_elegido(el)
-    cands = [(a, ci_de(el, ESTADO, a)) for a in get(BARRIDO_ALPHA, el, Float64[])]
-    filter!(c -> c[2] !== nothing, cands)
-    isempty(cands) && return nothing
-    return argmin(c -> costo_alpha(c[2]["niveles_cm"], el), cands)
-end
+alpha_elegido(el) = alpha_elegido(el, ci_de)
+curva_convergencia(el) = curva_convergencia(CI, MAN, el)
 
 # -----------------------------------------------------------------------------
 #  Tablas
@@ -356,22 +352,87 @@ function tabla_zeta(HF, ZETA_SENS)
     return String(take!(io)), proc
 end
 
+# g de Lande de 3P_2 y 1D_2 puros con el g_s del electron libre. El NIST mide con el g_s real: con
+# g_s = 2 el 3P_2 puro valdria 1.5 en vez de 1.50116, un corrimiento mayor que la mezcla del Ge.
+const G_3P2 = 1.0 + (G_S - 1.0) / 2      # 1 + (g_s - 1)[J(J+1) - L(L+1) + S(S+1)]/[2J(J+1)]
+const G_1D2 = 1.0
+peso_1D(g) = (G_3P2 - g) / (G_3P2 - G_1D2)
+
+"""g del 3P_2 con g_s real, a partir del g_eff de run_full_ci, que usa g_s = 2 (1.5 y 1.0)."""
+function g_real(e)
+    c2 = 2 * (1.5 - e["g_eff_3P2"])      # peso de 1D_2 en el nivel
+    return G_3P2 * (1 - c2) + G_1D2 * c2
+end
+
 function tabla_lande()
     io = IOBuffer(); proc = String[]
-    println(io, raw"\begin{tabular}{lccc}")
+    pct(x) = x === nothing ? "--" : @sprintf("%.2f\\%%", 100 * x)
+    println(io, raw"\begin{tabular}{lcccccc}")
     println(io, raw"    \toprule")
-    linea(io, raw"\textbf{Elemento}", raw"$g(^3P_2)$ HF+CI", raw"$g(^3P_2)$ CI+$V_{\text{pol}}$", raw"$g(^3P_2)$ NIST")
+    linea(io, raw"\textbf{Elemento}", raw"$g$ HF+CI", raw"$g$ CI+$V_{\text{pol}}$", raw"$g$ NIST",
+          raw"$^1D_2$ HF+CI", raw"$^1D_2$ CI+$V_{\text{pol}}$", raw"$^1D_2$ NIST")
     println(io, raw"    \midrule")
     for el in ELEMENTOS
         e0 = ci_de(el, ESTADO, 0.0)
         sel = haskey(BARRIDO_ALPHA, el) ? alpha_elegido(el) : nothing
-        linea(io, INFO[el].etiqueta, e0 === nothing ? "--" : fmt(e0["g_eff_3P2"], 4),
-              sel === nothing ? "--" : fmt(sel[2]["g_eff_3P2"], 4), fmt(NIST_LANDE_3P2[el], 3))
+        g0 = e0 === nothing ? nothing : g_real(e0)
+        gv = sel === nothing ? nothing : g_real(sel[2])
+        gn = NIST_LANDE_3P2[el]
+        linea(io, INFO[el].etiqueta, fmt(g0, 5), fmt(gv, 5), gn === nothing ? "--" : string(gn),
+              pct(g0 === nothing ? nothing : peso_1D(g0)), pct(gv === nothing ? nothing : peso_1D(gv)),
+              pct(gn === nothing ? nothing : peso_1D(gn)))
         e0 === nothing || push!(proc, proc_ci(e0))
         sel === nothing || push!(proc, proc_ci(sel[2]))
     end
     println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
-    push!(proc, "g NIST: tesis/config.jl (VERIFICAR contra el NIST ASD).")
+    push!(proc, "g del 3P_2 con g_s = $(G_S), sin correcciones relativistas ni diamagneticas (orden alpha^2). " *
+                "Peso de 1D_2 en el nivel = (g(3P_2 puro) - g)/(g(3P_2 puro) - g(1D_2 puro)). NIST ASD ver. 5.12.")
+    return String(take!(io)), proc
+end
+
+"""Limite si los incrementos siguen en razon constante; nothing si la razon no esta en (0, 1)."""
+function extrap_geometrica(y)
+    d1, d2 = y[2] - y[1], y[3] - y[2]
+    r = d2 / d1
+    (0 < r < 1) || return nothing
+    return (lim = y[3] + d2 * r / (1 - r), razon = r)
+end
+
+"""Ajuste exacto de E(m) = E_inf + A m^-p a tres puntos; nothing si no hay un p > 0 que lo cumpla."""
+function extrap_potencia(m, y)
+    q = (y[2] - y[1]) / (y[3] - y[2])
+    f(p) = (m[1]^-p - m[2]^-p) / (m[2]^-p - m[3]^-p) - q
+    lo, hi = 0.05, 20.0
+    f(lo) * f(hi) < 0 || return nothing
+    for _ in 1:200
+        mid = (lo + hi) / 2
+        f(lo) * f(mid) <= 0 ? (hi = mid) : (lo = mid)
+    end
+    p = (lo + hi) / 2
+    A = (y[3] - y[2]) / (m[3]^-p - m[2]^-p)
+    return (lim = y[3] - A * m[3]^-p, p = p)
+end
+
+function tabla_convergencia_singletes()
+    io = IOBuffer(); proc = String[]
+    curvas = Dict(el => Dict(e["m"] => e for e in curva_convergencia(el)) for el in ELEMENTOS)
+    ms = sort(unique(vcat([collect(keys(c)) for c in values(curvas)]...)))
+    println(io, raw"\begin{tabular}{r", "rr"^length(ELEMENTOS), "}")
+    println(io, raw"    \toprule")
+    linea(io, "", ["\\multicolumn{2}{c}{\\textbf{$(INFO[el].etiqueta)}}" for el in ELEMENTOS]...)
+    linea(io, raw"$m$", repeat([raw"$^1D_2$", raw"$^1S_0$"], length(ELEMENTOS))...)
+    println(io, raw"    \midrule")
+    for m in ms
+        linea(io, string(m), vcat([[haskey(curvas[el], m) ? fmt(curvas[el][m]["niveles_cm"][t], 1) : "--"
+                                    for t in (4, 5)] for el in ELEMENTOS]...)...)
+    end
+    println(io, raw"    \midrule")
+    linea(io, "NIST", vcat([[fmt(NIST_NIVELES[el][t], 1) for t in (4, 5)] for el in ELEMENTOS]...)...)
+    println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
+    for el in ELEMENTOS, m in sort(collect(keys(curvas[el])))
+        push!(proc, proc_ci(curvas[el][m]))
+    end
+    push!(proc, "Niveles en cm^-1 desde 3P_0, lmax = $(LMAX_CI). Las extrapolaciones estan en valores_texto.md.")
     return String(take!(io)), proc
 end
 
@@ -379,7 +440,8 @@ function valores_texto(HF, ZETA_SENS)
     io = IOBuffer()
     println(io, "# Valores citados en el texto\n")
     println(io, "GENERADO por `benchmarks/np2_sequence/tesis/etapa3_tablas.jl`; no editar a mano.")
-    println(io, "Convencion de orbitales: $(ESTADO) (sensibilidad: $(ESTADO_SENSIBILIDAD)); m = $(M), lmax = $(LMAX_CI).\n")
+    println(io, "Convencion de orbitales: $(ESTADO) (sensibilidad: $(ESTADO_SENSIBILIDAD) a m = $(m_sens())); ",
+            "lmax = $(LMAX_CI); m de produccion: ", join(["$(el) $(m_tabla(el))" for el in ELEMENTOS], ", "), ".\n")
     println(io, "## Pozo del potencial radial efectivo V_rad = V_eff + 1/r^2\n")
     for el in ELEMENTOS
         @printf(io, "- %s: minimo %.2f Ha en r = %.3f a0\n", INFO[el].etiqueta, HF[el].vrad_min, HF[el].r_min)
@@ -402,13 +464,42 @@ function valores_texto(HF, ZETA_SENS)
         t = zeta_nist_tensorial(el)
         @printf(io, "- %s: zeta = %.1f, D = %.2f\n", INFO[el].etiqueta, t.zeta, t.D)
     end
-    println(io, "\n## CI de valencia (alpha_d = 0)\n")
-    for el in ELEMENTOS, estado in (ESTADO, ESTADO_SENSIBILIDAD)
-        e = ci_de(el, estado, 0.0)
+    println(io, "\n## CI de valencia (alpha_d = 0, m de produccion)\n")
+    for el in ELEMENTOS
+        e = ci_de(el, ESTADO, 0.0)
         e === nothing && continue
         n = e["niveles_cm"]
-        @printf(io, "- %s %s: E_corr = %.6e Ha (%.1f cm^-1), g_eff(3P_2) = %.6f, niveles = %s\n", INFO[el].etiqueta, estado,
-                e["E_corr_Ha"], e["E_corr_Ha"] * HA2CM, e["g_eff_3P2"], join([@sprintf("%.2f", x) for x in n], " / "))
+        @printf(io, "- %s %s m = %d: E_corr = %.6e Ha (%.1f cm^-1), g(3P_2) con g_s = 2: %.6f, con g_s real: %.6f, niveles = %s\n",
+                INFO[el].etiqueta, ESTADO, e["m"], e["E_corr_Ha"], e["E_corr_Ha"] * HA2CM, e["g_eff_3P2"], g_real(e),
+                join([@sprintf("%.2f", x) for x in n], " / "))
+    end
+    println(io, "\n## Sensibilidad a la convencion de orbitales (alpha_d = 0, m = $(m_sens()))\n")
+    for el in ELEMENTOS
+        e3 = ci_de(el, ESTADO, 0.0; m = m_sens())
+        ea = ci_de(el, ESTADO_SENSIBILIDAD, 0.0)
+        (e3 === nothing || ea === nothing) && continue
+        dif = [@sprintf("%s %+.2f%%", TERM_TXT[t], 100 * (ea["niveles_cm"][t] - e3["niveles_cm"][t]) / e3["niveles_cm"][t])
+               for t in 2:5]
+        @printf(io, "- %s: %s frente a %s: %s\n", INFO[el].etiqueta, ESTADO_SENSIBILIDAD, ESTADO, join(dif, ", "))
+    end
+    println(io, "\n## Convergencia de los singletes con el espacio activo (3P, alpha_d = 0)\n")
+    println(io, "Con los tres ultimos tamanos de cada curva: extrapolacion geometrica (incrementos en razon constante) ",
+            "y de potencia (E(m) = E_inf + A m^-p, ajuste exacto). Una razon cercana a 1 hace inservible la geometrica.\n")
+    for el in ELEMENTOS
+        es = curva_convergencia(el)
+        length(es) >= 3 || continue
+        for (t, q) in ((4, "1D_2"), (5, "1S_0"))
+            ms = [e["m"] for e in es[end-2:end]]
+            ys = [e["niveles_cm"][t] for e in es[end-2:end]]
+            g = extrap_geometrica(ys)
+            p = extrap_potencia(ms, ys)
+            nist = NIST_NIVELES[el][t]
+            @printf(io, "- %s %s: m = %s -> %s cm^-1 | geometrica %s | potencia %s | NIST %.1f\n", INFO[el].etiqueta, q,
+                    join(ms, ", "), join([@sprintf("%.1f", y) for y in ys], ", "),
+                    g === nothing ? "no aplica" : @sprintf("%.1f (%+.1f%%, razon %.2f)", g.lim, 100 * (g.lim - nist) / nist, g.razon),
+                    p === nothing ? "no aplica" : @sprintf("%.1f (%+.1f%%, p = %.1f)", p.lim, 100 * (p.lim - nist) / nist, p.p),
+                    nist)
+        end
     end
     println(io, "\n## Barridos de V_pol: error frente al NIST\n")
     for el in ELEMENTOS
@@ -447,6 +538,7 @@ function main_etapa3()
     conv, costo, proc = tabla_convergencia()
     escribir_tabla("convergencia_ci.tex", conv, proc; dir = SALIDA)
     escribir_tabla("convergencia_ci_costo.tex", costo, proc; dir = SALIDA)
+    escribir_tabla("convergencia_singletes.tex", tabla_convergencia_singletes()...; dir = SALIDA)
     escribir_tabla("cdiis.tex", tabla_cdiis()...; dir = SALIDA)
     escribir_tabla("zeta.tex", tabla_zeta(HF, ZETA_SENS)...; dir = SALIDA)
     escribir_tabla("lande.tex", tabla_lande()...; dir = SALIDA)

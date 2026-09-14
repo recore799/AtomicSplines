@@ -4,8 +4,8 @@
 #
 #  Regenera en docs/figures/ las siete figuras que usa resultados.tex, ahora desde los .jld2
 #  registrados y resultados_ci.toml en lugar de constantes escritas a mano o de archivos
-#  sueltos de examples/scratch/, y agrega cuatro nuevas: convergencia del CI, convergencia de
-#  C-DIIS, razon de zeta y barrido de V_pol.
+#  sueltos de examples/scratch/, y agrega cinco nuevas: convergencia del CI y de los singletes,
+#  convergencia de C-DIIS, razon de zeta y barrido de V_pol.
 #
 #  Uso: julia --project=. benchmarks/np2_sequence/tesis/etapa4_figuras.jl
 #       ... --ci /ruta/prueba.toml --m 3 --salida /ruta/dir      (para pruebas)
@@ -18,7 +18,9 @@ ENV["GKSwstype"] = "100"            # GR sin abrir ventanas
 using Plots
 
 const CI     = leer_ci(argumento("--ci", RESULTADOS_CI))
-const M      = parse(Int, argumento("--m", string(M_PRODUCCION)))
+const M_ARG  = argumento("--m", nothing)        # fuerza un mismo m para todo (pruebas)
+m_fig(el, estado) = M_ARG !== nothing ? parse(Int, M_ARG) :
+                    (estado == ESTADO ? m_produccion(el) : M_SENSIBILIDAD)
 const SALIDA = argumento("--salida", DIR_FIGURAS)
 const MAN    = manifiesto()
 const COLOR  = Dict("C" => :blue, "Si" => :green, "Ge" => :red, "Sn" => :orange)
@@ -35,8 +37,10 @@ etiqueta_Z(el) = "$(INFO[el].etiqueta) (Z=$(Int(INFO[el].Z)))"
 
 function ci_fig(el, estado, a)
     archivo = archivo_scf(el, estado, a)
-    return registrado(archivo, MAN) ? buscar_ci(CI, archivo, M) : nothing
+    return registrado(archivo, MAN) ? buscar_ci(CI, archivo, m_fig(el, estado)) : nothing
 end
+
+alpha_elegido(el) = alpha_elegido(el, ci_fig)
 
 function datos_hf(el)
     archivo = archivo_scf(el, ESTADO)
@@ -153,10 +157,16 @@ function figura_niveles()
     paneles = []
     for el in ELEMENTOS
         e = ci_fig(el, ESTADO, 0.0)
-        p = plot(title = etiqueta_Z(el), legend = false, xticks = ([0.5, 1.8], ["HF+CI", "NIST"]),
-                 xlims = (-0.2, 2.9), ylabel = "Energía (cm⁻¹)")
-        for (x0, niv, color) in ((0.0, e === nothing ? nothing : e["niveles_cm"], :blue),
-                                 (1.3, NIST_NIVELES[el], :black))
+        sel = haskey(BARRIDO_ALPHA, el) ? alpha_elegido(el) : nothing
+        columnas = Any[("HF+CI", e === nothing ? nothing : e["niveles_cm"], :blue)]
+        sel === nothing || push!(columnas, ("+V_pol", sel[2]["niveles_cm"], :red))
+        push!(columnas, ("NIST", NIST_NIVELES[el], :black))
+        x0s = 1.3 .* collect(0:length(columnas) - 1)
+        # El alpha_d va en el titulo: como etiqueta del eje se encimaba con las columnas vecinas.
+        titulo = sel === nothing ? etiqueta_Z(el) : @sprintf("%s, α_d = %.2g", etiqueta_Z(el), sel[1])
+        p = plot(title = titulo, titlefontsize = 11, legend = false, xticks = (x0s .+ 0.5, [c[1] for c in columnas]),
+                 xlims = (-0.2, last(x0s) + 1.6), ylabel = "Energía (cm⁻¹)")
+        for (x0, (_, niv, color)) in zip(x0s, columnas)
             niv === nothing && continue
             for E in niv
                 plot!(p, [x0, x0 + 1.0], [E, E]; lw = 2, color = color)
@@ -164,12 +174,13 @@ function figura_niveles()
         end
         for (t, E) in enumerate(NIST_NIVELES[el])
             t in (2, 3) && continue          # 3P_1 y 3P_2 se encimarian con 3P_0 a esta escala
-            annotate!(p, 2.35, E, text(NOMBRES_NIVELES[t] * (t == 1 ? "," * NOMBRES_NIVELES[2][end:end] *
+            annotate!(p, last(x0s) + 1.05, E, text(NOMBRES_NIVELES[t] * (t == 1 ? "," * NOMBRES_NIVELES[2][end:end] *
                                                                "," * NOMBRES_NIVELES[3][end:end] : ""), 8, :left))
         end
         push!(paneles, p)
     end
-    guardar(plot(paneles...; layout = (1, 4), size = (1300, 500), margin = 5Plots.mm), "np2_energy_levels.pdf")
+    guardar(plot(paneles...; layout = (1, 4), size = (1500, 500), margin = 5Plots.mm, left_margin = 10Plots.mm),
+            "np2_energy_levels.pdf")
 end
 
 function figura_convergencia()
@@ -185,6 +196,24 @@ function figura_convergencia()
               color = COLOR[el], label = INFO[el].etiqueta)
     end
     guardar(p, "convergencia_ci.pdf")
+end
+
+function figura_convergencia_singletes()
+    paneles = []
+    for (t, nombre) in ((4, "¹D₂"), (5, "¹S₀"))
+        p = plot(title = nombre, xlabel = "m (orbitales por cada l ≤ $(LMAX_CI))",
+                 ylabel = "error frente al NIST (%)", legend = :topright)
+        for el in ELEMENTOS
+            es = curva_convergencia(CI, MAN, el)
+            isempty(es) && continue
+            ref = NIST_NIVELES[el][t]
+            plot!(p, [e["m"] for e in es], [100 * (e["niveles_cm"][t] - ref) / ref for e in es];
+                  marker = :circle, lw = 2, color = COLOR[el], label = INFO[el].etiqueta)
+        end
+        hline!(p, [0.0]; color = :black, linestyle = :dot, label = "")
+        push!(paneles, p)
+    end
+    guardar(plot(paneles...; layout = (1, 2), size = (1200, 450), margin = 5Plots.mm), "convergencia_singletes.pdf")
 end
 
 function figura_cdiis()
@@ -247,6 +276,7 @@ function main_etapa4()
     figuras_zeta(HFV)
     figura_niveles()
     figura_convergencia()
+    figura_convergencia_singletes()
     figura_cdiis()
     figura_barrido()
 end

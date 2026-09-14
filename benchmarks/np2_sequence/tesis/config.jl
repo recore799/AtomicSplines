@@ -39,33 +39,55 @@ const BARRIDO_ALPHA = Dict("Ge" => [0.25, 0.5, 0.75, 1.0],
 # relativo cuadratico medio de 3P_1 y 3P_2 frente al NIST; :solo_3P2 usa solo el 3P_2.
 const CRITERIO_ALPHA = :rms_3P
 
-# Espacio activo del CI: m orbitales por cada l = 0..LMAX_CI. El ultimo tamano de la
-# curva de convergencia es el de produccion, el que va a las tablas.
+# Espacio activo del CI: m orbitales por cada l = 0..LMAX_CI. El ultimo tamano de la curva
+# de cada elemento es el de produccion, el que va a las tablas. El carbono converge mucho mas
+# lento que el resto: a m = 20 sus singletes todavia bajaban ~200 (1D_2) y ~530 cm^-1 (1S_0)
+# por paso (docs/claude/REVISION-RESULTADOS-2026-09-13.md, seccion 2.2), por eso su curva sigue.
+# Costo del carbono: las R^k crecen como m^4 (~39 millones a m = 40) y la cache usa ~17 bytes
+# por casilla, del orden de 1.1 GB y hasta ~1.7 GB al redimensionarse. La curva completa tarda
+# ~35 min; cada tamano se guarda al terminar, asi que se puede cortar antes.
 const LMAX_CI = 3
-const TAMANOS_CONVERGENCIA = [4, 8, 12, 16, 20]
-const M_PRODUCCION = last(TAMANOS_CONVERGENCIA)
+const TAMANOS_CONVERGENCIA = Dict("C"  => [4, 8, 12, 16, 20, 24, 28, 32, 36, 40],
+                                  "Si" => [4, 8, 12, 16, 20],
+                                  "Ge" => [4, 8, 12, 16, 20],
+                                  "Sn" => [4, 8, 12, 16, 20])
+m_produccion(el) = last(TAMANOS_CONVERGENCIA[el])
+# La prueba de sensibilidad (promedio de configuracion frente a ESTADO) se compara al mismo m
+# en los cuatro elementos.
+const M_SENSIBILIDAD = 20
 espacio_activo(m::Int) = Dict(l => m for l in 0:LMAX_CI)
 
 # --- Literatura -----------------------------------------------------------------
 
-# NIST ASD: niveles de C I, Si I, Ge I y Sn I en cm^-1 referidos a 3P_0, en el orden
-# [3P_0, 3P_1, 3P_2, 1D_2, 1S_0]. Son los de generate_table.jl, redondeados a 0.1 cm^-1.
-# PENDIENTE: la tesis tiene que citar la version del ASD y la fecha de consulta.
+# NIST Atomic Spectra Database, ver. 5.12 (Kramida, Ralchenko, Reader y NIST ASD Team, 2024;
+# DOI 10.18434/T4W30F), consultada el 2026-09-13 en https://physics.nist.gov/asd. Niveles de
+# C I, Si I, Ge I y Sn I en cm^-1 referidos a 3P_0, en el orden [3P_0, 3P_1, 3P_2, 1D_2, 1S_0],
+# con todas las cifras que da la base. Fuentes que lista el ASD: C I, Haris y Kramida (2017);
+# Si I, Martin y Zalubas (1983); Ge I, Sugar y Musgrove (1993); Sn I, Brill (1964) y Brown et
+# al. (1977). Antes del 2026-09-13 aqui habia valores a 0.1 cm^-1 copiados de generate_table.jl;
+# el 1D_2 del carbono y el 1S_0 de germanio y estanio no eran el redondeo del valor de la base
+# (hasta 0.23 cm^-1 de diferencia).
 const NIST_NIVELES = Dict(
-    "C"  => [0.0,   16.4,   43.4, 10192.6, 21648.0],
-    "Si" => [0.0,   77.1,  223.2,  6298.8, 15394.4],
-    "Ge" => [0.0,  557.1, 1410.0,  7125.3, 16367.1],
-    "Sn" => [0.0, 1691.8, 3427.7,  8613.0, 17162.6],
+    "C"  => [0.0,   16.4167130,   43.4134567, 10192.657,  21648.030],
+    "Si" => [0.0,   77.115,      223.157,      6298.850,  15394.370],
+    "Ge" => [0.0,  557.1341,    1409.9609,     7125.2989, 16367.3332],
+    "Sn" => [0.0, 1691.806,     3427.673,      8612.955,  17162.499],
 )
 
-# Primer potencial de ionizacion (eV). C, Si y Ge son los de tab:koopmans; el del Sn es el
-# valor estandar y hay que confirmarlo en el NIST ASD antes de publicarlo.
-const NIST_IONIZACION = Dict("C" => 11.26, "Si" => 8.15, "Ge" => 7.90, "Sn" => 7.34)
+# Primer potencial de ionizacion (eV), del 3P_0 del neutro al 2P_1/2 del ion, NIST ASD ver. 5.12
+# (misma consulta). Incertidumbres: C 1.1e-6, Si 3e-5, Ge 1.2e-5 y Sn 1.2e-5 eV.
+const NIST_IONIZACION = Dict("C" => 11.2602880, "Si" => 8.15168, "Ge" => 7.899435, "Sn" => 7.343918)
 
-# Factor g de Lande del 3P_2. Solo el de germanio aparece en la tesis (discusion.tex:67),
-# y hay que VERIFICARLO; el NIST ASD da los cuatro.
+# Factor g de Lande del 3P_2, NIST ASD ver. 5.12 (misma consulta). Son medidos, con el g_s real
+# del electron, y por eso la etapa 3 los compara con g calculado con g_s = G_S. Si I no tiene
+# factores g en el ASD. C I: 1.5010469(50). Ge I: 1.49458, sin incertidumbre, bajo la fuente
+# primaria que lista el ASD (Sugar y Musgrove, 1993). Sn I: 1.452, de Moore (1958). La tesis
+# citaba 1.496 para el germanio (discusion.tex:67), que no es el valor del ASD.
 const NIST_LANDE_3P2 = Dict{String,Union{Float64,Nothing}}(
-    "C" => nothing, "Si" => nothing, "Ge" => 1.496, "Sn" => nothing)
+    "C" => 1.5010469, "Si" => nothing, "Ge" => 1.49458, "Sn" => 1.452)
+
+# Factor g del espin del electron libre, en valor absoluto (CODATA 2018).
+const G_S = 2.00231930436256
 
 # Froese Fischer (1977), limite Hartree-Fock del termino 3P, copiado tal cual de
 # resultados.tex (tab:resultados_energia_global, tab:momentos_inversos y

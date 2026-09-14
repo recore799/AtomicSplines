@@ -288,3 +288,37 @@ las energías de orbital guardadas: ns a ≤ 6×10⁻¹⁰ Ha y np a ≤ 1.7×10
   no aditivas. Tratarlas juntas exige un CI de cuatro electrones con ns y np activos
   (multirreferencia), que el motor actual no hace: es un motor nuevo, no una corrección.
 
+---
+
+## 8. Diferencias con Froese Fischer que no son de transcripción ni de malla
+
+Con los valores confirmados en el libro, las integrales de Slater coinciden con Froese Fischer a
+≤ 1.6×10⁻⁵ Ha en los cuatro elementos y la energía total a ≤ 3.3×10⁻⁵ Ha. Quedan tres diferencias
+mayores, todas en los elementos con core p:
+
+| | ⟨r⁻³⟩ frente a F.F. | T − T_F.F. (Ha) | \|virial − 2\| |
+|---|---|---|---|
+| C | +6×10⁻⁷ (relativo) | ~0 (3×10⁻⁸) | < 10⁻⁸ |
+| Si | −0.34 % | +4.4×10⁻³ | 1.5×10⁻⁵ |
+| Ge | −0.17 % | +2.9×10⁻³ | 1.4×10⁻⁶ |
+| Sn | −0.19 % | +3.8×10⁻³ | 6.2×10⁻⁷ |
+
+- **No es la malla.** `tesis/diagnostico_malla_silicio.jl` repite el SCF del silicio con N = 100,
+  200 y 300. De 100 a 200 la energía baja 1.7×10⁻⁶ Ha y ⟨r⁻³⟩ se mueve 2×10⁻⁵, alejándose de
+  Froese Fischer; de 200 a 300 no cambia ninguna cifra impresa, y F⁰ y F² no cambian en ocho cifras.
+- **Causa probable: la ortogonalización por Gram-Schmidt.** El orbital de valencia se resuelve en
+  su propia Fock y después se ortogonaliza contra los p del core, en vez de imponer la restricción
+  con multiplicadores de Lagrange. Eso deja la solución fuera del punto estacionario exacto: la
+  energía se desvía a segundo orden (coincide a ~10⁻⁶ Ha) y las propiedades, a primer orden. Lo
+  sostienen dos datos:
+  - el carbono, único sin core p y sin Gram-Schmidt en el canal de valencia, coincide con Froese
+    Fischer a 10⁻⁶ en ⟨r⁻³⟩ y a 10⁻⁹ en el virial;
+  - de los tres con Gram-Schmidt, el silicio, donde el piso del conmutador medido el 06-09 es mayor
+    (`HALLAZGOS-2026-09-06.md` §6), es el que más se desvía.
+  No está demostrado: probarlo exige un ROHF con multiplicadores de Lagrange, que obligaría a rehacer
+  todos los SCF y los CI.
+- **Qué pesa en la tesis.** Un 0.2–0.3 % en ⟨r⁻³⟩, y por tanto en ζ, es uno o dos órdenes menor que
+  los errores físicos del modelo (5–45 %). Va como limitación metodológica, junto a la energía con
+  autovalores (`PLAN-REGENERACION.md` §2.2), y cambia `resultados.tex:178`, que atribuye estas
+  diferencias a la discretización.
+

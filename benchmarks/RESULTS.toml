@@ -318,3 +318,174 @@ script        = "np2_sequence/tin_rohf_vpol.jl"
 commit_codigo = "eb5753c"
 nota          = "Renglon alpha_d = 6.0 del Cuadro tab:estanio_ci (resultados.tex:281)."
 
+[[resultado]]
+archivo       = "np2_sequence/germanium_rohf_results_3P_R30.0_ad0.250.jld2"
+elemento      = "Ge"
+estado        = "3P"
+sha256        = "de3d4641b8681875b273bfbfea5afaee11fbd5b05d236d19c630d5d11444f953"
+bytes         = 1022464
+E_total       = -2076.247268153816
+num_splines   = 307
+Z             = 32.0
+R_max         = 30.0
+N             = 300
+K             = 8
+gamma         = 3.0
+alpha_d       = 0.25
+r_c           = 1.0
+script        = "np2_sequence/germanium_rohf.jl"
+commit_codigo = "eb5753c"
+nota          = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. germanium_rohf.jl con alpha_d y C-DIIS."
+
+[[resultado]]
+archivo       = "np2_sequence/germanium_rohf_results_3P_R30.0_ad0.500.jld2"
+elemento      = "Ge"
+estado        = "3P"
+sha256        = "507e8ddf362d68b05c11a62dad483fc7d4455cc47b8789f23b85c585abd1566b"
+bytes         = 1022464
+E_total       = -2077.1372623239076
+num_splines   = 307
+Z             = 32.0
+R_max         = 30.0
+N             = 300
+K             = 8
+gamma         = 3.0
+alpha_d       = 0.5
+r_c           = 1.0
+script        = "np2_sequence/germanium_rohf.jl"
+commit_codigo = "eb5753c"
+nota          = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. germanium_rohf.jl con alpha_d y C-DIIS."
+
+[[resultado]]
+archivo       = "np2_sequence/germanium_rohf_results_3P_R30.0_ad0.750.jld2"
+elemento      = "Ge"
+estado        = "3P"
+sha256        = "1d18de809e85744696dd5a6626f12fc80cea8757ae4a04ccaabe51aec6292db2"
+bytes         = 1022464
+E_total       = -2078.029731863383
+num_splines   = 307
+Z             = 32.0
+R_max         = 30.0
+N             = 300
+K             = 8
+gamma         = 3.0
+alpha_d       = 0.75
+r_c           = 1.0
+script        = "np2_sequence/germanium_rohf.jl"
+commit_codigo = "eb5753c"
+nota          = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. germanium_rohf.jl con alpha_d y C-DIIS."
+
+[[resultado]]
+archivo       = "np2_sequence/germanium_rohf_results_3P_R30.0_ad1.000.jld2"
+elemento      = "Ge"
+estado        = "3P"
+sha256        = "bbb6eaba1ce3be4678eb7749641020497f8e9e165fa423ed6e26ca6c1514c668"
+bytes         = 1022464
+E_total       = -2078.9246934851126
+num_splines   = 307
+Z             = 32.0
+R_max         = 30.0
+N             = 300
+K             = 8
+gamma         = 3.0
+alpha_d       = 1.0
+r_c           = 1.0
+script        = "np2_sequence/germanium_rohf.jl"
+commit_codigo = "eb5753c"
+nota          = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. germanium_rohf.jl con alpha_d y C-DIIS."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_3P_R30.0_ad2.000.jld2"
+elemento      = "Sn"
+estado        = "3P"
+sha256        = "574efa0a7f591999623aaaa3894d32124049cf45acf64cb6a6707b8c7dacde6b"
+bytes         = 2350480
+E_total       = -6033.311128395053
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 2.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf.jl"
+commit_codigo = "eb5753c"
+nota          = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_3P_R30.0_ad3.000.jld2"
+elemento      = "Sn"
+estado        = "3P"
+sha256        = "b6dcaa41c8e11155672569350bff345ca860fec9500a07a1ca987257969a31df"
+bytes         = 2350480
+E_total       = -6038.5642533337605
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 3.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf.jl"
+commit_codigo = "eb5753c"
+nota          = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_3P_R30.0_ad4.000.jld2"
+elemento      = "Sn"
+estado        = "3P"
+sha256        = "4a0950772b227eca27dedcf832cc5d1de634fad84d9f7e70b1acf1afd648ed1c"
+bytes         = 2350480
+E_total       = -6043.85690105173
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 4.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf.jl"
+commit_codigo = "eb5753c"
+nota          = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_3P_R30.0_ad5.000.jld2"
+elemento      = "Sn"
+estado        = "3P"
+sha256        = "35dcd45dcf68cdfb6133d88ffa0879ca56e2c9362818c6edb9507b9effebfa66"
+bytes         = 2350480
+E_total       = -6049.187388452915
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 5.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf.jl"
+commit_codigo = "eb5753c"
+nota          = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."
+
+[[resultado]]
+archivo       = "np2_sequence/tin_rohf_results_3P_R30.0_ad6.000.jld2"
+elemento      = "Sn"
+estado        = "3P"
+sha256        = "5e1e2b169ceadee925220549877e0861fc673fb83dc4dba0a78f6a8f3a726acf"
+bytes         = 2350480
+E_total       = -6054.554293963235
+num_splines   = 507
+Z             = 50.0
+R_max         = 30.0
+N             = 500
+K             = 8
+gamma         = 4.0
+alpha_d       = 6.0
+r_c           = 1.0
+script        = "np2_sequence/tin_rohf.jl"
+commit_codigo = "eb5753c"
+nota          = "Barrido de V_pol sobre orbitales 3P de tesis/config.jl. tin_rohf.jl con alpha_d y C-DIIS."
+

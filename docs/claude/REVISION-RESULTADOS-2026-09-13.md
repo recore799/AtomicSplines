@@ -15,9 +15,10 @@ extrapolaciones) dicen cómo se obtuvieron.
   - La etapa 3 es reproducible y solo deja vacías las celdas de literatura.
 - **Queda un punto abierto del lado del cálculo:** los singletes del carbono no están
   convergidos a m = 20 (sección 2.2).
-- **Cuatro afirmaciones de la tesis se invierten con los números nuevos** (sección 3): el sentido
-  de V_pol, la ionización con V_pol, la brecha del factor g del germanio y la tensión del barrido
-  del estaño.
+- **Tres afirmaciones de la tesis se invierten con los números nuevos** (sección 3): el sentido de
+  V_pol, la ionización con V_pol y la tensión del barrido del estaño. Una cuarta cambia de
+  explicación: la brecha del factor g del germanio existe, pero no la cierra el CI (sección 2.6,
+  corregida con el NIST).
 
 ---
 
@@ -66,6 +67,8 @@ Extrapolación geométrica con los incrementos de m = 12 → 16 → 20:
   - Es el patrón que predice la casi-degeneración ns² ↔ np²: el ¹D₂ se acerca al NIST y el ¹S₀ se
     queda alto.
   - Pero es una extrapolación, y la tesis quiere afirmarlo (ver sección 4.1).
+  - Las dos extrapolaciones del ¹S₀ del carbono discrepan: +9.5 % la geométrica y +2.1 % la de
+    potencia (`valores_texto.md`). Por eso su curva se extiende hasta m = 40 (sección 6.2).
 
 ### 2.3 Sensibilidad ³P frente a promedio de configuración (m = 20)
 
@@ -93,9 +96,9 @@ los errores son con el α_d elegido.
   - El ¹D₂ empeora y el ¹S₀ mejora.
 - **Hipótesis para la discusión.** El ¹D₂ alto (ya sin V_pol en Si y Ge) apunta a un F² efectivo
   demasiado grande. Es lo que corregiría el término de dos cuerpos de la polarización del core,
-  que el modelo omite (Apéndice F, ecuación `eq:cpp_dos_cuerpos`). Cowan (1981) reduce los F^k de
-  Hartree-Fock en sus ajustes por efectos de correlación; verificar el factor y su justificación
-  antes de citarlo.
+  que el modelo omite (Apéndice F, ecuación `eq:cpp_dos_cuerpos`). Los cálculos HFR reducen las
+  integrales de Slater al 85 % siguiendo a Cowan (1981) (sección 6.3); la justificación hay que
+  leerla en el libro antes de citarla.
 
 ### 2.5 Ionización (eV, orbitales ³P)
 
@@ -113,16 +116,25 @@ los errores son con el α_d elegido.
 
 ### 2.6 Factor g del ³P₂ y mezcla con ¹D₂
 
-| | g (HF+CI) | peso de ¹D₂ | g (CI+V_pol) | peso de ¹D₂ |
-|---|---|---|---|---|
-| Ge | 1.496164 | 0.77 % | 1.495316 | 0.94 % |
-| Sn | 1.472668 | 5.47 % | 1.466527 | 6.69 % |
+Corregida la misma noche con el NIST ASD (sección 6.1). La primera versión de esta sección daba
+por buena la cifra de 1.496 de la tesis y concluía que la brecha desaparecía: era falso. Los g
+medidos llevan el g_s real del electrón, así que el ³P₂ puro vale 1.50116 y no 1.5. La tabla
+compara con g calculado con ese mismo g_s (`lande.tex`).
 
-- **El 1.496 que la tesis atribuye al NIST** (hay que verificarlo) implica, a tres cifras, entre
-  0.70 y 0.90 % de ¹D₂. Los dos cálculos del germanio caen dentro. La brecha de `discusion.tex:69`
-  y la historia del CI que la cierra (`:71-73`) desaparecen.
-- **Grado de mezcla:** el germanio no está «altamente mezclado» (menos de 1 %); el estaño sí
-  mezcla de forma apreciable (5–7 %).
+| | g HF+CI | g CI+V_pol | g NIST | ¹D₂ HF+CI | ¹D₂ CI+V_pol | ¹D₂ NIST |
+|---|---|---|---|---|---|---|
+| Ge | 1.49731 | 1.49647 | 1.49458 | 0.77 % | 0.94 % | 1.31 % |
+| Sn | 1.47376 | 1.46761 | 1.452 | 5.47 % | 6.69 % | 9.81 % |
+
+- **El 1.496 que imprime la tesis no es el valor del ASD** (1.49458). Con el valor real, el
+  germanio mezcla 1.31 % de ¹D₂ y el modelo da 0.77 % (0.94 % con V_pol): la brecha de
+  `discusion.tex:69` existe y es mayor de lo que la tesis supone. El estaño muestra lo mismo:
+  9.8 % medido frente a 5.5–6.7 %.
+- **Lectura física:** el modelo mezcla de menos en los pesados. Es coherente con un ζ demasiado
+  chico y un ¹D₂ demasiado alto, que agrandan el denominador del acoplamiento intermedio; V_pol
+  corrige solo una parte.
+- **Grado de mezcla:** el germanio no está «altamente mezclado» (1.3 % medido); el estaño sí
+  (~10 %).
 
 ### 2.7 Otros números que cambian respecto a lo impreso
 
@@ -134,6 +146,9 @@ los errores son con el α_d elegido.
   - Ge: F⁰ = 0.31650266; su F² queda sin referencia.
   - Sn: con las cifras completas.
 - **Pozo de V_rad del estaño:** −399.43 Ha en r = 0.042 a₀ (faltaba en `resultados.tex:98`).
+- **Columnas NIST:** con los valores completos del ASD cambian cuatro celdas en la décima: ¹D₂ de
+  C (10192.7) y Si (6298.9), ¹S₀ de Ge (16367.3) y Sn (17162.5). La R del NIST pasa a 1.644 (C) y
+  1.894 (Si). Ninguna conclusión cambia.
 
 ---
 
@@ -151,7 +166,7 @@ Afirmaciones que los números contradicen, además de las de `FALTANTES-2026-09-
 | `resultados.tex:267` | V_pol no se aplica a los ligeros porque su core es rígido | cierto, y además en el carbono ζ sobra: V_pol, que lo sube, lo empeoraría |
 | `discusion.tex:11` | el carbono obedece fielmente la regla de intervalos de Landé | el modelo sí (R = 1.98); el experimento no (R = 1.65), por el espín-espín |
 | `discusion.tex:14` | la desviación del silicio viene del promedio de configuración | venía del signo de f₂ y de una transcripción |
-| `discusion.tex:19, 64-73` | Ge «altamente mezclado»; g = 1.4975 con una brecha que cierra un CI de excitaciones np² → nd² | Ge tiene 0.8 % de ¹D₂; g = 1.4962 ya es compatible con 1.496; el CI es de pareja general, con parejas no equivalentes |
+| `discusion.tex:19, 64-73` | Ge «altamente mezclado»; g = 1.4975 frente a un experimental de 1.496, con una brecha que cierra un CI de excitaciones np² → nd² | el ASD da 1.49458: Ge mezcla 1.3 % de ¹D₂ y el modelo 0.8–0.9 %; la brecha existe y apunta a ζ y al ¹D₂, no al tamaño del CI, que ya es de pareja general |
 
 Contenido nuevo que ya tiene sus números:
 
@@ -163,24 +178,21 @@ Contenido nuevo que ya tiene sus números:
 
 ---
 
-## 4. Decisiones pendientes
+## 4. Decisiones y pendientes
 
-1. **Carbono con m > 20.**
-   - (a) Ampliar solo su curva a m = 24 y 28 y reportar m = 28 en su tabla. Es del orden de 10 min
-     y ~1 GB de memoria, con un cambio chico en `config.jl` y en las etapas 2–4 (tamaños por
-     elemento).
-   - (b) Reportar m = 20 y la extrapolación.
-   - Recomendación: (a). La afirmación de que el ¹S₀ alto es del modelo y no del tamaño del espacio
-     necesita un carbono convergido.
-2. **Figura de niveles.** Hoy muestra solo HF+CI y NIST; agregar la columna CI+V_pol de Ge y Sn es
-   opcional y cuesta minutos.
-3. **Literatura que el código no puede dar:**
-   - F²(4p,4p) de Froese Fischer para el germanio y el virial de referencia del estaño;
-   - g del ³P₂ del NIST para C, Si y Sn, y confirmar el 1.496 del germanio;
-   - versión y fecha de consulta del NIST ASD, y el potencial de ionización del Sn (7.34 eV);
-   - si el ζ(2p) = 31.946 cm⁻¹ de Froese Fischer es el de Blume-Watson;
-   - polarizabilidades dipolares de los cores de Ge y Sn, para compararlas con α_d = 0.75 y 3.0;
-   - el factor de escala de los F^k en Cowan (1981).
+Estado al cierre del 2026-09-13; el detalle está en la sección 6.
+
+1. **Carbono con m > 20: decidido, ampliar.** Su curva sigue hasta m = 40, que pasa a ser su m de
+   producción (`tesis/config.jl`). Falta correrla.
+2. **Figura de niveles: hecho.** Germanio y estaño muestran HF+CI, CI+V_pol y NIST, con el α_d
+   elegido en el título del panel.
+3. **Literatura:**
+   - hecho: niveles, factores g, potenciales de ionización y versión del NIST ASD (5.12), y el
+     factor de escala de Cowan;
+   - lo trae el usuario del libro de Froese Fischer: los F²(np,np), en particular el del germanio;
+   - también del libro, si se puede: el virial de referencia del estaño y si el ζ(2p) = 31.946
+     cm⁻¹ es el de Blume-Watson;
+   - sin resolver: polarizabilidades dipolares de los cores de Ge y Sn (sección 6.3).
 
 ---
 
@@ -197,3 +209,47 @@ Contenido nuevo que ya tiene sus números:
 4. **`discusion.tex`,** completo.
 5. **Cierre:** `conclusiones.tex` con trabajo futuro, la introducción y la pasada final de
    `FALTANTES-2026-09-13.md` §3.3.
+
+---
+
+## 6. Actualización del 2026-09-13 (noche): NIST, carbono y literatura
+
+### 6.1 NIST ASD
+
+Consulta del 2026-09-13 a la versión 5.12 (Kramida, Ralchenko, Reader y NIST ASD Team, 2024; DOI
+10.18434/T4W30F). Los valores completos y sus fuentes primarias están en `tesis/config.jl`, y la
+entrada `NIST_ASD` quedó en `docs/bib/bibliografia.bib`.
+
+- **Versión:** la tesis dice «versión 6.1» (`ciclo-scf.tex:205`); la consultada es la 5.12.
+- **Niveles:** cuatro valores guardados no eran el redondeo del ASD (sección 2.7).
+- **Ionización (eV):** C 11.2602880, Si 8.15168, Ge 7.899435 y Sn 7.343918. Cambia en la segunda
+  cifra el error CI del silicio (2.0 %) y del estaño (0.5 %).
+- **Factores g del ³P₂:** C 1.5010469(50), Ge 1.49458 y Sn 1.452; Si I no tiene en el ASD (sección
+  2.6).
+
+### 6.2 Carbono
+
+- **Tamaños:** `TAMANOS_CONVERGENCIA` es ahora por elemento: el carbono llega a m = 40 y el resto
+  se queda en m = 20. La sensibilidad se sigue comparando a m = 20.
+- **Costo medido:** la caché de R^k usa ~17 bytes por casilla. A m = 40 son ~39 millones de
+  integrales, del orden de 1.1 GB (hasta ~1.7 GB al redimensionarse) y ~35 min.
+- **Salidas nuevas:**
+  - `convergencia_singletes.tex` y `convergencia_singletes.pdf`;
+  - en `valores_texto.md`, dos extrapolaciones (geométrica y de potencia) con los tres últimos
+    tamaños.
+- **Qué decide la corrida:** con m ≤ 20 las dos extrapolaciones del ¹S₀ del carbono discrepan
+  (+9.5 % frente a +2.1 %). Con m = 40 se verá si el ¹S₀ se queda alto, que es lo que la tesis
+  quiere afirmar.
+
+### 6.3 Literatura
+
+- **Cowan (1981) y el 0.85:** la práctica de reducir las integrales de Slater al 85 % siguiendo la
+  recomendación de Cowan (1981) está documentada, por ejemplo, en arXiv:2302.01780 (métodos HFR).
+  Para citarla en la tesis conviene ir a la sección correspondiente del libro de Cowan.
+- **Polarizabilidades de los cores de Ge y Sn: sin resolver.** No encontré valores primarios
+  verificables; las búsquedas devolvieron resúmenes contradictorios que no uso.
+  - Pistas para biblioteca, sin verificar: las tablas de Johnson, Kolb y Huang (1983), *At. Data
+    Nucl. Data Tables* 28, que cubren la secuencia del níquel donde está Ge⁴⁺, y la revisión de
+    Mitroy, Safronova y Clark (2010), *J. Phys. B* 43, 202001.
+  - Al compararlas con α_d hay que recordar que el valor ajustado depende de r_c y de qué capas se
+    tratan como core (con o sin ns²).

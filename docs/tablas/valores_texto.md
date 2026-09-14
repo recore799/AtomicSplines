@@ -1,7 +1,7 @@
 # Valores citados en el texto
 
 GENERADO por `benchmarks/np2_sequence/tesis/etapa3_tablas.jl`; no editar a mano.
-Convencion de orbitales: 3P (sensibilidad: av); m = 20, lmax = 3.
+Convencion de orbitales: 3P (sensibilidad: av a m = 20); lmax = 3; m de produccion: C 40, Si 20, Ge 20, Sn 20.
 
 ## Pozo del potencial radial efectivo V_rad = V_eff + 1/r^2
 
@@ -21,26 +21,42 @@ Convencion de orbitales: 3P (sensibilidad: av); m = 20, lmax = 3.
 
 - Carbono: sin 3P_1 -> zeta = 28.9 (predice 3P_1 = 14.5, NIST 16.4); sin 3P_2 -> zeta = 32.6 (predice 3P_2 = 49.0, NIST 43.4)
 - Silicio: sin 3P_1 -> zeta = 148.1 (predice 3P_1 = 76.9, NIST 77.1); sin 3P_2 -> zeta = 148.5 (predice 3P_2 = 223.8, NIST 223.2)
-- Germanio: sin 3P_1 -> zeta = 920.6 (predice 3P_1 = 564.5, NIST 557.1); sin 3P_2 -> zeta = 910.4 (predice 3P_2 = 1394.2, NIST 1410.0)
+- Germanio: sin 3P_1 -> zeta = 920.6 (predice 3P_1 = 564.5, NIST 557.1); sin 3P_2 -> zeta = 910.4 (predice 3P_2 = 1394.3, NIST 1410.0)
 - Estaño: sin 3P_1 -> zeta = 2241.1 (predice 3P_1 = 1727.3, NIST 1691.8); sin 3P_2 -> zeta = 2207.5 (predice 3P_2 = 3382.4, NIST 3427.7)
 
 ## zeta con termino tensorial dentro del 3P (ajuste exacto de los cuatro niveles)
 
 - Carbono: zeta = 28.0, D = -0.31
-- Silicio: zeta = 148.0, D = -0.03
-- Germanio: zeta = 924.6, D = 1.37
-- Estaño: zeta = 2265.4, D = 8.19
+- Silicio: zeta = 148.0, D = -0.04
+- Germanio: zeta = 924.5, D = 1.37
+- Estaño: zeta = 2265.4, D = 8.18
 
-## CI de valencia (alpha_d = 0)
+## CI de valencia (alpha_d = 0, m de produccion)
 
-- Carbono 3P: E_corr = -8.698045e-03 Ha (-1909.0 cm^-1), g_eff(3P_2) = 1.499996, niveles = 0.00 / 21.15 / 63.08 / 11148.39 / 24574.78
-- Carbono av: E_corr = -8.965971e-03 Ha (-1967.8 cm^-1), g_eff(3P_2) = 1.499997, niveles = 0.00 / 20.77 / 61.96 / 11127.33 / 24524.70
-- Silicio 3P: E_corr = -8.562860e-03 Ha (-1879.3 cm^-1), g_eff(3P_2) = 1.499903, niveles = 0.00 / 72.35 / 210.58 / 7285.25 / 14674.51
-- Silicio av: E_corr = -8.722626e-03 Ha (-1914.4 cm^-1), g_eff(3P_2) = 1.499906, niveles = 0.00 / 71.21 / 207.32 / 7276.55 / 14658.14
-- Germanio 3P: E_corr = -7.060409e-03 Ha (-1549.6 cm^-1), g_eff(3P_2) = 1.496164, niveles = 0.00 / 490.74 / 1257.58 / 7851.64 / 15780.18
-- Germanio av: E_corr = -7.219809e-03 Ha (-1584.6 cm^-1), g_eff(3P_2) = 1.496278, niveles = 0.00 / 481.99 / 1237.04 / 7828.27 / 15748.30
-- Estaño 3P: E_corr = -6.244565e-03 Ha (-1370.5 cm^-1), g_eff(3P_2) = 1.472668, niveles = 0.00 / 1367.10 / 2921.70 / 8710.14 / 16045.30
-- Estaño av: E_corr = -6.379331e-03 Ha (-1400.1 cm^-1), g_eff(3P_2) = 1.473394, niveles = 0.00 / 1343.57 / 2878.98 / 8659.29 / 15987.93
+- Carbono 3P m = 40: E_corr = -9.851678e-03 Ha (-2162.2 cm^-1), g(3P_2) con g_s = 2: 1.499996, con g_s real: 1.501156, niveles = 0.00 / 21.15 / 63.08 / 10810.12 / 23894.03
+- Silicio 3P m = 20: E_corr = -8.562860e-03 Ha (-1879.3 cm^-1), g(3P_2) con g_s = 2: 1.499903, con g_s real: 1.501063, niveles = 0.00 / 72.35 / 210.58 / 7285.25 / 14674.51
+- Germanio 3P m = 20: E_corr = -7.060409e-03 Ha (-1549.6 cm^-1), g(3P_2) con g_s = 2: 1.496164, con g_s real: 1.497315, niveles = 0.00 / 490.74 / 1257.58 / 7851.64 / 15780.18
+- Estaño 3P m = 20: E_corr = -6.244565e-03 Ha (-1370.5 cm^-1), g(3P_2) con g_s = 2: 1.472668, con g_s real: 1.473764, niveles = 0.00 / 1367.10 / 2921.70 / 8710.14 / 16045.30
+
+## Sensibilidad a la convencion de orbitales (alpha_d = 0, m = 20)
+
+- Carbono: av frente a 3P: 3P_1 -1.78%, 3P_2 -1.77%, 1D_2 -0.19%, 1S_0 -0.20%
+- Silicio: av frente a 3P: 3P_1 -1.58%, 3P_2 -1.55%, 1D_2 -0.12%, 1S_0 -0.11%
+- Germanio: av frente a 3P: 3P_1 -1.78%, 3P_2 -1.63%, 1D_2 -0.30%, 1S_0 -0.20%
+- Estaño: av frente a 3P: 3P_1 -1.72%, 3P_2 -1.46%, 1D_2 -0.58%, 1S_0 -0.36%
+
+## Convergencia de los singletes con el espacio activo (3P, alpha_d = 0)
+
+Con los tres ultimos tamanos de cada curva: extrapolacion geometrica (incrementos en razon constante) y de potencia (E(m) = E_inf + A m^-p, ajuste exacto). Una razon cercana a 1 hace inservible la geometrica.
+
+- Carbono 1D_2: m = 32, 36, 40 -> 10864.7, 10831.1, 10810.1 cm^-1 | geometrica 10775.4 (+5.7%, razon 0.62) | potencia 10758.2 (+5.5%, p = 3.2) | NIST 10192.7
+- Carbono 1S_0: m = 32, 36, 40 -> 23988.4, 23929.9, 23894.0 cm^-1 | geometrica 23836.8 (+10.1%, razon 0.61) | potencia 23809.4 (+10.0%, p = 3.4) | NIST 21648.0
+- Silicio 1D_2: m = 12, 16, 20 -> 7491.1, 7340.1, 7285.2 cm^-1 | geometrica 7254.0 (+15.2%, razon 0.36) | potencia 7225.8 (+14.7%, p = 2.9) | NIST 6298.9
+- Silicio 1S_0: m = 12, 16, 20 -> 14944.7, 14767.5, 14674.5 cm^-1 | geometrica 14571.6 (-5.3%, razon 0.53) | potencia 14443.0 (-6.2%, p = 1.5) | NIST 15394.4
+- Germanio 1D_2: m = 12, 16, 20 -> 8021.9, 7893.3, 7851.6 cm^-1 | geometrica 7831.7 (+9.9%, razon 0.32) | potencia 7814.3 (+9.7%, p = 3.4) | NIST 7125.3
+- Germanio 1S_0: m = 12, 16, 20 -> 16069.2, 15849.5, 15780.2 cm^-1 | geometrica 15748.2 (-3.8%, razon 0.32) | potencia 15720.6 (-4.0%, p = 3.5) | NIST 16367.3
+- Estaño 1D_2: m = 12, 16, 20 -> 8764.2, 8736.1, 8710.1 cm^-1 | geometrica 8388.8 (-2.6%, razon 0.93) | potencia no aplica | NIST 8613.0
+- Estaño 1S_0: m = 12, 16, 20 -> 16181.5, 16090.6, 16045.3 cm^-1 | geometrica 16000.4 (-6.8%, razon 0.50) | potencia 15948.6 (-7.1%, p = 1.7) | NIST 17162.5
 
 ## Barridos de V_pol: error frente al NIST
 

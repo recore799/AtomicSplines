@@ -25,20 +25,23 @@
 %   CI tin_rohf_results_3P_R30.0.jld2 m=12 (sha256 7db46b8f, commit 2479092)
 %   CI tin_rohf_results_3P_R30.0.jld2 m=16 (sha256 7db46b8f, commit 2479092)
 %   CI tin_rohf_results_3P_R30.0.jld2 m=20 (sha256 7db46b8f, commit 2479092)
-%   lmax = 3. t es incremental (cada tamano reutiliza las R^k del anterior) salvo donde resultados_ci.toml marca cache_heredada = false: primer tamano o corrida reanudada.
-\begin{tabular}{rrrrrrr}
+%   Niveles en cm^-1 desde 3P_0, lmax = 3. Las extrapolaciones estan en valores_texto.md.
+\begin{tabular}{rrrrrrrrr}
     \toprule
-    $m$ & Orbitales & CSF $^3P$ & $E_{\text{corr}}$ C (mHa) & $E_{\text{corr}}$ Si (mHa) & $E_{\text{corr}}$ Ge (mHa) & $E_{\text{corr}}$ Sn (mHa) \\
+     & \multicolumn{2}{c}{\textbf{Carbono}} & \multicolumn{2}{c}{\textbf{Silicio}} & \multicolumn{2}{c}{\textbf{Germanio}} & \multicolumn{2}{c}{\textbf{Estaño}} \\
+    $m$ & $^1D_2$ & $^1S_0$ & $^1D_2$ & $^1S_0$ & $^1D_2$ & $^1S_0$ & $^1D_2$ & $^1S_0$ \\
     \midrule
-    4 & 16 & 30 & -2.597 & -6.519 & -4.242 & -4.059 \\
-    8 & 32 & 108 & -4.274 & -7.722 & -5.774 & -5.407 \\
-    12 & 48 & 234 & -6.284 & -8.270 & -6.649 & -6.037 \\
-    16 & 64 & 408 & -7.773 & -8.468 & -6.968 & -6.190 \\
-    20 & 80 & 630 & -8.698 & -8.563 & -7.060 & -6.245 \\
-    24 & 96 & 900 & -9.232 & -- & -- & -- \\
-    28 & 112 & 1218 & -9.532 & -- & -- & -- \\
-    32 & 128 & 1584 & -9.700 & -- & -- & -- \\
-    36 & 144 & 1998 & -9.795 & -- & -- & -- \\
-    40 & 160 & 2460 & -9.852 & -- & -- & -- \\
+    4 & 12128.9 & 28259.0 & 8191.3 & 15993.8 & 8740.4 & 17631.6 & 9371.3 & 17508.5 \\
+    8 & 11901.5 & 27160.7 & 7803.5 & 15311.1 & 8320.6 & 16643.2 & 8920.3 & 16592.6 \\
+    12 & 11609.6 & 25965.5 & 7491.1 & 14944.7 & 8021.9 & 16069.2 & 8764.2 & 16181.5 \\
+    16 & 11349.0 & 25107.2 & 7340.1 & 14767.5 & 7893.3 & 15849.5 & 8736.1 & 16090.6 \\
+    20 & 11148.4 & 24574.8 & 7285.2 & 14674.5 & 7851.6 & 15780.2 & 8710.1 & 16045.3 \\
+    24 & 11009.4 & 24265.0 & -- & -- & -- & -- & -- & -- \\
+    28 & 10919.9 & 24088.8 & -- & -- & -- & -- & -- & -- \\
+    32 & 10864.7 & 23988.4 & -- & -- & -- & -- & -- & -- \\
+    36 & 10831.1 & 23929.9 & -- & -- & -- & -- & -- & -- \\
+    40 & 10810.1 & 23894.0 & -- & -- & -- & -- & -- & -- \\
+    \midrule
+    NIST & 10192.7 & 21648.0 & 6298.9 & 15394.4 & 7125.3 & 16367.3 & 8613.0 & 17162.5 \\
     \bottomrule
 \end{tabular}

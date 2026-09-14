@@ -94,18 +94,17 @@ const G_S = 2.00231930436256
 # tab:momentos_inversos y tab:integrales_slater); el usuario tomo del libro el 2026-09-13:
 #   - F2(4p,4p) del Ge = 0.16271717 (la tesis imprimia 0.16593265, copia del de Si);
 #   - virial del Sn = 2.0000000019 (la tesis lo tenia corrido a la columna Delta);
-#   - zeta(2p) del C = 31.946 cm^-1 (sin confirmar si es el de Blume-Watson).
-# POR VERIFICAR en el libro: el F0(4p,4p) del Ge (0.32624597) difiere 9.7e-3 del calculado,
-# cuando su F2 coincide a 7e-6 y los F0 de Si y Sn a ~1e-5, asi que probablemente es otra
-# transcripcion equivocada. Los <r^-3> de Si, Ge y Sn difieren 0.2-0.3 %; puede ser la malla
-# cerca del nucleo o transcripcion.
+#   - zeta(2p) del C = 31.946 cm^-1 (sin confirmar si es el de Blume-Watson);
+#   - F0(4p,4p) del Ge = 0.31650656 (la tesis imprimia 0.32624597, que no sale del libro);
+#   - los <r^-3> de Si (2.05423), Ge (4.80120) y Sn (6.83248), confirmados: su diferencia de
+#     0.2-0.3 % con los calculados no es de transcripcion.
 const FF = Dict(
     "C"  => (E = "-37.688619", T = "37.688619", virial = "1.999999998",
              r3 = "1.69181", F0 = "0.53860360", F2 = "0.24330170", zeta = "31.946"),
     "Si" => (E = "-288.85436", T = "288.85437", virial = "1.999999965",
              r3 = "2.05423", F0 = "0.32971786", F2 = "0.16593265", zeta = nothing),
     "Ge" => (E = "-2075.3597", T = "2075.3597", virial = "2.00000005",
-             r3 = "4.80120", F0 = "0.32624597", F2 = "0.16271717", zeta = nothing),
+             r3 = "4.80120", F0 = "0.31650656", F2 = "0.16271717", zeta = nothing),
     "Sn" => (E = "-6022.9317", T = "6022.9316", virial = "2.0000000019",
              r3 = "6.83248", F0 = "0.27875374", F2 = "0.14722241", zeta = nothing),
 )

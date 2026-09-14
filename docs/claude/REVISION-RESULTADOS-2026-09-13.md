@@ -13,8 +13,8 @@ extrapolaciones) dicen cómo se obtuvieron.
   - Los 9 SCF convergieron con C-DIIS y las 18 autoverificaciones del CI pasan.
   - A m = 20 el HF+CI reproduce exactamente el log del 07-09.
   - La etapa 3 es reproducible y solo deja vacías las celdas de literatura.
-- **Queda un punto abierto del lado del cálculo:** los singletes del carbono no están
-  convergidos a m = 20 (sección 2.2).
+- **El punto abierto del lado del cálculo quedó cerrado:** los singletes del carbono no estaban
+  convergidos a m = 20; con la curva hasta m = 40 lo están (sección 2.2).
 - **Tres afirmaciones de la tesis se invierten con los números nuevos** (sección 3): el sentido de
   V_pol, la ionización con V_pol y la tensión del barrido del estaño. Una cuarta cambia de
   explicación: la brecha del factor g del germanio existe, pero no la cierra el CI (sección 2.6,
@@ -28,9 +28,9 @@ extrapolaciones) dicen cómo se obtuvieron.
 |---|---|
 | SCF de la etapa 1 | 9/9 con C-DIIS, sin caer al respaldo; Ge en 65–69 iteraciones (~1.5 min), Sn en 35–39 (~3.5 min) |
 | manifiesto | 25/25; el diff solo agrega las 9 entradas |
-| autoverificación del CI | 18/18 pasan T1–T4 |
-| raíces | 34/34 en [1, 1, 1] |
-| procedencia | las 34 corridas, con el código de `2479092` sin cambios |
+| autoverificación del CI | 19/19 pasan T1–T4 |
+| raíces | 39/39 en [1, 1, 1] |
+| procedencia | 34 corridas con el código de `2479092` y las 5 del carbono (m = 24–40) con `6dfb84b`, sin cambios |
 | reproducibilidad | a m = 20 y sin V_pol, E_corr y ³P₂ idénticos al log del 07-09 en los cuatro elementos |
 | etapa 3 | sin celdas faltantes salvo las de literatura; volver a correrla da archivos idénticos |
 
@@ -38,37 +38,41 @@ extrapolaciones) dicen cómo se obtuvieron.
 
 ## 2. Qué dicen los números
 
-### 2.1 Estructura fina sin V_pol (m = 20, error frente al NIST)
+### 2.1 Estructura fina sin V_pol (m de producción: 40 en C y 20 en el resto; error frente al NIST)
 
 | | ³P₁ | ³P₂ | ¹D₂ | ¹S₀ |
 |---|---|---|---|---|
-| C | +28.9 % | +45.3 % | +9.4 % | +13.5 % |
+| C | +28.9 % | +45.3 % | +6.1 % | +10.4 % |
 | Si | −6.2 % | −5.7 % | +15.7 % | −4.7 % |
 | Ge | −11.9 % | −10.8 % | +10.2 % | −3.6 % |
 | Sn | −19.2 % | −14.8 % | +1.1 % | −6.5 % |
 
 Los ³P_J están convergidos en el espacio activo: el ³P₂ del carbono se mueve 0.13 cm⁻¹ de m = 4
-a m = 20. Su error sigue la razón de ζ (`PLAN-REGENERACION.md` §6).
+a m = 40. Su error sigue la razón de ζ (`PLAN-REGENERACION.md` §6).
 
 ### 2.2 Convergencia de los singletes
 
-Extrapolación geométrica con los incrementos de m = 12 → 16 → 20:
+Extrapolación geométrica con los incrementos de los tres últimos tamaños de cada curva
+(m = 32 → 36 → 40 en el carbono; m = 12 → 16 → 20 en el resto):
 
-| | ¹D₂ a m = 20 | cola | ¹S₀ a m = 20 | cola |
+| | ¹D₂ en el m de producción | cola | ¹S₀ en el m de producción | cola |
 |---|---|---|---|---|
-| C | 11148.4 | −671 | 24574.8 | −870 |
-| Si | 7285.2 | −31 | 14674.5 | −103 |
-| Ge | 7851.6 | −20 | 15780.2 | −32 |
-| Sn | 8710.1 | no fiable (razón 0.93) | 16045.3 | −45 |
+| C (m = 40) | 10810.1 | −35 | 23894.0 | −57 |
+| Si (m = 20) | 7285.2 | −31 | 14674.5 | −103 |
+| Ge (m = 20) | 7851.6 | −20 | 15780.2 | −32 |
+| Sn (m = 20) | 8710.1 | no fiable (razón 0.93) | 16045.3 | −45 |
 
-- **Si, Ge y Sn están convergidos:** les falta del orden de 100 cm⁻¹ o menos.
-- **El carbono no.** A m = 20 el ¹D₂ todavía baja 200 cm⁻¹ por paso y el ¹S₀, 530.
-  - Extrapolados, ¹D₂ ≈ 10 480 cm⁻¹ (+2.8 %) y ¹S₀ ≈ 23 700 (+9.5 %).
-  - Es el patrón que predice la casi-degeneración ns² ↔ np²: el ¹D₂ se acerca al NIST y el ¹S₀ se
-    queda alto.
-  - Pero es una extrapolación, y la tesis quiere afirmarlo (ver sección 4.1).
-  - Las dos extrapolaciones del ¹S₀ del carbono discrepan: +9.5 % la geométrica y +2.1 % la de
-    potencia (`valores_texto.md`). Por eso su curva se extiende hasta m = 40 (sección 6.2).
+- **Los cuatro elementos están convergidos:** les falta del orden de 100 cm⁻¹ o menos.
+- **El carbono necesitó llegar a m = 40.** Con m ≤ 20 sus dos extrapolaciones del ¹S₀ discrepaban
+  (+9.5 % y +2.1 %) y la del ¹D₂ daba +2.8 %. Con la curva completa:
+  - la razón entre incrementos sucesivos se estabiliza en ~0.6 desde m = 24, para los dos
+    singletes y para E_corr, y las extrapolaciones geométrica y de potencia coinciden;
+  - ¹D₂ → 10 760–10 775 cm⁻¹ (+5.6 %), ¹S₀ → 23 810–23 840 (+10.0 %) y E_corr → −9.93 mHa;
+  - a m = 20 el ¹D₂ todavía estaba 340 cm⁻¹ y el ¹S₀ 680 cm⁻¹ por encima de su valor a m = 40.
+- **Lectura física:** los dos singletes del carbono se quedan altos, y el ¹S₀ el doble que el ¹D₂.
+  Es el patrón de la casi-degeneración ns² ↔ np², que el modelo de pareja con core congelado no
+  contiene y que deprime específicamente al ¹S (`HALLAZGOS-2026-09-06.md` §4). El ¹D₂ residual
+  apunta a correlación que el modelo tampoco contiene, la de las parejas que incluyen al 2s.
 
 ### 2.3 Sensibilidad ³P frente a promedio de configuración (m = 20)
 
@@ -104,10 +108,10 @@ los errores son con el α_d elegido.
 
 | | −ε | error | CI (ΔE) | error | + V_pol | error |
 |---|---|---|---|---|---|---|
-| C | 11.79 | +4.7 % | 12.03 | +6.8 % | | |
-| Si | 8.08 | −0.8 % | 8.32 | +2.1 % | | |
+| C | 11.79 | +4.7 % | 12.06 | +7.1 % | | |
+| Si | 8.08 | −0.8 % | 8.32 | +2.0 % | | |
 | Ge | 7.82 | −1.0 % | 8.01 | +1.4 % | 8.28 | +4.8 % |
-| Sn | 7.21 | −1.7 % | 7.38 | +0.6 % | 7.96 | +8.4 % |
+| Sn | 7.21 | −1.8 % | 7.38 | +0.5 % | 7.96 | +8.4 % |
 
 - **Con −ε del ³P el error ya es menor que 2 % en Si, Ge y Sn.** La corrección CI (~0.2 eV) empuja
   todo hacia arriba y sobrestima, salvo en el estaño.
@@ -182,8 +186,8 @@ Contenido nuevo que ya tiene sus números:
 
 Estado al cierre del 2026-09-13; el detalle está en la sección 6.
 
-1. **Carbono con m > 20: decidido, ampliar.** Su curva sigue hasta m = 40, que pasa a ser su m de
-   producción (`tesis/config.jl`). Falta correrla.
+1. **Carbono con m > 20: hecho.** Su curva llega a m = 40, que es su m de producción, y está
+   convergida (sección 2.2).
 2. **Figura de niveles: hecho.** Germanio y estaño muestran HF+CI, CI+V_pol y NIST, con el α_d
    elegido en el título del panel.
 3. **Literatura:**
@@ -237,9 +241,9 @@ entrada `NIST_ASD` quedó en `docs/bib/bibliografia.bib`.
   - `convergencia_singletes.tex` y `convergencia_singletes.pdf`;
   - en `valores_texto.md`, dos extrapolaciones (geométrica y de potencia) con los tres últimos
     tamaños.
-- **Qué decide la corrida:** con m ≤ 20 las dos extrapolaciones del ¹S₀ del carbono discrepan
-  (+9.5 % frente a +2.1 %). Con m = 40 se verá si el ¹S₀ se queda alto, que es lo que la tesis
-  quiere afirmar.
+- **Resultado de la corrida** (13-09, código `6dfb84b`): T1–T4 pasan, las raíces son la más baja y
+  la curva tardó ~39 min. El ¹S₀ se queda alto (+10 % convergido) y el ¹D₂ también, pero a la
+  mitad (+5.6 %). La afirmación de la tesis se sostiene con un carbono convergido (sección 2.2).
 
 ### 6.3 Literatura
 

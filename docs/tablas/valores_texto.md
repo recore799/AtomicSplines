@@ -13,6 +13,7 @@ Convencion de orbitales: 3P (sensibilidad: av a m = 20); lmax = 3; m de producci
 ## zeta y F^2 (cm^-1)
 
 - Carbono: zeta(3P) = 42.216, zeta(av) = 41.480 (razon 1.0178), F^2 = 53398.6
+  - zeta de Froese Fischer: 31.946 cm^-1
 - Silicio: zeta(3P) = 140.992, zeta(av) = 138.903 (razon 1.0150), F^2 = 36421.4
 - Germanio: zeta(3P) = 823.671, zeta(av) = 810.736 (razon 1.0160), F^2 = 35713.9
 - Estaño: zeta(3P) = 1885.936, zeta(av) = 1858.739 (razon 1.0146), F^2 = 32313.7

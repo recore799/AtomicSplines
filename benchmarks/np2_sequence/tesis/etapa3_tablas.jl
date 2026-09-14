@@ -451,6 +451,7 @@ function valores_texto(HF, ZETA_SENS)
         h = HF[el]
         @printf(io, "- %s: zeta(%s) = %.3f, zeta(%s) = %.3f (razon %.4f), F^2 = %.1f\n", INFO[el].etiqueta,
                 ESTADO, h.zeta * HA2CM, ESTADO_SENSIBILIDAD, ZETA_SENS[el] * HA2CM, h.zeta / ZETA_SENS[el], h.F2 * HA2CM)
+        FF[el].zeta === nothing || @printf(io, "  - zeta de Froese Fischer: %s cm^-1\n", FF[el].zeta)
     end
     println(io, "\n## zeta que pide el NIST con una sola zeta (Breit-Pauli p^2 sin CI)\n")
     for el in ELEMENTOS

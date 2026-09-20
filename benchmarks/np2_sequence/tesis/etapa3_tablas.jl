@@ -162,14 +162,16 @@ end
 
 function tabla_niveles(els, con_vpol::Bool)
     io = IOBuffer(); proc = String[]
-    cols = con_vpol ? 3 : 2
+    # Por elemento: HF+CI, err, [CI+Vpol, err,] NIST
+    cols = con_vpol ? 5 : 3
+    println(io, con_vpol ? raw"\small" : "")
     println(io, "\\begin{tabular}{l|", join(fill("r"^cols, length(els)), "|"), "}")
     println(io, raw"    \toprule")
     enc = ["\\multicolumn{$cols}{c$(i < length(els) ? "|" : "")}{\\textbf{$(INFO[el].etiqueta) ($(el) I)}}"
            for (i, el) in enumerate(els)]
     linea(io, "", enc...)
-    sub = con_vpol ? [raw"\textbf{HF+CI}", raw"\textbf{CI+$V_{\text{pol}}$}", raw"\textbf{NIST}"] :
-                     [raw"\textbf{HF+CI}", raw"\textbf{NIST}"]
+    sub = con_vpol ? [raw"\textbf{HF+CI}", raw"$\Delta$", raw"\textbf{CI+$V_{\text{pol}}$}", raw"$\Delta$", raw"\textbf{NIST}"] :
+                     [raw"\textbf{HF+CI}", raw"$\Delta$", raw"\textbf{NIST}"]
     linea(io, raw"\textbf{Término}", repeat(sub, length(els))...)
     println(io, raw"    \midrule")
     datos = Dict{String,Any}()
@@ -186,17 +188,25 @@ function tabla_niveles(els, con_vpol::Bool)
         end
         datos[el] = (e0, ev)
     end
+    # Error relativo al NIST; el 3P_0 es la referencia (0 cm^-1) y no admite error relativo.
+    err(v, ref) = (v === nothing || ref == 0.0) ? "--" : @sprintf("%+.1f\\%%", 100 * (v - ref) / ref)
     for (t, nombre) in enumerate(TERMINOS)
         celdas = String[]
         for el in els
             e0, ev = datos[el]
+            ref = NIST_NIVELES[el][t]
             push!(celdas, e0 === nothing ? "--" : fmt(e0["niveles_cm"][t], 1))
-            con_vpol && push!(celdas, ev === nothing ? "--" : fmt(ev["niveles_cm"][t], 1))
-            push!(celdas, fmt(NIST_NIVELES[el][t], 1))
+            push!(celdas, err(e0 === nothing ? nothing : e0["niveles_cm"][t], ref))
+            if con_vpol
+                push!(celdas, ev === nothing ? "--" : fmt(ev["niveles_cm"][t], 1))
+                push!(celdas, err(ev === nothing ? nothing : ev["niveles_cm"][t], ref))
+            end
+            push!(celdas, fmt(ref, 1))
         end
         linea(io, nombre, celdas...)
     end
     println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
+    push!(proc, "Delta = error relativo frente al NIST, en por ciento. El 3P_0 es el origen de la escala.")
     return String(take!(io)), proc
 end
 

@@ -32,6 +32,16 @@ Convencion de orbitales: 3P (sensibilidad: av a m = 20); lmax = 3; m de producci
 - Germanio: zeta = 924.5, D = 1.37
 - Estaño: zeta = 2265.4, D = 8.18
 
+## Escalamiento con Z: ajuste de ley de potencias y = A Z^p
+
+Minimos cuadrados de log y frente a log Z con los cuatro elementos (Z = 6, 14, 32, 50), y exponente local entre elementos consecutivos. zeta y F^2 en cm^-1, <r^-3> en a0^-3.
+
+- zeta calculado: p = 1.82 (R^2 = 0.9924); local Carbono->Silicio 1.42, Silicio->Germanio 2.14, Germanio->Estaño 1.86
+- zeta desnudo: p = 1.69 (R^2 = 0.9882); local Carbono->Silicio 1.23, Silicio->Germanio 2.03, Germanio->Estaño 1.79
+- zeta que pide el NIST: p = 2.07 (R^2 = 0.9992); local Carbono->Silicio 1.93, Silicio->Germanio 2.21, Germanio->Estaño 1.99
+- <r^-3>: p = 0.69 (R^2 = 0.9330); local Carbono->Silicio 0.23, Silicio->Germanio 1.03, Germanio->Estaño 0.79
+- F^2(np,np): p = -0.22 (R^2 = 0.8413); local Carbono->Silicio -0.45, Silicio->Germanio -0.02, Germanio->Estaño -0.22
+
 ## CI de valencia (alpha_d = 0, m de produccion)
 
 - Carbono 3P m = 40: E_corr = -9.851678e-03 Ha (-2162.2 cm^-1), g(3P_2) con g_s = 2: 1.499996, con g_s real: 1.501156, niveles = 0.00 / 21.15 / 63.08 / 10810.12 / 23894.03

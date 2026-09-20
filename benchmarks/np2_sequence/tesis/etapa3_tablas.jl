@@ -390,6 +390,19 @@ function tabla_lande()
     return String(take!(io)), proc
 end
 
+"""Ley de potencias y = A Z^p por minimos cuadrados sobre log-log, con su R^2."""
+function ajuste_potencia_Z(Zs, ys)
+    x, y = log.(Zs), log.(ys)
+    mx, my = sum(x) / length(x), sum(y) / length(y)
+    p = sum((x .- mx) .* (y .- my)) / sum((x .- mx) .^ 2)
+    res = y .- (my .+ p .* (x .- mx))
+    tot = y .- my
+    return (p = p, A = exp(my - p * mx), R2 = 1 - sum(res .^ 2) / sum(tot .^ 2))
+end
+
+"""Exponente local entre elementos consecutivos: log(y2/y1) / log(Z2/Z1)."""
+exponentes_locales(Zs, ys) = [log(ys[i + 1] / ys[i]) / log(Zs[i + 1] / Zs[i]) for i in 1:length(Zs) - 1]
+
 """Limite si los incrementos siguen en razon constante; nothing si la razon no esta en (0, 1)."""
 function extrap_geometrica(y)
     d1, d2 = y[2] - y[1], y[3] - y[2]
@@ -465,6 +478,24 @@ function valores_texto(HF, ZETA_SENS)
         t = zeta_nist_tensorial(el)
         @printf(io, "- %s: zeta = %.1f, D = %.2f\n", INFO[el].etiqueta, t.zeta, t.D)
     end
+    println(io, "\n## Escalamiento con Z: ajuste de ley de potencias y = A Z^p\n")
+    println(io, "Minimos cuadrados de log y frente a log Z con los cuatro elementos (Z = 6, 14, 32, 50), ",
+            "y exponente local entre elementos consecutivos. zeta y F^2 en cm^-1, <r^-3> en a0^-3.\n")
+    let Zs = [INFO[el].Z for el in ELEMENTOS]
+        series = ["zeta calculado"  => [HF[el].zeta * HA2CM for el in ELEMENTOS],
+                  "zeta desnudo"    => [ALFA^2 / 2 * INFO[el].Z * HF[el].r3 * HA2CM for el in ELEMENTOS],
+                  "zeta que pide el NIST" => [zeta_nist(el).zeta for el in ELEMENTOS],
+                  "<r^-3>"          => [HF[el].r3 for el in ELEMENTOS],
+                  "F^2(np,np)"      => [HF[el].F2 * HA2CM for el in ELEMENTOS]]
+        for (nombre, ys) in series
+            a = ajuste_potencia_Z(Zs, ys)
+            loc = exponentes_locales(Zs, ys)
+            @printf(io, "- %s: p = %.2f (R^2 = %.4f); local %s\n", nombre, a.p, a.R2,
+                    join([@sprintf("%s->%s %.2f", INFO[ELEMENTOS[i]].etiqueta,
+                                   INFO[ELEMENTOS[i + 1]].etiqueta, loc[i]) for i in eachindex(loc)], ", "))
+        end
+    end
+
     println(io, "\n## CI de valencia (alpha_d = 0, m de produccion)\n")
     for el in ELEMENTOS
         e = ci_de(el, ESTADO, 0.0)

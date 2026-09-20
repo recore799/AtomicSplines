@@ -175,15 +175,16 @@ donde $\bm{V}^{(2)}$ es la matriz del operador $r^{-2}$. Esta matriz depende exc
 
 que nuestra implementación calcula una sola vez para cada multipolo $k$ requerido y conserva en memoria durante todo el ciclo. En las iteraciones subsecuentes, obtener el potencial se reduce a dos sustituciones triangulares sobre la factorización ya conocida, de costo lineal en el número de splines por tratarse de un sistema bandado.
 
-Resta imponer las condiciones de frontera. El potencial satisface condiciones de Dirichlet $y(0) = 0$ y $y(R_{\text{max}}) = q_{\text{enc}}$, donde $q_{\text{enc}}$ es la carga encerrada dada por la Ec. (\ref{eq:bc-metodo}). Aquí resulta útil una propiedad de la base: con un vector de nudos apretado, el primer y el último spline son los únicos con valor no nulo en los extremos del dominio, de modo que el valor de frontera queda asociado a un único coeficiente. Esto permite particionar el sistema entre los índices internos $\Omega_{\text{in}}$ y el índice de frontera $N$, y pasar el término conocido al lado derecho:
+Resta imponer las condiciones de frontera, y la base de B-splines permite hacerlo sin añadir ecuaciones al sistema. En el origen, el comportamiento $Y^k(r) \sim r^{k+1}$ deducido en el Apéndice \ref{ap:galerkin-poisson} se impone de manera exacta restringiendo el sistema a los splines con índice mayor que $k+1$, ya que son precisamente los primeros $k+1$ los que tienen valor o derivadas no nulas en $r=0$. La condición no se aplica entonces como una ecuación adicional sino eliminando del espacio de prueba las funciones que la violarían, lo que además reduce el tamaño del sistema en lugar de aumentarlo.
+
+En el extremo exterior la situación es distinta, porque el valor del potencial en $R_{\text{max}}$ no se conoce de antemano: depende del momento multipolar $M_k$ de la densidad, que es justamente parte de lo que se está calculando. Lo que sí se conoce es la forma de la cola, $Y^k \to M_k r^{-k}$, y derivarla elimina la constante desconocida:
 
 \begin{equation}
-\label{eq:lifting}
-  \bm{A}_{\text{in},\text{in}}\, \bm{y}_{\text{in}} = \bm{b}_{\text{in}} - \bm{A}_{\text{in},N}\, q_{\text{enc}}.
+\label{eq:robin}
+  \left. \dv{Y^k}{r} \right|_{R_{\text{max}}} + \frac{k}{R_{\text{max}}}\, Y^k(R_{\text{max}}) = 0 .
 \end{equation}
 
-\todo{Falta la cita de elementos finitos para \emph{lifting}/condensación estática. La bibliografía actual no tiene ningún texto de FEM: hay que agregar uno (p.ej. un Zienkiewicz o un Strang-Fix) a docs/bib/bibliografia.bib antes de citarlo aquí.}
-Esta técnica, conocida en elementos finitos como \textit{lifting} o condensación estática, garantiza que la solución cumpla exactamente la condición asintótica, sin recurrir a términos de penalización ni modificar el tamaño del sistema.
+La Ecuación \eqref{eq:robin} es una condición de Robin, y su virtud práctica es que en la formulación débil el término de borde se traduce en sumar $k/R_{\text{max}}$ a un único elemento diagonal de $\bm{A}^{(k)}$, el último. La matriz permanece simétrica y definida positiva, de modo que la factorización de Cholesky sigue siendo válida y el potencial ajusta su propia normalización sin que haya que suministrarla. Para el monopolo la condición degenera en una de Neumann, $\dd Y^0/\dd r = 0$, que es la condición natural de la formulación débil y que reproduce correctamente el límite $Y^0 \to M_0$ constante.
 
 Con estos elementos, cada iteración del ciclo autoconsistente se reduce a contraer $\mathbf{W}$ con la matriz de densidad para formar los términos fuente, resolver los sistemas de Poisson mediante sustitución triangular sobre las factorizaciones precalculadas, ensamblar la matriz de Fock y diagonalizarla. El detalle algorítmico de esta arquitectura ---el kernel de evaluación de la base, el ensamblaje por elementos finitos y la organización de los precálculos en memoria--- se documenta en el Apéndice \ref{ap:bsplines}.
 

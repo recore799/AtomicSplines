@@ -1,11 +1,9 @@
 \chapter{Método Numérico: B-splines y el método de Galerkin}
 \label{ch:bsplines-galerkin}
 
-\todo{buscar referencias para las STOs y GTOs (probablemente del Szabo) y buscar referencia para la condicion de Kato}
-Para resolver numéricamente las ecuaciones integro-diferenciales de Hartree-Fock descritas en el capítulo anterior, es necesario proyectar las funciones de onda radiales incógnitas $P_a(r)$ sobre un conjunto base finito. Tradicionalmente, la química cuántica ha dependido de bases polinómicas globales como los Orbitales de Tipo Slater (STO) o las funciones Gaussianas (GTO). Si bien estas bases son eficientes para ciertos cálculos, sufren de limitaciones críticas: la sobrecompletitud, que genera problemas de dependencia lineal, y una representación deficiente en las regiones muy cercanas al núcleo o en las colas asintóticas.
+Para resolver numéricamente las ecuaciones integro-diferenciales de Hartree-Fock descritas en el capítulo anterior, es necesario proyectar las funciones de onda radiales incógnitas $P_a(r)$ sobre un conjunto base finito. Tradicionalmente, la química cuántica ha dependido de bases polinómicas globales como los Orbitales de Tipo Slater (STO) o las funciones Gaussianas (GTO), cuya construcción y propiedades se exponen en detalle en \cite{Szabo1989}. Si bien estas bases son eficientes para ciertos cálculos, presentan dos limitaciones para el problema que nos ocupa. La primera es la casi dependencia lineal que aparece al ampliarlas, ya que sus funciones no son ortogonales y el solapamiento entre ellas degrada el condicionamiento del problema generalizado de eigenvalores. La segunda es de forma: una base de gaussianas tiene derivada nula en el origen y no puede reproducir la cúspide que la solución exacta presenta en el núcleo, mientras que ambas familias describen mal las colas asintóticas, que es justamente donde reside la densidad de valencia de los elementos pesados.
 
-\todo{insertar cita a bachau donde digo precision de maquina}
-Para superar estos problemas, en este trabajo empleamos una base de funciones localizadas conocida como polinomios B-splines \cite{deBoor1978}. A diferencia de las representaciones polinómicas globales, los B-splines ofrecen una flexibilidad local controlada, un soporte riguroso capaz de aproximar orbitales con precisión casi ilimitada (alcanzando precisiones de máquina), y una discretización altamente eficaz del continuo atómico.
+Para superar estos problemas, en este trabajo empleamos una base de funciones localizadas conocida como polinomios B-splines \cite{deBoor1978}. A diferencia de las representaciones polinómicas globales, los B-splines ofrecen una flexibilidad local controlada, un soporte capaz de aproximar orbitales hasta alcanzar la precisión de la aritmética de máquina \cite{Bachau2001}, y una discretización eficaz del continuo atómico.
 
 \section{Fundamentos de los B-splines}
 
@@ -42,7 +40,8 @@ Esta localidad tiene dos consecuencias críticas:
     \item \textbf{Matrices Banda:} Al integrar el producto de dos funciones base, $\int B_i(r) B_j(r) dr$, el resultado es distinto de cero solo si sus soportes se intersectan ($|i-j| \leq p$). Las matrices resultantes (solapamiento, energía cinética) no son densas, sino matrices de banda (\textit{banded matrices}). Esto reduce drásticamente el costo computacional de almacenamiento y resolución del sistema lineal de $O(N^3)$ a $O(N)$, permitiendo usar mallas de altísima resolución.
     \item \textbf{Control Local:} La alteración de un coeficiente $c_k$ en la expansión de la función de onda altera la curva \textit{exclusivamente} dentro de su región de influencia local $[t_k, t_{k+p+1})$. Esto permite capturar detalles muy finos (como la cúspide nuclear) sin inducir oscilaciones espurias (fenómeno de Runge) en otras regiones del dominio, otorgando una robustez muy superior a las bases globales (ver Figura \ref{fig:control_local_fem}).
 \end{enumerate}
-\todo{aqui serviria una referencia tanto al paper de Bachau, como a algo que describa el fenomeno de Runge}
+
+Ambas propiedades son las que motivan el uso de esta base en física atómica, y la revisión de Bachau y colaboradores \cite{Bachau2001} documenta con detalle su aplicación a problemas de estructura y de continuo. El fenómeno de Runge que el control local evita, consistente en la aparición de oscilaciones de amplitud creciente cerca de los extremos del dominio al elevar el grado de un interpolante polinómico global, es un resultado clásico del análisis numérico cuyo tratamiento en el contexto de splines puede consultarse en \cite{deBoor1978}.
 
 \begin{figure}[htbp]
     \centering

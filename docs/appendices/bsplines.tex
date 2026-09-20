@@ -115,7 +115,7 @@ Una consecuencia directa de la propiedad de soporte compacto es el control local
   S(x) = \sum_ic_iB_i^p(x),
 \end{equation}
 
-donde los coeficientes \( c_i \) poseen una interpretación geométrica directa: actúan como puntos de control que "atraen" la curva hacia ellos. Esta es una diferencia fundamental respecto a las bases polinómicas globales (como la interpolación de Lagrange o bases ortogonales de Legendre), donde la alteración de un sólo coeficiente \( c_k \) induce oscilaciones que se propagan a lo largo de todo el dominio \( \Omega \).
+donde los coeficientes \( c_i \) poseen una interpretación geométrica directa: actúan como puntos de control que ``atraen'' la curva hacia ellos. Esta es una diferencia fundamental respecto a las bases polinómicas globales (como la interpolación de Lagrange o bases ortogonales de Legendre), donde la alteración de un sólo coeficiente \( c_k \) induce oscilaciones que se propagan a lo largo de todo el dominio \( \Omega \).
 
 En el esquema B-spline, si se perturba un coeficiente \( c_k \), la modificación de la función \( S(x) \) queda estrictamente confinada al soporte de la función base asociada, es decir, al intervalo \( [t_k,t_{k+p+1}) \). Fuera de este subdominio, la función permanece inalterada.
 
@@ -441,8 +441,7 @@ function assemble_geometry(basis::BSplineBasis{K}, Z::Float64) where {K}
 end
 \end{lstlisting}
 
-\todo{lista repetida: no se cual es mejor. En el diseno final no utilice bandedmatrices.jl porque tenian mucho overhead para el tamano de mis matrices}
-Se destacan tres aspectos de eficiencia en este diseño:
+Se destacan tres aspectos de eficiencia en este diseño, todos ellos internos al bucle de ensamblaje; la organización de más alto nivel se resume al cierre del apéndice:
 
 \begin{enumerate}
     \item \textbf{Localidad Temporal:} Los valores de la base (\texttt{vals}) y sus derivadas (\texttt{derivs}) se calculan una sola vez y residen en los registros de la CPU mientras se distribuyen a cinco destinos diferentes (\(\mathbf{S}, \mathbf{T}, \mathbf{V}, \mathbf{V}^{(2)}, \mathbf{W}\)). Esto amortiza completamente el costo de la evaluación de B-splines.
@@ -471,7 +470,7 @@ La eficiencia de este fragmento descansa en tres decisiones de diseño específi
 
 Construido el término fuente mediante la contracción del tensor \( \mathbf{W} \), resta invertir el operador de Poisson \( \bm{A}^{(k)} = 2\bm{T} + k(k+1)\bm{V}^{(2)} \) introducido en la Sección \ref{sec:estructura-algebraica}. Dado que \( \bm{A}^{(k)} \) es independiente de la densidad electrónica, su descomposición de Cholesky se calcula la primera vez que el ciclo requiere un multipolo de orden \( k \) y el objeto de factorización se almacena en el mismo espacio de trabajo donde residen los demás precálculos. En todas las iteraciones subsecuentes, la resolución del sistema \( \bm{A}^{(k)}\bm{y} = \bm{b} \) se reduce a dos sustituciones triangulares (hacia adelante y hacia atrás) de costo \( \order{N^2} \), en lugar del costo cúbico de refactorizar en cada paso.
 
-La imposición de las condiciones de frontera mediante \textit{lifting} (Ec. \ref{eq:lifting}) se aplica de forma vectorizada sobre el vector fuente antes de invocar al solucionador de Cholesky, dentro de la rutina \texttt{solve\_generalized\_poisson}. Esto garantiza que la solución cumpla exactamente la condición asintótica sin ampliar el tamaño del sistema ni introducir penalizaciones numéricas.
+Las condiciones de frontera se imponen sin tocar el vector fuente. La del origen se aplica restringiendo el sistema a los splines de índice mayor que $k+1$, y la del extremo exterior sumando el término de Robin de la Ecuación \eqref{eq:bc-robin} al último elemento diagonal de la matriz del operador, una sola vez al construir la factorización. Como ninguna de las dos altera la simetría ni el carácter definido positivo, la descomposición de Cholesky se calcula una vez por multipolo y se reutiliza durante todo el ciclo, y el sistema resuelto es menor que el original en lugar de mayor.
 
 \subsection{Conclusión}
 
@@ -483,8 +482,9 @@ La arquitectura documentada en este apéndice descansa sobre tres niveles jerár
     \item A nivel \textbf{geométrico}, los tensores de colocación (\( \bm{E} \)) e interacción (\( \mathbf{W} \)) introducidos en la Sección \ref{sec:estructura-algebraica} desacoplan la geometría de la malla de la física del ciclo SCF; aquí se traducen en tensores locales por elemento y en factorizaciones almacenadas en caché.
 \end{itemize}
 
-\todo{se me olvida cual es la distincion entre los niveles de BLAS, tal vez poner una tabla?}
-El resultado es un solucionador donde el ciclo autoconsistente está dominado casi exclusivamente por operaciones BLAS de nivel 2 y 3. Esta infraestructura permite alcanzar la precisión numérica característica de los B-splines con un costo computacional que escala favorablemente para sistemas atómicos de gran tamaño, estableciendo la base sobre la que se construyen los cálculos de interacción de configuraciones y de estructura fina presentados en este trabajo.
+El resultado es un solucionador donde el ciclo autoconsistente está dominado casi exclusivamente por operaciones BLAS de niveles 2 y 3. La distinción entre los tres niveles de esa biblioteca es la razón por la que esto importa, y se refiere a la relación entre el trabajo aritmético que realiza una rutina y el volumen de datos que debe mover desde memoria. Las de nivel 1 operan entre vectores y ejecutan del orden de $n$ operaciones sobre $n$ datos; las de nivel 2 son de matriz por vector, con $n^2$ operaciones sobre $n^2$ datos; y las de nivel 3 son de matriz por matriz, con $n^3$ operaciones sobre $n^2$ datos. Solo en este último caso el número de operaciones crece más rápido que el de accesos a memoria, lo que permite reutilizar cada dato cargado en caché muchas veces y acercarse al rendimiento máximo del procesador. Las de nivel 1 están limitadas por el ancho de banda de memoria y no por la capacidad de cálculo.
+
+Conviene señalar una decisión de implementación relacionada. Aunque el ensamblaje por elementos produce de manera natural matrices de banda, el motor no las almacena en una estructura de datos especializada para ese patrón, sino en arreglos densos contiguos, por las razones de sobrecosto que se discuten en la Sección \ref{sec:repositorio}. La estructura de banda se aprovecha entonces a través de las rutinas de factorización y no del formato de almacenamiento, lo que resulta ventajoso para los tamaños de malla empleados aquí. Esta infraestructura permite alcanzar la precisión numérica característica de los B-splines con un costo que escala favorablemente, y establece la base sobre la que se construyen los cálculos de interacción de configuraciones y de estructura fina presentados en este trabajo.
 
 %%% Local Variables:
 %%% mode: LaTeX

@@ -13,8 +13,8 @@ de los números está en `REVISION-RESULTADOS-2026-09-13.md`, y el de la regener
   reproducible y sin celdas faltantes. La regla de congelamiento está en `CLAUDE.md`.
 - **Todo lo que la tesis reporta ya existe generado:** 16 fragmentos de tabla y `valores_texto.md`
   en `docs/tablas/`, y 12 figuras del pipeline en `docs/figures/`.
-- **Lo que falta es el manuscrito.** Las ocho tablas del capítulo de resultados siguen escritas a
-  mano, ninguna usa todavía `\input{tablas/...}`, y quedan 21 `\todo` en los `.tex`.
+- **El manuscrito está redactado** (2026-09-20). Las quince tablas entran por `\input`, no queda
+  ningún `\todo`, y la verificación estática pasa limpia. Falta la revisión del usuario y compilar.
 
 ## 1. Qué hay listo para usar
 
@@ -81,9 +81,14 @@ convergencia de los singletes con sus extrapolaciones y el error de cada punto d
 4. ~~**`discusion.tex`.**~~ **Hecho el 2026-09-20.** Reescrito de 73 a 122 líneas. El hilo
    cuantitativo es ahora la razón de intervalos R del Cuadro `tab:zeta`. Sección nueva de
    limitaciones, con la casi-degeneración citada desde `valores_texto.md`.
-5. **`conclusiones.tex`:** está vacío (7 líneas), y con él la sección de trabajo futuro, que ya
-   tiene sus números en las secciones 6 y 7 de la revisión.
-6. **Cierre:** introducción, prólogo, los 21 `\todo` restantes y una pasada de referencias.
+5. ~~**`conclusiones.tex`.**~~ **Hecho el 2026-09-20.** Escrito desde cero (43 líneas):
+   resultados principales, alcance y seis líneas de trabajo futuro ordenadas por costo.
+6. ~~**Cierre.**~~ **Hecho el 2026-09-20.** Prólogo cerrado, introducción corregida (el mapa de
+   capítulos estaba desfasado y decía «isoelectrónica» de una secuencia que no lo es), los 16
+   `\todo` cerrados y la pasada de referencias hecha: 0 rotas, 0 duplicadas, 0 comillas rectas.
+
+**Pendiente de decisión del usuario:** `Garza2012` y `TingYun2001` siguen en la bibliografía sin
+citar. Son de átomos confinados, tema que la tesis no trata; o se borran o se usan.
 
 ## 4. Lo que los números contradicen
 

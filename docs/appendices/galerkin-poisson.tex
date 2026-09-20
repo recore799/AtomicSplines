@@ -32,18 +32,18 @@ Aproximamos la función de onda radial \( P(r) \) como una combinación lineal d
 
 Como la expansión en B-splines es una aproximación, al sustituirla en la ecuación de Schrödinger no se obtiene cero exactamente; se obtiene un residuo \( R(r) \). El objetivo es minimizar este residuo proyectando la ecuación sobre una función de peso (o prueba) \( w_i(r) \) y forzando a que la integral ponderada sea nula sobre el dominio \( [0,R_{\text{max}}] \). Existen diversas estrategias para seleccionar estas funciones de peso, lo que da lugar a diferentes formulaciones numéricas, como se resume en \cref{tab:mwr-methods}.
 
-\todo{el cuadro se sale un poco de la pagina}
 \begin{table}[htbp]
     \centering
+    \small
     \caption{Comparación de Métodos de Residuos Ponderados (MWR) para la minimización del residuo $R$.}
     \label{tab:mwr-methods}
-    \renewcommand{\arraystretch}{2.0} % Un poco más de aire para las integrales
-    \setlength{\tabcolsep}{8pt}       % Ajuste fino horizontal
+    \renewcommand{\arraystretch}{1.6}
+    \setlength{\tabcolsep}{4pt}
 
     \begin{tabularx}{\textwidth}{
-        >{\RaggedRight\bfseries}m{2.5cm}
-        >{\RaggedRight}m{3.5cm}
-        >{\centering}m{3.5cm}
+        >{\RaggedRight\bfseries}m{2.1cm}
+        >{\RaggedRight}m{3.0cm}
+        >{\centering}m{2.9cm}
         >{\RaggedRight\arraybackslash}X
     }
         \toprule
@@ -52,7 +52,7 @@ Como la expansión en B-splines es una aproximación, al sustituirla en la ecuac
 
         Galerkin &
         Funciones base \newline $w_i = B_i$ &
-        $\displaystyle \int R \cdot B_i \, dr = 0$ &
+        $\int R \cdot B_i \, dr = 0$ &
         El \textbf{residuo} es ortogonal al espacio de las funciones base. Proyección óptima en términos de energía. \\
         \cmidrule{1-4}
 
@@ -64,13 +64,13 @@ Como la expansión en B-splines es una aproximación, al sustituirla en la ecuac
 
         Mínimos Cuadrados \newline \textit{\footnotesize (Least \newline Squares)} &
         Derivada del \newline residuo \newline $w_i = \frac{\partial R}{\partial c_i}$ &
-        $\displaystyle \int R \cdot \frac{\partial R}{\partial c_i} \, dr = 0$ &
+        $\int R \cdot \frac{\partial R}{\partial c_i} \, dr = 0$ &
         Minimiza la norma $L^2$ del \textbf{residuo global} ($\int R^2 dr$). Ideal para operadores no simétricos. \\
         \cmidrule{1-4}
 
         Subdominio \newline \textit{\footnotesize (Finite \newline Volume)} &
         Función escalón \newline $w_i = \begin{cases} 1 & r \in \Omega_i \\ 0 & \text{resto} \end{cases}$ &
-        $\displaystyle \int_{\Omega_i} R \, dr = 0$ &
+        $\int_{\Omega_i} R \, dr = 0$ &
         El \textbf{promedio integral} del residuo es cero dentro de cada volumen de control $\Omega_i$. \\
         \bottomrule
     \end{tabularx}
@@ -78,7 +78,7 @@ Como la expansión en B-splines es una aproximación, al sustituirla en la ecuac
 
 En este trabajo utilizamos el método de Galerkin, donde las funciones de peso son idénticas a las funciones base (\( w_i = B_i \)). Como se menciona en la tabla, esto implica que el residuo es ortogonal al espacio generado por las funciones base.
 
-Esencialmente estamos buscando la mejor aproximación posible a la solución real dentro del espacio limitado generado por las funciones base, i.e. B-splines. Así, al forzar que el error residual sea ortogonal a cada una de estas funciones, aseguramos geométricamente que no quede ninguna componente del error "proyectada" dentro del subespacio que podemos controlar. Esto es análogo a minimizar la distancia entre un punto y un plano trazando una línea perpendicular: se elimina cualquier parte del error que pudiera haber sido corregida ajustando los coeficientes. De esta forma, garantizamos que la discrepancia restante sea puramente intrínseca a las limitaciones del tamaño de la base elegida y no a la calidad de nuestra proyección.
+Esencialmente estamos buscando la mejor aproximación posible a la solución real dentro del espacio limitado generado por las funciones base, i.e. B-splines. Así, al forzar que el error residual sea ortogonal a cada una de estas funciones, aseguramos geométricamente que no quede ninguna componente del error ``proyectada'' dentro del subespacio que podemos controlar. Esto es análogo a minimizar la distancia entre un punto y un plano trazando una línea perpendicular: se elimina cualquier parte del error que pudiera haber sido corregida ajustando los coeficientes. De esta forma, garantizamos que la discrepancia restante sea puramente intrínseca a las limitaciones del tamaño de la base elegida y no a la calidad de nuestra proyección.
 
 \subsection{Forma débil}
 
@@ -103,8 +103,7 @@ El término de borde se anula por las condiciones de frontera sobre la función 
 
 \subsection{Ecuación matricial}
 
-\todo[inline]{me gustaria decir algo como que la expansion claramente debe converger uniformemente, por lo que la sumatoria conmuta con el signo integral, pero creo que eso es para series, y como esta es una sumatoria finita, esto se cumple en automatico?.}
-Sustituimos la expansión (\cref{eq:basis-exp}) en las ecuaciones integrales. Ya que la integral es lineal, la sumatoria y los coeficientes se pueden factorizar.
+Sustituimos la expansión (\cref{eq:basis-exp}) en las ecuaciones integrales. El intercambio entre la sumatoria y el signo integral no requiere aquí ninguna justificación de convergencia: la expansión es una suma \textit{finita} de $N$ términos, y la linealidad de la integral basta para factorizarla. La cuestión de la convergencia uniforme, que sí sería necesaria para una serie infinita, se traslada en este esquema a la pregunta distinta de con qué rapidez la solución discreta se aproxima a la exacta al aumentar $N$.
 
 \begin{itemize}
 \item La integral cinética
@@ -174,8 +173,9 @@ Esta identidad confirma que la proyección de Galerkin es matemáticamente equiv
     \mathbf{H}\mathbf{c} = E \mathbf{S}\mathbf{c}
 \end{equation}
 
-\todo{cabe anadir aqui que entonces, aunque dan el mismo resultado, nuestro metodo de galerkin nos dota de un manejo mas directo del algebra lineal que es mucho mas facil y rapido implementar en computadora que el metodo de ritz tradicional, o algo asi justificando la eleccion (ademas de los B-splines).}
-donde $\mathbf{H}$ y $\mathbf{S}$ son las matrices Hamiltoniana y de traslape respectivamente, validando así el uso de Galerkin como una herramienta rigurosa y directa para la implementación numérica con B-splines.
+donde $\mathbf{H}$ y $\mathbf{S}$ son las matrices Hamiltoniana y de traslape respectivamente.
+
+La equivalencia justifica la elección que hacemos en este trabajo. Si ambos caminos conducen al mismo problema matricial, conviene tomar el que resulte más directo de implementar, y ese es el de Galerkin. La vía de Ritz exige construir el funcional de energía, derivarlo respecto de cada coeficiente e igualar a cero, lo que en la práctica significa manipular simbólicamente una expresión cuadrática antes de poder escribir una sola línea de código. La proyección de Galerkin, en cambio, entrega los elementos de matriz directamente como integrales de productos de funciones base, que es exactamente la forma que la cuadratura numérica consume. La diferencia no es de rigor ni de resultado, sino de distancia entre la formulación y el algoritmo.
 
 \section{Interacción Electrónica y el Potencial \texorpdfstring{$Y^k$}{Yk}}
 \label{sec:interaccion-electronica}
@@ -189,8 +189,8 @@ En un sistema atómico con \( N \) electrones y un núcleo fijo de carga \( Z \)
 El término que presenta mayor dificultad computacional y teórica es la repulsión interelectrónica, representada por el operador de Coulomb \( V_{ij} = \abs{\bm{r}_i-\bm{r}_j}^{-1} \). Debido a que este operador acopla las coordenadas de los pares electrónicos, impide separar directamente las variables en la ecuación de Schrödinger. Para tratar este término en una geometría esférica, se utiliza la expansión de Laplace del potencial de Coulomb como armónicos esféricos.
 
 \subsection{Expansión multipolar del potencial de Coulomb}
-\todo{esto lo habia hecho antes del apendice de tensores, ahora vamos a citar tensores mejor}
-Consideremos dos electrones \( i \) y \( j \) con vectores de posición \( r_i \) y \( r_j \). De acuerdo con el teorema de adición de armónicos esféricos, la interacción recíproca puede expandirse como:
+
+Consideremos dos electrones \( i \) y \( j \) con vectores de posición \( r_i \) y \( r_j \). De acuerdo con el teorema de adición de armónicos esféricos, cuya formulación en el lenguaje de operadores tensoriales irreducibles se desarrolla en el Apéndice \ref{ap:operadores-tensoriales}, la interacción recíproca puede expandirse como:
 
 \begin{equation}
   \label{eq:laplace1}
@@ -220,7 +220,7 @@ Es crucial notar que esta cantidad $\rho_{ab}(r)$ posee una interpretación fís
 
 \begin{itemize}
 \item Cuando $a = b$, $\rho_{aa}(r)$ corresponde a la densidad de carga electrónica clásica de la capa $a$.
-\item Cuando $a \neq b$, $\rho_{ab}(r)$ representa una \textit{densidad de transición} o de intercambio. Aunque no tiene un análogo en la electrostática clásica, matemáticamente actúa como una distribución de carga "virtual" que genera un campo de potencial efectivo.
+\item Cuando $a \neq b$, $\rho_{ab}(r)$ representa una \textit{densidad de transición} o de intercambio. Aunque no tiene un análogo en la electrostática clásica, matemáticamente actúa como una distribución de carga ``virtual'' que genera un campo de potencial efectivo.
 \end{itemize}
 
 El componente radial del potencial electrostático de orden multipolar $k$ generado por esta distribución $\rho_{ab}(s)$, actuando sobre un electrón en la posición $r$, se define formalmente mediante la integración sobre la coordenada $s$ de la distribución fuente:
@@ -244,8 +244,7 @@ Sustituyendo estas condiciones en \cref{eq:vk-integral}, obtenemos la expresión
  v_k(a, b; r) = \frac{1}{r^{k+1}} \int_0^r s^k P_a(s) P_b(s) \, ds + r^k \int_r^{\infty} \frac{1}{s^{k+1}} P_a(s) P_b(s) \, ds.
 \end{equation}
 
-\todo{cita, creo que es al libro? o al articulo?}
-Siguiendo el formalismo de Froese Fischer, resulta conveniente trabajar con una función de potencial escalada por $r$, lo cual simplifica la estructura de la ecuación radial de Schrödinger (eliminando singularidades y factores de $1/r$ en el término de potencial). Definimos así las funciones $Y^k$:
+Siguiendo el formalismo de Froese Fischer \cite{fischer1977}, resulta conveniente trabajar con una función de potencial escalada por $r$, lo cual simplifica la estructura de la ecuación radial de Schrödinger (eliminando singularidades y factores de $1/r$ en el término de potencial). Definimos así las funciones $Y^k$:
 
 \begin{equation}
  \label{eq:yk-pot}
@@ -259,8 +258,7 @@ Al aplicar este factor $r$ a la ecuación (\cref{eq:vk-integral2}), obtenemos la
  Y^k(a,b;r) = r^{-k}\int_0^r s^kP_a(s)P_b(s) \dd{s} + r^{k+1} \int_r^{\infty} s^{-(k+1)}P_a(s)P_b(s)\dd{s}.
 \end{equation}
 
-\todo{bueno, aqui esta la referencia, tal vez hay que hacerla desde el principio una sola vez?}
-Esta función $Y^k(a,b;r)$ encapsula toda la información necesaria para construir tanto los operadores de Coulomb $J$ (donde $a=b$) como los operadores de Intercambio $K$ (donde $a \neq b$) para cualquier átomo multielectrónico bajo la aproximación de campo central. Siguiendo el formalismo estándar de Hartree-Fock descrito por \textcite{fischer1977}, esta función permite además expresar las integrales de Slater de interacción directa ($F^k$) e intercambio ($G^k$) como simples valores esperados radiales, por ejemplo:
+Esta función $Y^k(a,b;r)$ encapsula toda la información necesaria para construir tanto los operadores de Coulomb $J$ (donde $a=b$) como los operadores de Intercambio $K$ (donde $a \neq b$) para cualquier átomo multielectrónico bajo la aproximación de campo central. Permite además expresar las integrales de Slater de interacción directa ($F^k$) e intercambio ($G^k$) como simples valores esperados radiales, por ejemplo:
 
 \begin{equation}
 \label{eq:Fk-def}
@@ -276,11 +274,11 @@ Sin embargo, como se demuestra en adeltante, mediante la aplicación de la regla
     \left( -\frac{d^2}{dr^2} + \frac{k(k+1)}{r^2} \right) Y^k(a,b;r) = \frac{2k+1}{r} P_a(r)P_b(r).
 \end{equation}
 
-\todo{creo que estas condiciones de frontera estan mal, segun yo eran de Robin}
-Para completar la definición del problema de valores de contorno, se imponen las condiciones asintóticas derivadas del comportamiento de la integral original:
+Para completar la definición del problema de valores de contorno se imponen las condiciones que se deducen del comportamiento de la integral original, y que se derivan en detalle en la Sección \ref{sec:condiciones-frontera}:
 \begin{equation}
-    Y^k(a,b; 0) = 0, \quad \quad \lim_{r \to \infty} Y^k(a,b; r) = \text{cte} \quad (\text{o comportamiento asintótico } \propto r^{-(k+1)}).
+    Y^k(a,b; 0) = 0, \qquad Y^k(a,b; r \to \infty) \longrightarrow \frac{M_k}{r^{k}},
 \end{equation}
+donde $M_k$ es el momento multipolar de orden $k$ de la densidad. Nótese que el decaimiento de $Y^k$ va como $r^{-k}$ y no como $r^{-(k+1)}$, que es el del potencial sin escalar $v_k = Y^k/r$.
 
 La transición del formalismo integral al diferencial (\cref{eq:poisson-radial}) ofrece ventajas decisivas para la implementación numérica, particularmente en el contexto del Método de Elementos Finitos (FEM) que empleamos en este trabajo:
 
@@ -292,9 +290,7 @@ La transición del formalismo integral al diferencial (\cref{eq:poisson-radial})
     \item \textbf{Tratamiento de Singularidades:} La Ecuación (\cref{eq:poisson-radial}) permite tratar de manera robusta el término centrífugo $k(k+1)/r^2$ y la singularidad de Coulomb $1/r$ en el origen mediante las propiedades de las funciones base, evitando las inestabilidades numéricas que suelen surgir al integrar numéricamente kernels singulares.
 \end{enumerate}
 
-En consecuencia, en este trabajo adoptamos (\cref{eq:poisson-radial}) como la ecuación gobernante para determinar los potenciales de interacción, transformando el problema de Hartree-Fock en un sistema acoplado de ecuaciones diferenciales. A continuación demostramos formalmente la equivalencia entre esta forma diferencial y la definición integral (\cref{eq:Yk-final}).
-
-\todo[inline]{creo que puedo incluir la derivacion de Poisson bajo Galerkin}
+En consecuencia, en este trabajo adoptamos (\cref{eq:poisson-radial}) como la ecuación gobernante para determinar los potenciales de interacción, transformando el problema de Hartree-Fock en un sistema acoplado de ecuaciones diferenciales. Su discretización por el método de Galerkin, que sigue paso por paso el procedimiento de la Sección \ref{sec:galerkin-formulacion} aplicado ahora al operador de Poisson, se desarrolla en la Sección \ref{subsec:poisson-metodo} del capítulo de método numérico, donde conduce a la forma débil \eqref{eq:poisson-weak-metodo} y al sistema lineal \eqref{eq:poisson-linear-metodo}; no la repetimos aquí. A continuación demostramos formalmente la equivalencia entre la forma diferencial y la definición integral (\cref{eq:Yk-final}), que es lo que este apéndice aporta y que el capítulo da por establecido.
 
 \section{Diferenciación bajo el signo integral}
 \label{sec:leibniz}
@@ -415,10 +411,11 @@ Aplicamos la regla de Leibniz (\cref{thm:leibniz-general}) para encontrar las de
     \end{equation}
 \end{itemize}
 
-Donde utilizamos utilizamos que los integrandos no son funciones de la variable \( r \), es decir, en ambos casos se tiene
+En ambos casos hemos usado que el integrando depende solo de la variable de integración y no del parámetro $r$. La regla de Leibniz para un integrando $f(s)$ con límites variables consta de tres términos, y el que involucra la derivada del integrando se anula de manera idéntica:
 
-\todo{checar si esta expresion es correcta}
-\[ \int_{a(r)}^{b(r)} \pdv{r}f(s) \dd{s} = 0 \]
+\[ \dv{r}\int_{a(r)}^{b(r)} f(s)\dd{s} = f(b(r))\,b'(r) - f(a(r))\,a'(r) + \int_{a(r)}^{b(r)} \pdv{f(s)}{r} \dd{s}, \qquad \pdv{f(s)}{r} = 0. \]
+
+Solo sobreviven, por tanto, las contribuciones de los límites de integración, que son las que se han evaluado arriba.
 
 Ahora, derivamos $Y^k(r)$ utilizando la regla del producto y sustituyendo los resultados anteriores:
 
@@ -468,6 +465,7 @@ Finalmente, recuperamos la ecuación diferencial de segundo orden utilizada en e
 \end{equation}
 
 \subsubsection{Análisis de las Condiciones de Frontera}
+\label{sec:condiciones-frontera}
 
 Para que la ecuación diferencial de segundo orden derivada anteriormente tenga una solución única, es necesario especificar las condiciones de frontera en los límites del dominio radial, es decir, en $r \to 0$ y $r \to \infty$. Estas condiciones emergen naturalmente del comportamiento asintótico de la definición integral (\cref{eq:Yk-final}).
 
@@ -512,12 +510,19 @@ Esta relación nos proporciona la condición de frontera adecuada para un domini
     \item \textbf{Caso $k > 0$:} El potencial decae a cero.
 \end{itemize}
 
-En resumen, para resolver la \cref{eq:poisson-radial} numéricamente, imponemos:
+Escrita como condición de Dirichlet, la prescripción exterior sería
 \begin{equation}
 \label{eq:bc-final}
-    Y^k(0) = 0 \quad \text{y} \quad Y^k(R_{\text{max}}) = \frac{1}{R_{\text{max}}^k} \int_0^{R_{\text{max}}} s^k P_a(s) P_b(s) \, ds.
+    Y^k(0) = 0 \quad \text{y} \quad Y^k(R_{\text{max}}) = \frac{1}{R_{\text{max}}^k} \int_0^{R_{\text{max}}} s^k P_a(s) P_b(s) \, ds,
 \end{equation}
-En la práctica, para $k \neq 0$, es común aproximar la condición exterior simplemente como $Y^k(R_{\text{max}}) = 0$ si $R_{\text{max}}$ es suficientemente grande, aunque la forma (\cref{eq:bc-final}) es la más rigurosa.
+y en la práctica es común aproximarla para $k \neq 0$ por $Y^k(R_{\text{max}}) = 0$ cuando $R_{\text{max}}$ es suficientemente grande. Ambas formas tienen el inconveniente de exigir el momento multipolar como dato de entrada, siendo que depende de la densidad que se está calculando.
+
+La alternativa que adoptamos en la implementación evita ese acoplamiento. Derivando la relación asintótica $Y^k \to M_k r^{-k}$ se elimina la constante desconocida y queda una condición homogénea sobre el borde,
+\begin{equation}
+\label{eq:bc-robin}
+    \left. \dv{Y^k}{r} \right|_{R_{\text{max}}} + \frac{k}{R_{\text{max}}}\, Y^k(R_{\text{max}}) = 0,
+\end{equation}
+que es de tipo Robin y que en la formulación débil se implementa sumando $k/R_{\text{max}}$ al último elemento diagonal de la matriz del operador, sin alterar su simetría ni su carácter definido positivo. Para el monopolo se reduce a la condición natural de Neumann, que reproduce el límite constante $Y^0 \to M_0$ dejando que la solución determine el valor de la meseta. La condición en el origen, por su parte, no se impone como ecuación sino eliminando del espacio de prueba los primeros $k+1$ splines, que son los únicos incompatibles con el comportamiento $Y^k \sim r^{k+1}$.
 
 %%% Local Variables:
 %%% mode: LaTeX

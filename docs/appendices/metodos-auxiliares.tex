@@ -111,6 +111,22 @@ Los términos cruzados, con $i \neq j$, sobreviven en cambio como un operador de
 
 Este término tiene una interpretación física propia y no es un residuo despreciable: describe el apantallamiento dieléctrico que el core interpone entre los dos electrones de valencia, ya que el dipolo inducido por uno de ellos es sentido por el otro. Se suma al operador de repulsión $1/r_{12}$ y, al depender del ángulo entre ambos radios vectores, contribuye a la parte anisótropa de la interacción, reduciendo la separación entre los términos del multiplete. Su omisión en un tratamiento que retenga únicamente \eqref{eq:cpp_un_cuerpo} constituye, por tanto, una aproximación que conviene tener presente al interpretar los desdoblamientos calculados.
 
+\section{Costo Computacional del Cálculo CI}
+\label{sec:costo_ci}
+
+Las curvas de convergencia de la Sección \ref{sec:convergencia_ci} exigen repetir el cálculo de interacción de configuraciones para tamaños crecientes del espacio activo, y conviene documentar qué recurso limita ese barrido. El costo no lo domina la diagonalización, cuyo espacio es de unas pocas miles de configuraciones, sino el ensamblado previo de las integrales de Slater $R^k$ entre orbitales virtuales. Su número crece como la cuarta potencia del tamaño de la base de virtuales, de modo que es este ensamblado el que fija tanto el tiempo de pared como la huella de memoria.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/convergencia_ci_costo}
+    \caption{Número de integrales $R^k$ almacenadas en caché y tiempo de pared por tamaño del espacio activo, para los cuatro elementos de la secuencia. Los tiempos son incrementales: cada tamaño reutiliza las integrales calculadas para el anterior, salvo en el primer punto de cada curva y en las corridas reanudadas.}
+    \label{tab:convergencia_ci_costo}
+\end{table}
+
+El Cuadro \ref{tab:convergencia_ci_costo} cuantifica ambos recursos. El conteo de integrales es prácticamente el mismo para los cuatro elementos, ya que depende del tamaño de la base y no de la carga nuclear, y pasa de unos cuatro mil quinientos valores en $m=4$ a treinta y ocho millones en $m=40$. Con un ocupamiento medido de unos diecisiete bytes por casilla, el caso extremo del carbono requiere del orden de $1.1$ gigabytes de memoria residente, que llegan a $1.7$ durante los redimensionamientos de la tabla asociativa. El tiempo de pared del mismo punto es de unos quince minutos, y la curva completa del carbono hasta $m=40$ tomó cerca de treinta y nueve minutos.
+
+La comparación entre elementos muestra que el tiempo sí depende de $Z$, aunque el número de integrales no. A $m=20$ el silicio emplea sesenta y ocho segundos y el estaño quinientos noventa y ocho, casi nueve veces más, pese a evaluar una cantidad de integrales que difiere en menos del uno por ciento. La razón es el número de puntos de la malla radial, que debe crecer con $Z$ para resolver la contracción de las capas internas: cada integral $R^k$ se evalúa sobre esa malla, de modo que el costo por integral escala con la discretización y no con el espacio activo. Esta separación entre los dos factores es la que permite reutilizar la caché entre tamaños consecutivos y hace viable el barrido completo.
+
 \section{Arquitectura Computacional y Repositorio de Código}
 \label{sec:repositorio}
 

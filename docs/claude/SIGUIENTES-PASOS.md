@@ -65,11 +65,13 @@ convergencia de los singletes con sus extrapolaciones y el error de cada punto d
 
 ## 3. Orden de trabajo
 
-1. **`resultados.tex`.** Sustituir las ocho tablas por `\input` y reescribir los pasajes que los
-   números contradicen (punto 4). Es el capítulo con más trabajo y el que arrastra al resto.
-2. **Secciones nuevas en resultados:** convergencia del CI (`convergencia_ci`,
-   `convergencia_ci_costo`, `convergencia_singletes`), C-DIIS (`cdiis`, `cdiis_convergencia`) y el
-   diagnóstico de ζ (`zeta`, `zeta_razon`).
+1. ~~**`resultados.tex`.**~~ **Hecho el 2026-09-20.** Las quince tablas entran por `\input`, no
+   queda ningún `tabular` a mano, y los siete pasajes del punto 4 están reescritos. El capítulo
+   pasó de 322 a 351 líneas.
+2. ~~**Secciones nuevas en resultados.**~~ **Hecho el 2026-09-20.** Quedaron como
+   `sec:cdiis_resultados` (dentro de la validación, que es donde pertenece un resultado del SCF),
+   `sec:convergencia_ci`, `sec:zeta_diagnostico` y `sec:lande`. `convergencia_ci_costo` se fue al
+   apéndice (`sec:costo_ci`), porque el registro de redacción manda el rendimiento ahí.
 3. **`ciclo-scf.tex`** (6 `\todo`) y **`correlacion-estructura-fina.tex`** (1): el mecanismo de
    V_pol, la formulación de C-DIIS y el método de CI.
 4. **`discusion.tex`:** reescritura completa. Son 73 líneas y cuatro de sus afirmaciones cambian.
@@ -89,7 +91,7 @@ En resumen:
 | `resultados.tex:294-311` | V_pol reduce a la mitad el error de ionización | lo empeora: 1.4 % → 4.8 % en germanio |
 | `resultados.tex:271, 311` | el ¹S₀ alto es del espacio CI truncado | el espacio está convergido; es del modelo de pareja con core congelado |
 | `discusion.tex:64-73` | g = 1.4975 frente a 1.496, y el CI cierra la brecha | el ASD da 1.49458: el germanio mezcla 1.31 % de ¹D₂ y el modelo 0.8-0.9 % |
-| `resultados.tex:172` | la figura confirma ζ ∝ Z⁴ | el ζ calculado va como ~Z^1.8 contra Z; **generar el ajuste en `valores_texto.md` antes de citarlo** |
+| ~~`resultados.tex:172`~~ | la figura confirma ζ ∝ Z⁴ | resuelto: el ajuste ya sale de la etapa 3 (p = 1.82 contra el Z nuclear) y el pasaje explica que la ley Z_eff⁴ es sobre la carga efectiva |
 | `ciclo-scf.tex:205` | NIST ASD versión 6.1 | es la 5.12; citar con la clave `NIST_ASD` de la bibliografía |
 
 Además, las tablas ya corrigieron el virial del estaño, el ⟨r⁻³⟩ del germanio y el F⁰(4p,4p) del
@@ -111,8 +113,8 @@ germanio: el texto que los comenta tiene que seguir a las tablas, no al revés.
 
 ## 6. Decisiones abiertas
 
-- **Modo de trabajo:** si Claude redacta los `.tex` y el usuario revisa, o el usuario escribe y
-  Claude verifica. Sin responder.
+- ~~**Modo de trabajo.**~~ **Decidido el 2026-09-20:** Claude redacta los `.tex` y el usuario
+  revisa, capítulo por capítulo en el orden del punto 3.
 - **ζ(2p) = 31.946 cm⁻¹ de Froese Fischer:** no se sabe si es el de Blume-Watson. Cambia cómo se
   cita en la discusión de ζ.
 - **Polarizabilidades de los cores de Ge y Sn:** sin fuente verificada (revisión §6.3). Sin ellas,

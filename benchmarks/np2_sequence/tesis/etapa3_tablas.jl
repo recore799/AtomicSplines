@@ -17,6 +17,7 @@ include(joinpath(@__DIR__, "comun.jl"))
 isdefined(Main, :run_full_ci) || include(joinpath(NP2, "np2_ci_full.jl"))
 include(joinpath(@__DIR__, "diagnostico_rayleigh.jl"))
 include(joinpath(@__DIR__, "analisis_zeta.jl"))
+include(joinpath(@__DIR__, "diagnostico_casi_degeneracion.jl"))
 
 const CI     = leer_ci(argumento("--ci", RESULTADOS_CI))
 # --m fuerza un mismo tamano para todo (pruebas). Sin el, cada elemento usa su m de produccion y
@@ -582,6 +583,23 @@ function valores_texto(HF, ZETA_SENS)
             end
             @printf(io, "- %s 3P_%d (NIST %.1f cm^-1): %s\n", INFO[el].etiqueta, J, meta,
                     cruce === nothing ? "sin cruce dentro del barrido" : @sprintf("alpha_d = %.2f", cruce))
+        end
+    end
+
+    println(io, "\n## Casi-degeneracion ns^2 np^2 <-> np^4 (dos configuraciones, orbitales congelados)\n")
+    println(io, "G1(ns,np) y Delta en Ha; el resto en cm^-1. 'baja S-P' es cuanto desciende la separacion ",
+            "1S - 3P por la mezcla con np^4. 'residuo' es el 1S_0 del CI de pareja menos el NIST, y ",
+            "'sumado' lo que quedaria si la baja se sumara al CI: sobrecorrige, por eso no son aditivos.\n")
+    for el in ELEMENTOS
+        for a in vcat(0.0, haskey(BARRIDO_ALPHA, el) ? [alpha_elegido(el)[1]] : Float64[])
+            d = casi_degeneracion(el, ESTADO, a)
+            e = ci_de(el, ESTADO, a)
+            e === nothing && continue
+            res = e["niveles_cm"][5] - NIST_NIVELES[el][5]
+            @printf(io, "- %s%s: G1 = %.5f, Delta = %.4f, peso de np^4 %.2f%% en 3P y %.2f%% en 1S, baja S-P %.0f, residuo 1S_0 %+.0f -> sumado %+.0f\n",
+                    INFO[el].etiqueta, a == 0.0 ? "" : @sprintf(" (alpha_d = %.2f)", a),
+                    d.G1, d.Delta, 100 * d.peso_P, 100 * d.peso_S, d.baja_S * HA2CM,
+                    res, res - d.baja_S * HA2CM)
         end
     end
 

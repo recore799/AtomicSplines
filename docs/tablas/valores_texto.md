@@ -103,3 +103,14 @@ Interpolacion lineal del barrido entre los dos alpha_d que acotan el nivel medid
 - Germanio 3P_2 (NIST 1410.0 cm^-1): alpha_d = 0.66
 - Estaño 3P_1 (NIST 1691.8 cm^-1): alpha_d = 3.22
 - Estaño 3P_2 (NIST 3427.7 cm^-1): alpha_d = 2.87
+
+## Casi-degeneracion ns^2 np^2 <-> np^4 (dos configuraciones, orbitales congelados)
+
+G1(ns,np) y Delta en Ha; el resto en cm^-1. 'baja S-P' es cuanto desciende la separacion 1S - 3P por la mezcla con np^4. 'residuo' es el 1S_0 del CI de pareja menos el NIST, y 'sumado' lo que quedaria si la baja se sumara al CI: sobrecorrige, por eso no son aditivos.
+
+- Carbono: G1 = 0.34373, Delta = 0.7456, peso de np^4 2.21% en 3P y 7.40% en 1S, baja S-P 10444, residuo 1S_0 +2246 -> sumado -8198
+- Silicio: G1 = 0.23443, Delta = 0.5875, peso de np^4 1.68% en 3P y 5.86% en 1S, baja S-P 6315, residuo 1S_0 -720 -> sumado -7035
+- Germanio: G1 = 0.22590, Delta = 0.6275, peso de np^4 1.38% en 3P y 4.92% en 1S, baja S-P 5566, residuo 1S_0 -587 -> sumado -6154
+- Germanio (alpha_d = 0.75): G1 = 0.23205, Delta = 0.6602, peso de np^4 1.32% en 3P y 4.73% en 1S, baja S-P 5599, residuo 1S_0 +96 -> sumado -5503
+- Estaño: G1 = 0.19967, Delta = 0.5116, peso de np^4 1.61% en 3P y 5.65% en 1S, baja S-P 5277, residuo 1S_0 -1117 -> sumado -6394
+- Estaño (alpha_d = 3.00): G1 = 0.21101, Delta = 0.5662, peso de np^4 1.48% en 3P y 5.22% en 1S, baja S-P 5359, residuo 1S_0 +368 -> sumado -4991

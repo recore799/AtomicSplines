@@ -1,7 +1,10 @@
 \chapter{Correlación Electrónica y Estructura Fina}
 \label{ch:correlacion-estructura-fina}
 
-\todo{a ver que le pongo al capitulo para que incluya Vpol}
+El modelo de partículas independientes del Capítulo \ref{ch:particulas-independientes} entrega un estado fundamental bien definido, pero no basta para predecir un espectro. Le faltan tres ingredientes, y este capítulo los introduce en el orden en que el cálculo los necesita. El primero es la correlación electrónica, es decir, la parte de la repulsión entre electrones que un campo medio no puede representar por construcción, y que trataremos mediante una expansión en configuraciones. El segundo son los términos relativistas del Hamiltoniano de Breit-Pauli, responsables de que los niveles con distinto momento angular total dejen de estar degenerados y de que las etiquetas de Russell-Saunders pierdan sentido al descender en el grupo.
+
+El tercero es la respuesta del core al campo del electrón de valencia. La aproximación de core congelado que hace tratable el cálculo de correlación también suprime un efecto físico real, el de un core que se deforma y cuyo dipolo inducido actúa de vuelta sobre la valencia. Incorporarlo desde primeros principios exigiría un tratamiento de muchos cuerpos fuera del alcance de este trabajo, de modo que lo representamos mediante un potencial de polarización local, cuya deducción y cuyos límites ocupan la última sección del capítulo. Los tres ingredientes comparten una característica que conviene tener presente: ninguno modifica la arquitectura numérica establecida en los capítulos anteriores, y los tres se apoyan en las mismas integrales radiales que el ciclo autoconsistente ya produce.
+
 \section{Notación de Estructura Electrónica y Espectroscópica}
 
 Para el resto de este documento, es pertinente asentar firmemente la notación estándar empleada en física atómica y astrofísica.
@@ -160,11 +163,13 @@ Para resolver esta singularidad, la literatura estándar de física atómica (in
 \end{equation}
 El parámetro empírico $r_c$ (radio de corte) demarca la frontera donde la física de penetración nuclear neutraliza la polarización.
 
-La inclusión de $V_{\text{pol}}$ altera la estructura orbital de los propios orbitales de valencia. El efecto atractivo apantalla el pozo nuclear profundo, permitiendo que la distribución de probabilidad se relaje y se recorra ligeramente hacia el exterior. Esta leve relajación reduce de forma importante el \textbf{momento radial de orden inverso cúbico}:
+La inclusión de $V_{\text{pol}}$ altera la estructura de los propios orbitales de valencia, y conviene precisar en qué sentido lo hace. El término de la Ecuación \eqref{eq:vpol_cutoff} es estrictamente negativo, de modo que se suma a la atracción nuclear en lugar de apantallarla: liga con más fuerza al electrón de valencia y contrae su distribución de probabilidad hacia el núcleo. Esa contracción aumenta el \textbf{momento radial de orden inverso cúbico}
 \begin{equation}
-    \left\langle \frac{1}{r^3} \right\rangle_{nl} = \int_0^\infty P_{nl}^2(r) \frac{1}{r^3} \dd{r}.
+    \left\langle \frac{1}{r^3} \right\rangle_{nl} = \int_0^\infty P_{nl}^2(r) \frac{1}{r^3} \dd{r},
 \end{equation}
-Dado que el parámetro de estructura fina magnético $\zeta_{nl}$ (que gobierna el Hamiltoniano de Breit-Pauli) es un observable que escala asintóticamente de manera directa con $\langle 1/r^3 \rangle$, la omisión de la polarización del core condena al modelo de Hartree-Fock puro a sobreestimar este momento inverso. Al no poseer $V_{\text{pol}}$, el campo central atrae excesivamente a la nube de valencia hacia $r \to 0$, incrementando la penetración radial y produciendo un acoplamiento espín-órbita anómalamente alto. Este comportamiento subraya la necesidad de incorporar correcciones de correlación adicionales para modelar adecuadamente átomos pesados como el Germanio y el Estaño.
+cuyo integrando está fuertemente pesado hacia el origen y responde por ello de manera desproporcionada a un cambio pequeño de la densidad en esa región.
+
+La consecuencia espectroscópica es directa. Como el parámetro de estructura fina magnético $\zeta_{nl}$ escala de manera proporcional a $\langle 1/r^3 \rangle$ según la Ecuación \eqref{eq:zeta_spin_orbit}, incorporar la polarización del core \textit{aumenta} el acoplamiento espín-órbita y abre los intervalos del término fundamental. El modelo de Hartree-Fock puro, que omite esta contribución, subestima entonces el desdoblamiento en los átomos donde el core es apreciablemente polarizable. El Capítulo \ref{ch:resultados} confirma este comportamiento en el germanio y el estaño, cuantifica el déficit de $\zeta$ respecto al que exigen los niveles medidos, y muestra que la corrección lo cierra hasta menos del dos por ciento en ambos elementos.
 
 %%% Local Variables:
 %%% mode: LaTeX

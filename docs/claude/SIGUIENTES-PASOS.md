@@ -72,8 +72,12 @@ convergencia de los singletes con sus extrapolaciones y el error de cada punto d
    `sec:cdiis_resultados` (dentro de la validación, que es donde pertenece un resultado del SCF),
    `sec:convergencia_ci`, `sec:zeta_diagnostico` y `sec:lande`. `convergencia_ci_costo` se fue al
    apéndice (`sec:costo_ci`), porque el registro de redacción manda el rendimiento ahí.
-3. **`ciclo-scf.tex`** (6 `\todo`) y **`correlacion-estructura-fina.tex`** (1): el mecanismo de
-   V_pol, la formulación de C-DIIS y el método de CI.
+3. ~~**`ciclo-scf.tex`** y **`correlacion-estructura-fina.tex`**.~~ **Hecho el 2026-09-20.**
+   C-DIIS quedó en `sec:cdiis_metodo` (con el conmutador proyectado y el carbono como
+   control); el mecanismo de V_pol se corrigió en los dos capítulos (contrae, no relaja);
+   la calibración de α_d se describe como lo que es, un barrido contra el NIST con
+   r_c = 1.0 fijo. NIST ASD ya se cita con `NIST_ASD` y versión 5.12. De los 7 `\todo`
+   queda 1: falta una referencia de FEM en la bibliografía para citar el *lifting*.
 4. **`discusion.tex`:** reescritura completa. Son 73 líneas y cuatro de sus afirmaciones cambian.
 5. **`conclusiones.tex`:** está vacío (7 líneas), y con él la sección de trabajo futuro, que ya
    tiene sus números en las secciones 6 y 7 de la revisión.

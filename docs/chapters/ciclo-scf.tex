@@ -55,12 +55,42 @@ Si denotamos como $\bm{R}_v$ al proyector sobre el subespacio virtual, definimos
 
 donde $\lambda > 0$ es un escalar (conocido como parámetro de shift) que actúa como un penalizador energético, y $\bm{S}$ es la matriz de solapamiento de la base no ortogonal de B-splines.
 
-Esta transformación es equivalente a agregar una constante $\lambda$ exclusivamente a las energías de los orbitales desocupados $\epsilon_a \rightarrow \epsilon_a + \lambda$. Al aplicar un shift lo suficientemente grande (típicamente $\lambda \sim 0.5 - 1.0$ Hartrees en átomos como el Germanio o el Estaño), se amplía artificialmente la brecha energética (gap) entre la banda de valencia y la banda de conducción virtual. Este enorme muro energético aísla y "congela" a los autovectores desocupados, suprimiendo las oscilaciones erráticas e impidiendo categóricamente que la matriz de densidad colapse en cruces de niveles espurios. Una vez que el ciclo SCF alcanza la autoconsistencia estricta, la penalización se desvanece por sí misma del subespacio ocupado y las energías físicas obtenidas convergen a los valores exactos del límite multiconfiguracional de Hartree-Fock.
+Esta transformación es equivalente a agregar una constante $\lambda$ exclusivamente a las energías de los orbitales desocupados $\epsilon_a \rightarrow \epsilon_a + \lambda$. En nuestras corridas el germanio y el estaño emplean $\lambda = 3.0$ Hartree, mientras que el carbono y el silicio convergen sin desplazamiento alguno. Al aplicar un shift lo suficientemente grande se amplía artificialmente la brecha energética entre la banda de valencia y la banda de conducción virtual. Este enorme muro energético aísla y ``congela'' a los autovectores desocupados, suprimiendo las oscilaciones erráticas e impidiendo categóricamente que la matriz de densidad colapse en cruces de niveles espurios. Una vez que el ciclo SCF alcanza la autoconsistencia estricta, la penalización se desvanece por sí misma del subespacio ocupado y las energías físicas obtenidas convergen a los valores exactos del límite multiconfiguracional de Hartree-Fock.
+
+\subsection{Extrapolación de Pulay sobre el Conmutador Proyectado}
+\label{sec:cdiis_metodo}
+
+El desplazamiento de nivel estabiliza el ciclo pero no lo acelera: al ampliar la brecha artificialmente también reduce el paso efectivo de cada iteración, y en el germanio y el estaño la convergencia se vuelve tan lenta que deja de ser practicable. La técnica que resuelve el problema de fondo es la extrapolación de Pulay, que en lugar de amortiguar la iteración construye, a partir del historial de matrices de Fock, la combinación lineal que más se acerca al punto fijo. Su variante moderna toma como medida del error el conmutador entre la matriz de Fock y la de densidad, y por eso se la conoce como C-DIIS.
+
+En un Hartree-Fock de capa cerrada el vector de error es $\bm{e} = \bm{F}\bm{D}\bm{S} - \bm{S}\bm{D}\bm{F}$, que se anula exactamente en la solución porque allí los orbitales ocupados generan un subespacio invariante del único operador de Fock. Nuestro esquema ROHF no cumple esa condición, y conviene explicar por qué, porque la corrección que exige no es un detalle de implementación. Como se describió en la Sección \ref{sec:gram-schmidt}, el orbital de valencia se obtiene de su propio operador $\bm{F}_{np}$ y después se ortogonaliza contra los orbitales del core del mismo momento angular, que provienen de un operador distinto. En el punto fijo satisface entonces
+
+\begin{equation}
+    \label{eq:rohf_lagrange}
+    \bm{F}_{np}\,\bm{c}_{np} = \epsilon\,\bm{S}\,\bm{c}_{np} + \sum_{c \in \text{core}} \lambda_c\,\bm{S}\,\bm{c}_{c},
+\end{equation}
+
+donde los $\lambda_c$ son los multiplicadores de Lagrange asociados a la restricción de ortogonalidad. El término de multiplicadores impide que el conmutador crudo baje de un piso no nulo, que medimos en $1.2\times10^{-4}$ para el silicio, $2.2\times10^{-6}$ para el germanio y $7.1\times10^{-7}$ para el estaño. Una extrapolación construida sobre vectores de error que han dejado de decrecer no converge: recorre la superficie de energía sin criterio.
+
+El carbono funciona como control de este diagnóstico y confirma su origen. Es el único elemento de la secuencia cuyo core carece de electrones $p$, de modo que su orbital de valencia no requiere ortogonalización contra el core y la suma de la Ecuación \eqref{eq:rohf_lagrange} está vacía; su conmutador crudo baja hasta $2.5\times10^{-13}$, trece órdenes de magnitud por debajo del piso del silicio. El piso no es entonces un artefacto de la base ni de la malla, sino la huella del esquema de ortogonalización, la misma que reaparece en los momentos radiales del Capítulo \ref{ch:resultados}.
+
+La solución consiste en proyectar el error fuera del espacio ocupado antes de usarlo. Si $\bm{C}_{\text{occ}}$ reúne en columnas todos los orbitales ocupados del mismo momento angular, incluidos los de los otros canales, el vector de error proyectado es
+
+\begin{equation}
+    \label{eq:cdiis_error}
+    \bm{e} = \left( \bm{1} - \bm{S}\,\bm{C}_{\text{occ}}\bm{C}_{\text{occ}}^{T} \right)\left( \bm{F}\bm{D}\bm{S} - \bm{S}\bm{D}\bm{F} \right) = \left( \bm{1} - \bm{S}\,\bm{C}_{\text{occ}}\bm{C}_{\text{occ}}^{T} \right)\bm{F}\bm{D}\bm{S},
+\end{equation}
+
+donde el segundo sumando se anula de manera idéntica porque $\bm{S}\bm{D}\bm{F}$ vive por completo en el espacio ocupado. Lo que queda es el bloque ocupado-virtual del gradiente orbital, que sí es exactamente cero en la solución ROHF y que por tanto sirve como medida legítima del error. La proyección elimina precisamente la componente que los multiplicadores de la Ecuación \eqref{eq:rohf_lagrange} mantenían viva.
+
+La segunda particularidad de nuestro esquema es que la extrapolación opera por bloques. Cada canal tiene su propio operador de Fock y su propia matriz de densidad, y la capa abierta $np$ convive con un canal de core del mismo momento angular sobre el mismo espacio activo; construir un solo vector de error mezclando ambos invalidaría el conmutador. Cada canal aporta entonces su matriz de error a partir de su pareja $(\bm{F}, \bm{D})$, y el sistema de Pulay se resuelve sobre el historial conjunto, conservando las matrices de Fock sin desplazar. El historial se limita a seis iteraciones y se descarta cuando el condicionamiento del sistema o la magnitud de los coeficientes indican que los vectores de error se han vuelto casi paralelos.
+
+El cambio entre los dos regímenes se decide por el residual y no por un número fijo de iteraciones. Mientras el error proyectado permanece por encima de $10^{-2}$, el desplazamiento de nivel de la Sección \ref{sec:level_shifting} mantiene al sistema dentro de la cuenca de atracción; en cuanto baja de ese umbral el shift se apaga y la extrapolación toma el control. Conviene señalar los límites de lo que se afirma aquí: se trata de C-DIIS por bloques sobre operadores de Fock dependientes del término, y no del método canónico, ya que no existe un operador único que diagonalizar y el acoplamiento entre la capa abierta y las cerradas no entra en el residual. Por esa razón la convergencia se declara siempre sobre la energía total, y el residual se emplea únicamente para decidir el cambio de régimen. El efecto medido sobre el conteo de iteraciones, y la comprobación de que ambos regímenes llegan a la misma energía, se documentan en la Sección \ref{sec:cdiis_resultados}.
 
 \section{Estructura Algebraica del Ciclo Autoconsistente}
 \label{sec:estructura-algebraica}
 
-\todo{creo que vale la pena mencionar aqui que la cuadratura es por Gauss-Legendre (apendice F)}
+Todas las integrales que aparecen en esta sección se evalúan por cuadratura de Gauss-Legendre sobre cada intervalo de la malla, con $N_q = k$ puntos por intervalo. Esa elección no es un compromiso de precisión: los integrandos son polinómicos a trozos de grado a lo sumo $2k-2$, y una regla gaussiana de $k$ puntos es exacta hasta grado $2k-1$, de modo que la cuadratura no introduce error de truncamiento. El detalle del mapeo afín al intervalo de referencia se encuentra en la Sección \ref{sec:gauss-legendre} del Apéndice \ref{ap:metodos-auxiliares}.
+
 Tal como se describió, cada iteración del ciclo SCF vuelve a construir la matriz de Fock y a resolver las ecuaciones de Poisson que definen los potenciales de interacción. Leído literalmente, esto significa repetir en cada paso la integración numérica de todos los operadores. Sin embargo, esa repetición es en buena medida innecesaria: aunque la densidad electrónica evoluciona, las funciones base y los operadores sobre los que se integra permanecen fijos. Existe entonces una separación exacta entre lo que depende de la \textit{geometría} de la base (la malla de nudos y los splines definidos sobre ella) y lo que depende del \textit{estado} del átomo (la matriz de densidad). Hacer explícita esa separación reorganiza el ciclo autoconsistente como una sucesión de contracciones algebraicas. Conviene subrayar que no se trata de una aproximación adicional, sino de un reordenamiento exacto de las mismas sumas.
 
 \subsection{Tensores de colocación}
@@ -127,7 +157,8 @@ con lo cual la construcción del término fuente se reduce a una contracción pu
 \end{equation}
 
 La lectura física de la Ec. (\ref{eq:b-contraction}) es transparente: $\mathbf{W}$ contiene la geometría de la base y el operador de Coulomb, mientras que $\bm{P}$ contiene el estado electrónico del átomo; la interacción es lineal en el objeto geométrico y bilineal en la densidad. Además, el soporte compacto de los B-splines vuelve a $\mathbf{W}$ un tensor disperso: $W_{\mu\alpha\beta}$ es no nulo si y solo si las tres funciones base involucradas son simultáneamente activas sobre al menos un intervalo de la malla.
-\todo{anadir comentario sobre como programar W con mapeos do hash (o solo decir eficientemente) es un reto interesante y una de las razones principales por las que mi implementacion corre tan bien como lo hace.}
+Esa dispersión es lo que vuelve practicable el precálculo. Almacenar $\mathbf{W}$ como un arreglo tridimensional denso sería inviable incluso para las mallas de los elementos ligeros, mientras que guardar únicamente las ternas con soporte común reduce la memoria a una fracción pequeña y convierte la contracción de la Ec. (\ref{eq:b-contraction}) en un recorrido sobre entradas no nulas. La organización concreta de ese almacenamiento y del ensamblaje por elementos se documenta en el Apéndice \ref{ap:bsplines}.
+
 \subsection{El operador de Poisson y sus condiciones de frontera}
 
 Construido el término fuente, resta invertir el operador diferencial. Como se estableció en la Ec. (\ref{eq:poisson-linear-metodo}), la representación matricial del operador de Poisson para el multipolo de orden $k$ es
@@ -142,9 +173,8 @@ donde $\bm{V}^{(2)}$ es la matriz del operador $r^{-2}$. Esta matriz depende exc
   \bm{A}^{(k)} = \bm{L}_k \bm{L}_k^{T},
 \end{equation}
 
-que se calcula una sola vez para cada multipolo $k$ requerido. En las iteraciones subsecuentes, obtener el potencial se reduce a dos sustituciones triangulares sobre la factorización ya conocida.
+que nuestra implementación calcula una sola vez para cada multipolo $k$ requerido y conserva en memoria durante todo el ciclo. En las iteraciones subsecuentes, obtener el potencial se reduce a dos sustituciones triangulares sobre la factorización ya conocida, de costo lineal en el número de splines por tratarse de un sistema bandado.
 
-\todo{seguro?}
 Resta imponer las condiciones de frontera. El potencial satisface condiciones de Dirichlet $y(0) = 0$ y $y(R_{\text{max}}) = q_{\text{enc}}$, donde $q_{\text{enc}}$ es la carga encerrada dada por la Ec. (\ref{eq:bc-metodo}). Aquí resulta útil una propiedad de la base: con un vector de nudos apretado, el primer y el último spline son los únicos con valor no nulo en los extremos del dominio, de modo que el valor de frontera queda asociado a un único coeficiente. Esto permite particionar el sistema entre los índices internos $\Omega_{\text{in}}$ y el índice de frontera $N$, y pasar el término conocido al lado derecho:
 
 \begin{equation}
@@ -152,7 +182,7 @@ Resta imponer las condiciones de frontera. El potencial satisface condiciones de
   \bm{A}_{\text{in},\text{in}}\, \bm{y}_{\text{in}} = \bm{b}_{\text{in}} - \bm{A}_{\text{in},N}\, q_{\text{enc}}.
 \end{equation}
 
-\todo{buscar una cita}
+\todo{Falta la cita de elementos finitos para \emph{lifting}/condensación estática. La bibliografía actual no tiene ningún texto de FEM: hay que agregar uno (p.ej. un Zienkiewicz o un Strang-Fix) a docs/bib/bibliografia.bib antes de citarlo aquí.}
 Esta técnica, conocida en elementos finitos como \textit{lifting} o condensación estática, garantiza que la solución cumpla exactamente la condición asintótica, sin recurrir a términos de penalización ni modificar el tamaño del sistema.
 
 Con estos elementos, cada iteración del ciclo autoconsistente se reduce a contraer $\mathbf{W}$ con la matriz de densidad para formar los términos fuente, resolver los sistemas de Poisson mediante sustitución triangular sobre las factorizaciones precalculadas, ensamblar la matriz de Fock y diagonalizarla. El detalle algorítmico de esta arquitectura ---el kernel de evaluación de la base, el ensamblaje por elementos finitos y la organización de los precálculos en memoria--- se documenta en el Apéndice \ref{ap:bsplines}.
@@ -191,18 +221,18 @@ Esta redefinición impacta el cálculo desde su cimiento más bajo. Durante la c
 
 En consecuencia, el ciclo SCF entero converge hacia una nueva solución donde los orbitales de valencia ya sienten la repulsión apantallada. 
 
-\todo{creo que voy a quitar esto, en realidad lo que hice fue poner en un bucle el scf hasta obtener buenas energias, como se muestra en el capitulo de resultados}
-Para operar este modelo, es necesario proveer los parámetros empíricos $\alpha_d$ y $r_c$. La constante de polarizabilidad escalar dipolar $\alpha_d$ se extrae típicamente de mediciones experimentales espectroscópicas de los iones análogos correspondientes o de cálculos teóricos paralelos altamente precisos de especies con core cerrado. El radio de corte $r_c$ está delimitado espacialmente y suele definirse en el entorno del valor esperado del radio exterior del último orbital ocupado del core, $\langle r \rangle_{\text{core}}$, sirviendo como una frontera suave que previene la divergencia no física de $1/r^4$ cerca del núcleo. 
+Para operar este modelo es necesario fijar los dos parámetros empíricos. El radio de corte $r_c$ está delimitado espacialmente y suele situarse en el entorno del radio medio del último orbital ocupado del core, $\langle r \rangle_{\text{core}}$, donde actúa como una frontera suave que previene la divergencia no física de $1/r^4$ cerca del núcleo; lo mantenemos fijo en $r_c = 1.0\,a_0$ para el germanio y el estaño, de modo que la calibración recae sobre un solo grado de libertad.
+
+La polarizabilidad $\alpha_d$ se extrae idealmente de mediciones sobre el ión de core cerrado análogo o de cálculos independientes de alta precisión. Para los cores de $\mathrm{Ge}$ y $\mathrm{Sn}$ no dispusimos de un valor de referencia verificable, de manera que la determinamos por ajuste espectroscópico: se repite el ciclo autoconsistente completo, y con él el cálculo CI posterior, para una rejilla de valores de $\alpha_d$, y se retiene el que minimiza el error cuadrático medio de los dos intervalos del término $^3P$ frente a los niveles del NIST. El barrido resultante y el valor adoptado en cada elemento se presentan en la Sección \ref{sec:vpol_resultados}. Conviene anticipar que un parámetro obtenido de este modo no es una polarizabilidad medida sino una cantidad efectiva, y que el Capítulo \ref{ch:resultados} documenta en qué sentido absorbe física ajena a la polarización del core.
 
 \section{La Base de Datos de Espectros Atómicos del NIST (ASD)}
 \label{sec:nist_asd}
 
-\todo{me falta poner la cita al citio web}
 Para validar la precisión predictiva de nuestro modelo de Campo Autoconsistente y la diagonalización del Hamiltoniano de Breit-Pauli, es imperativo contrastar nuestros autovalores teóricos con mediciones observacionales exactas. A lo largo de esta tesis, la referencia empírica absoluta proviene del \textit{NIST Atomic Spectra Database (ASD)}, mantenido por el Instituto Nacional de Estándares y Tecnología de los Estados Unidos.
 
 El NIST ASD recopila, evalúa críticamente y tabula exhaustivamente datos experimentales de espectroscopía de alta resolución provenientes de literatura revisada por pares durante el último siglo. Proporciona niveles de energía empíricos para casi todos los elementos de la tabla periódica y sus iones, asignando a cada nivel de energía medido su término de Russell-Saunders dominante ($^{2S+1}L_J$), la configuración electrónica a la que pertenece, y su energía referenciada al estado fundamental. 
 
-La relevancia de esta base de datos es invaluable, pues constituye el cimiento metodológico de la astrofísica observacional y la física de plasmas. Permite a los astrónomos identificar líneas de emisión o absorción estelar, y a nosotros, fungir como el juez definitivo de nuestro código numérico. En el capítulo de resultados, los niveles reportados como "NIST" fueron extraídos directamente de esta base de datos (versión 6.1) para los átomos neutros de Carbono (C I), Silicio (Si I), Germanio (Ge I) y Estaño (Sn I).
+La relevancia de esta base de datos es invaluable, pues constituye el cimiento metodológico de la astrofísica observacional y la física de plasmas. Permite a los astrónomos identificar líneas de emisión o absorción estelar, y a nosotros, fungir como el juez definitivo de nuestro código numérico. En el capítulo de resultados, los niveles reportados como ``NIST'' fueron extraídos directamente de esta base de datos \cite{NIST_ASD}, en su versión 5.12, para los átomos neutros de Carbono (C I), Silicio (Si I), Germanio (Ge I) y Estaño (Sn I). La consulta se realizó el 13 de septiembre de 2026, y los valores empleados, junto con la referencia primaria de cada nivel, quedaron registrados en el archivo de configuración que alimenta la generación de los cuadros.
 
 %%% Local Variables:
 %%% mode: LaTeX

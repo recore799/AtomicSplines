@@ -514,6 +514,22 @@ function valores_texto(HF, ZETA_SENS)
                for t in 2:5]
         @printf(io, "- %s: %s frente a %s: %s\n", INFO[el].etiqueta, ESTADO_SENSIBILIDAD, ESTADO, join(dif, ", "))
     end
+    println(io, "\n## Estabilidad de los 3P_J con el espacio activo (3P, alpha_d = 0)\n")
+    println(io, "Recorrido total de cada intervalo entre el primer y el ultimo m de la curva, y ",
+            "excursion maxima respecto al valor en el m de produccion. En cm^-1.\n")
+    for el in ELEMENTOS
+        c = curva_convergencia(el)
+        length(c) >= 2 || continue
+        ms = [e["m"] for e in c]
+        for (J, i) in ((1, 2), (2, 3))
+            v = [e["niveles_cm"][i] for e in c]
+            prod = v[findfirst(==(m_tabla(el)), ms)]
+            @printf(io, "- %s 3P_%d: m = %d -> %d, %.2f -> %.2f (recorrido %.2f); excursion max. desde el m de produccion %.2f\n",
+                    INFO[el].etiqueta, J, ms[1], ms[end], v[1], v[end], v[end] - v[1],
+                    maximum(abs.(v .- prod)))
+        end
+    end
+
     println(io, "\n## Convergencia de los singletes con el espacio activo (3P, alpha_d = 0)\n")
     println(io, "Con los tres ultimos tamanos de cada curva: extrapolacion geometrica (incrementos en razon constante) ",
             "y de potencia (E(m) = E_inf + A m^-p, ajuste exacto). Una razon cercana a 1 hace inservible la geometrica.\n")
@@ -545,6 +561,30 @@ function valores_texto(HF, ZETA_SENS)
                     er[1], er[2], e["niveles_cm"][4], e["niveles_cm"][5], (sel !== nothing && sel[1] == a) ? "  <- elegido" : "")
         end
     end
+    println(io, "\n## Cruce de alpha_d: el valor que iguala cada intervalo 3P_J al NIST\n")
+    println(io, "Interpolacion lineal del barrido entre los dos alpha_d que acotan el nivel medido. ",
+            "Un solo alpha_d basta para los dos intervalos si ambos cruces coinciden.\n")
+    for el in ELEMENTOS
+        haskey(BARRIDO_ALPHA, el) || continue
+        as = vcat(0.0, BARRIDO_ALPHA[el])
+        es = [ci_de(el, ESTADO, a) for a in as]
+        ok = [i for i in eachindex(as) if es[i] !== nothing]
+        for (J, k) in ((1, 2), (2, 3))
+            meta = NIST_NIVELES[el][k]
+            cruce = nothing
+            for j in 1:length(ok) - 1
+                i1, i2 = ok[j], ok[j + 1]
+                v1, v2 = es[i1]["niveles_cm"][k], es[i2]["niveles_cm"][k]
+                if (v1 - meta) * (v2 - meta) <= 0 && v2 != v1
+                    cruce = as[i1] + (as[i2] - as[i1]) * (meta - v1) / (v2 - v1)
+                    break
+                end
+            end
+            @printf(io, "- %s 3P_%d (NIST %.1f cm^-1): %s\n", INFO[el].etiqueta, J, meta,
+                    cruce === nothing ? "sin cruce dentro del barrido" : @sprintf("alpha_d = %.2f", cruce))
+        end
+    end
+
     return String(take!(io))
 end
 

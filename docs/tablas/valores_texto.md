@@ -56,6 +56,19 @@ Minimos cuadrados de log y frente a log Z con los cuatro elementos (Z = 6, 14, 3
 - Germanio: av frente a 3P: 3P_1 -1.78%, 3P_2 -1.63%, 1D_2 -0.30%, 1S_0 -0.20%
 - Estaño: av frente a 3P: 3P_1 -1.72%, 3P_2 -1.46%, 1D_2 -0.58%, 1S_0 -0.36%
 
+## Estabilidad de los 3P_J con el espacio activo (3P, alpha_d = 0)
+
+Recorrido total de cada intervalo entre el primer y el ultimo m de la curva, y excursion maxima respecto al valor en el m de produccion. En cm^-1.
+
+- Carbono 3P_1: m = 4 -> 40, 21.18 -> 21.15 (recorrido -0.03); excursion max. desde el m de produccion 0.03
+- Carbono 3P_2: m = 4 -> 40, 63.21 -> 63.08 (recorrido -0.13); excursion max. desde el m de produccion 0.13
+- Silicio 3P_1: m = 4 -> 20, 72.15 -> 72.35 (recorrido 0.20); excursion max. desde el m de produccion 0.20
+- Silicio 3P_2: m = 4 -> 20, 210.59 -> 210.58 (recorrido -0.01); excursion max. desde el m de produccion 0.03
+- Germanio 3P_1: m = 4 -> 20, 481.80 -> 490.74 (recorrido 8.94); excursion max. desde el m de produccion 8.94
+- Germanio 3P_2: m = 4 -> 20, 1255.62 -> 1257.58 (recorrido 1.96); excursion max. desde el m de produccion 1.96
+- Estaño 3P_1: m = 4 -> 20, 1326.27 -> 1367.10 (recorrido 40.83); excursion max. desde el m de produccion 40.83
+- Estaño 3P_2: m = 4 -> 20, 2918.37 -> 2921.70 (recorrido 3.33); excursion max. desde el m de produccion 3.54
+
 ## Convergencia de los singletes con el espacio activo (3P, alpha_d = 0)
 
 Con los tres ultimos tamanos de cada curva: extrapolacion geometrica (incrementos en razon constante) y de potencia (E(m) = E_inf + A m^-p, ajuste exacto). Una razon cercana a 1 hace inservible la geometrica.
@@ -81,3 +94,12 @@ Con los tres ultimos tamanos de cada curva: extrapolacion geometrica (incremento
 - Estaño alpha_d = 4.00: 3P_1 +6.4%, 3P_2 +8.0%, 1D_2 = 10104.5, 1S_0 = 18195.5
 - Estaño alpha_d = 5.00: 3P_1 +16.2%, 3P_2 +16.3%, 1D_2 = 10592.4, 1S_0 = 18950.1
 - Estaño alpha_d = 6.00: 3P_1 +27.5%, 3P_2 +25.8%, 1D_2 = 11142.0, 1S_0 = 19797.7
+
+## Cruce de alpha_d: el valor que iguala cada intervalo 3P_J al NIST
+
+Interpolacion lineal del barrido entre los dos alpha_d que acotan el nivel medido. Un solo alpha_d basta para los dos intervalos si ambos cruces coinciden.
+
+- Germanio 3P_1 (NIST 557.1 cm^-1): alpha_d = 0.67
+- Germanio 3P_2 (NIST 1410.0 cm^-1): alpha_d = 0.66
+- Estaño 3P_1 (NIST 1691.8 cm^-1): alpha_d = 3.22
+- Estaño 3P_2 (NIST 3427.7 cm^-1): alpha_d = 2.87

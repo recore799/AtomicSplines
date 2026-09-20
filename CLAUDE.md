@@ -18,6 +18,26 @@ tesis de licenciatura del usuario; el manuscrito vive en `docs/`.
    Si se regenera uno, hay que reemitir el manifiesto y commitear el diff; si no, se rompe la
    única señal que detecta una regresión numérica sola. Ver `benchmarks/README.md`.
 
+## Congelamiento del código (desde 2026-09-13)
+
+El código que produce los números de la tesis está congelado: manifiesto 25/25, 39 corridas de CI
+registradas y etapa 3 reproducible. La fase en curso es la redacción del manuscrito, y el orden de
+trabajo está en `docs/claude/SIGUIENTES-PASOS.md`.
+
+**Se puede sin preguntar:**
+
+- editar los valores de literatura de `benchmarks/np2_sequence/tesis/config.jl` y regenerar la
+  etapa 3 (segundos);
+- agregar a `valores_texto.md` una salida nueva que el texto necesite citar;
+- escribir diagnósticos de solo lectura, con nombre propio, que no toquen los resultados.
+
+**No se toca sin que el usuario lo pida explícitamente:** la física del SCF, del CI o de
+Breit-Pauli; los `.jld2` y el `resultados_ci.toml`; y las decisiones de `config.jl` (`ESTADO`,
+`ENERGIA_HF`, `CRITERIO_ALPHA`, `TAMANOS_CONVERGENCIA`, `BARRIDO_ALPHA`).
+
+Una discrepancia que aparezca mientras se redacta se documenta como limitación; no se persigue con
+código. Las que ya están diagnosticadas viven en `docs/claude/REVISION-RESULTADOS-2026-09-13.md`.
+
 ## Cómo correr
 
 ```bash

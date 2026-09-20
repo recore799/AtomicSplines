@@ -78,7 +78,9 @@ convergencia de los singletes con sus extrapolaciones y el error de cada punto d
    la calibración de α_d se describe como lo que es, un barrido contra el NIST con
    r_c = 1.0 fijo. NIST ASD ya se cita con `NIST_ASD` y versión 5.12. De los 7 `\todo`
    queda 1: falta una referencia de FEM en la bibliografía para citar el *lifting*.
-4. **`discusion.tex`:** reescritura completa. Son 73 líneas y cuatro de sus afirmaciones cambian.
+4. ~~**`discusion.tex`.**~~ **Hecho el 2026-09-20.** Reescrito de 73 a 122 líneas. El hilo
+   cuantitativo es ahora la razón de intervalos R del Cuadro `tab:zeta`. Sección nueva de
+   limitaciones, con la casi-degeneración citada desde `valores_texto.md`.
 5. **`conclusiones.tex`:** está vacío (7 líneas), y con él la sección de trabajo futuro, que ya
    tiene sus números en las secciones 6 y 7 de la revisión.
 6. **Cierre:** introducción, prólogo, los 21 `\todo` restantes y una pasada de referencias.

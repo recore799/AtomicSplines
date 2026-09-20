@@ -1,73 +1,122 @@
 \chapter{Discusión}
 \label{ch:discusion}
 
-\section{Análisis del Acoplamiento Intermedio en la Secuencia np²}
+El Capítulo \ref{ch:resultados} estableció qué reproduce el motor numérico y con qué error. Este capítulo se ocupa de la pregunta siguiente, que es la que interesa físicamente: qué significan esos errores. La tesis que se defiende aquí es que las discrepancias observadas no son defectos de la implementación sino consecuencias identificables de las tres aproximaciones que definen el modelo, a saber, el campo medio de capa abierta, el core congelado y el tratamiento de la relatividad a primer orden mediante un único parámetro de un cuerpo. Mostrar que cada discrepancia tiene un origen concreto, y que ese origen predice su signo y su magnitud, es una forma más sólida de validar el método que exhibir un acuerdo numérico global.
 
-El desarrollo computacional del método de B-splines para Hartree-Fock ha demostrado ser excepcionalmente robusto en el modelado radial y el tratamiento de apantallamiento multi-cuerpo. No obstante, el valor profundo de haber extraído la información radial analíticamente mediante tensores reside en que nos brinda las piezas estructurales directas para ensamblar la fenomenología relativista. 
+\section{El Régimen de Acoplamiento a lo Largo de la Secuencia}
 
-Una vez que evaluamos y aislamos los campos medios (especialmente bajo un promedio de configuraciones), el siguiente paso crítico en la predicción del espectro atómico verdadero de la secuencia homóloga $np^2$ es abandonar las aproximaciones de perturbación de campo débil y proceder hacia el esquema de \textbf{acoplamiento intermedio}. Esto se logra construyendo la matriz del Hamiltoniano de Breit-Pauli en la base completa y diagnosticando su diagonalización. 
+La secuencia $np^2$ fue elegida porque mantiene fija la simetría angular mientras varía la carga nuclear, de modo que el tránsito del carbono al estaño aísla un solo fenómeno: el paso del acoplamiento de Russell-Saunders al acoplamiento intermedio. Conviene disponer de un indicador cuantitativo de ese tránsito que no dependa de la escala absoluta de las energías, y la razón entre los intervalos del término fundamental lo proporciona. Definida como $R = (E_{^3P_2} - E_{^3P_1})/(E_{^3P_1} - E_{^3P_0})$, esta cantidad vale exactamente $2$ para un acoplamiento espín-órbita de un cuerpo actuando sobre estados $LS$ puros, que es el contenido de la regla de intervalos de Landé, y es independiente del valor de $\zeta_{np}$. Sus valores calculados y medidos aparecen en el Cuadro \ref{tab:zeta}.
 
-\subsection{El régimen de campo débil (Carbono)}
-En el caso del Carbono ($Z=6$), la repulsión electrostática intra-capa (parametrizada por la integral de Slater $F^2$) domina abrumadoramente el equilibrio energético. El parámetro de interacción espín-órbita $\zeta_{2p}$, que depende del momento inverso cúbico $\langle r^{-3} \rangle$, es minúsculo en comparación. La matriz del Hamiltoniano resulta ser fuertemente diagonal, por lo que los números cuánticos totales $L$ (Momento Orbital Total) y $S$ (Espín Total) se mantienen como escalares casi invariantes del movimiento. En este límite, las etiquetas clásicas de los términos espectroscópicos, como $^3P$, conservan un sentido físico estricto y la separación de la estructura fina obedece fielmente la regla de intervalos de Landé.
+\subsection{El carbono y el límite de campo débil}
 
-\subsection{La fractura inicial y re-optimización (Silicio)}
-Al descender al Silicio ($Z=14$), comenzamos a notar que la inyección estática del término espín-órbita altera ligeramente las distancias relativas inter-multipletes. Como se discutió en el capítulo de Resultados, la pequeña desviación observada en los parámetros de repulsión $\zeta_{3p}$ y $F^2$ frente a los cálculos focalizados al estado base de Froese Fischer es evidencia directa del uso de un campo medio promediado. Optimizar el SCF bajo el promedio de configuraciones relaja artificialmente las constricciones sobre el término singlete contra el triplete, asegurando que las funciones radiales generadas sirvan como una base imparcial para la superposición e interferencia de estados en cálculos posteriores de interacción de configuraciones. Aquí, la fractura de la regla de Landé comienza a ser medible.
+En el carbono la repulsión electrostática domina al acoplamiento magnético por tres órdenes de magnitud, según el contraste entre $F^2$ y $\zeta_{2p}$ de la Sección \ref{sec:zeta_diagnostico}. La matriz de Breit-Pauli es en consecuencia casi diagonal, los números cuánticos $L$ y $S$ se conservan con excelente aproximación, y las etiquetas espectroscópicas conservan sentido físico estricto. El factor de Landé del nivel $^3P_2$ que arroja el modelo coincide con el del triplete puro hasta la quinta cifra, lo que confirma que el espacio de Hilbert no se ha mezclado apreciablemente.
 
-\subsection{El colapso espectroscópico y mezcla fuerte (Germanio y Estaño)}
-El colapso total de la aproximación tradicional sucede de manera inevitable a partir del Germanio ($Z=32$) y se agudiza severamente en el Estaño ($Z=50$). Por el drástico acortamiento del pozo efectivo y el intenso apantallamiento de sus núcleos masivos, la magnitud de las interacciones magnéticas radiales asciende bruscamente hasta escalar y competir en el mismo orden de magnitud que la repulsión coulómbica. 
+Precisamente por eso el carbono ofrece la prueba más limpia de una carencia del modelo, y conviene enunciarla con cuidado porque invierte la lectura habitual. Nuestro cálculo entrega $R_{\text{modelo}} = 1.983$, es decir, obedece la regla de Landé casi exactamente, tal como debe hacerlo un modelo cuyo único operador de estructura fina es de un cuerpo. El experimento, en cambio, da $R_{\text{NIST}} = 1.644$. No es el átomo el que sigue la regla de intervalos y el modelo el que se desvía, sino al revés: la naturaleza se aparta de Landé en un $18\%$ y nuestro modelo es incapaz de reproducir esa desviación.
 
-Frente a la diagonalización matricial del operador completo de la energía de Breit-Pauli, los elementos de matriz fuera de la diagonal dominan la dinámica de subespacios con el mismo Momento Angular Total $J$. En la configuración $np^2$, los autoestados con $J=0$ y $J=2$ son composiciones altamente mezcladas del término singlete ($^1S_0$, $^1D_2$) y el término triplete ($^3P_0$, $^3P_2$). La fuerte interacción no-diagonal rompe de facto la degeneración electrostática y entrelaza las funciones de onda analíticas, indicando que el formalismo $LS$ ha sucumbido frente a la relatividad escalar. Las notaciones espectroscópicas que aún clasifican experimentalmente los niveles del germanio pierden su pureza puramente cuántica y sólo sobreviven como etiquetas formales remanentes de su ancestro ligero, demostrando la capacidad del método de acoplamiento intermedio propuesto en esta tesis.
+El origen de la discrepancia queda acotado por la propia definición de $R$. Al ser una razón entre intervalos, es insensible a la escala de $\zeta_{2p}$, de modo que ningún error en el momento $\langle r^{-3} \rangle$, en la malla o en el campo medio puede explicarla. Lo que puede explicarla son los términos de dos cuerpos del Hamiltoniano de Breit-Pauli que nuestro tratamiento omite, y en particular la interacción espín-espín, cuyo peso relativo frente al espín-órbita es máximo justamente donde este último es más débil. El carbono es entonces el elemento de la secuencia donde el modelo es más preciso en términos absolutos y más incompleto en términos estructurales.
+
+\subsection{El silicio y la estabilidad del esquema}
+
+El silicio presenta el mejor acuerdo de toda la secuencia en la forma del multiplete, con $R_{\text{modelo}} = 1.911$ frente a $R_{\text{NIST}} = 1.894$. Su interés para la discusión es de otro tipo: sirve como control de que las elecciones metodológicas del cálculo no condicionan las conclusiones. La más relevante de esas elecciones es la convención de orbitales, ya que el campo medio puede optimizarse sobre el término $^3P$ o sobre el promedio de configuración, y las dos opciones producen orbitales distintos.
+
+La sensibilidad medida a esa elección es pequeña y sistemática. Al pasar de orbitales del término a orbitales de promedio, los intervalos del tripleto descienden entre un $1.5\%$ y un $1.8\%$ en los cuatro elementos, siguiendo la razón entre los dos valores de $\zeta_{np}$, mientras que los singletes se mueven menos de un $0.6\%$. Ninguna de las conclusiones de esta tesis cambia de signo ni de magnitud al conmutar la convención, de manera que las discrepancias que discutimos no pueden atribuirse a ella. Las integrales de Slater del silicio coinciden además con las de Froese Fischer dentro de $1.8\times10^{-5}$ Hartree, según el Cuadro \ref{tab:integrales_slater}, lo que descarta también la parte electrostática del campo medio como fuente de error.
+
+\subsection{El germanio y el estaño: la ruptura del esquema LS}
+
+A partir del germanio la razón de intervalos se desploma, de $1.894$ en el silicio a $1.531$ en el germanio y $1.026$ en el estaño según los valores del NIST. En el estaño los dos intervalos del tripleto son prácticamente iguales, lo que constituye la firma inequívoca de que el esquema $LS$ ha dejado de describir el sistema. El modelo sigue esa caída y la reproduce de manera cualitativamente correcta, con $R_{\text{modelo}} = 1.563$ y $1.137$, aunque en ambos casos se queda por encima del valor medido.
+
+El mecanismo es distinto del que opera en el carbono y conviene no confundirlos. Aquí la desviación respecto a $R = 2$ no procede de términos de dos cuerpos omitidos sino del acoplamiento intermedio genuino: los elementos fuera de la diagonal de la matriz de Breit-Pauli conectan los estados de igual $J$, de modo que el nivel $^3P_2$ interactúa con el $^1D_2$ y el $^3P_0$ con el $^1S_0$, mientras que el $^3P_1$ permanece aislado por no tener compañero con su mismo momento angular total. El resultado es que los dos niveles acoplados se desplazan y el intermedio no, lo que rompe la proporcionalidad de Landé sin necesidad de invocar ninguna interacción adicional.
+
+Que el modelo reproduzca la caída de $R$ pero se quede corto indica que mezcla de menos, y esa es una afirmación verificable de manera independiente mediante el factor de Landé. La sección siguiente la somete a esa prueba.
 
 \section{Efecto Zeeman Anómalo y el Factor $g$ de Landé}
 
-Una forma contundente y físicamente observable de cuantificar la fractura espectroscópica discutida en la sección anterior es evaluar la interacción del átomo con un campo magnético externo débil, fenómeno conocido como el \textbf{Efecto Zeeman anómalo} \cite{CohenTannoudji1977}. 
+Una forma físicamente observable de cuantificar la ruptura del acoplamiento $LS$ es evaluar la interacción del átomo con un campo magnético externo débil, fenómeno conocido como el efecto Zeeman anómalo \cite{CohenTannoudji1977}. Su interés para esta discusión es que el factor $g$ resultante no depende de la escala de las energías sino de la composición del autoestado, de modo que mide directamente el grado de mezcla y ofrece una prueba independiente de la que proporcionan los intervalos.
 
-Cuando un átomo se somete a un campo magnético estático $\mathbf{B}$, la degeneración espacial de los subniveles magnéticos $M_J$ se rompe. La interacción está gobernada por el Hamiltoniano de Zeeman, el cual acopla el campo externo con los momentos dipolares magnéticos orbital ($\boldsymbol{\mu}_L$) y de espín ($\boldsymbol{\mu}_S$):
+Cuando un átomo se somete a un campo magnético estático $\mathbf{B}$, la degeneración de los subniveles magnéticos $M_J$ se rompe. La interacción está gobernada por el Hamiltoniano de Zeeman, que acopla el campo externo con los momentos dipolares magnéticos orbital y de espín:
 
 \begin{equation}
     \hat{H}_Z = - (\boldsymbol{\mu}_L + \boldsymbol{\mu}_S) \cdot \mathbf{B} = \frac{\mu_B}{\hbar} (\mathbf{L} + g_s \mathbf{S}) \cdot \mathbf{B},
 \end{equation}
 
-donde $\mu_B$ es el magnetón de Bohr y $g_s \approx 2$ es el factor giromagnético anómalo del espín del electrón. Debido a que el momento orbital pondera con un factor de $1$ y el espín con un factor de $2$, el momento magnético total $\boldsymbol{\mu}_J$ no es colineal con el momento angular total $\mathbf{J}$. 
+donde $\mu_B$ es el magnetón de Bohr y $g_s$ el factor giromagnético del espín del electrón. Debido a que el momento orbital pondera con un factor de $1$ y el espín con uno cercano a $2$, el momento magnético total no es colineal con el momento angular total $\mathbf{J}$.
 
-\subsection{El Límite del Acoplamiento LS}
+\subsection{El límite del acoplamiento LS}
 
-Para un estado de acoplamiento $LS$ perfectamente puro, los vectores $\mathbf{L}$ y $\mathbf{S}$ precesan rápidamente alrededor de $\mathbf{J}$ debido a la interacción espín-órbita, mientras que $\mathbf{J}$ precesa lentamente alrededor del eje definido por $\mathbf{B}$ (típicamente el eje $z$). Al aplicar el teorema de Wigner-Eckart para proyectar el operador vectorial $(\mathbf{L} + 2\mathbf{S})$ sobre la dirección del vector constante $\mathbf{J}$, el desdoblamiento energético resulta estrictamente lineal y proporcional a un factor adimensional $g_{LS}$, conocido como el \textbf{factor de Landé}:
-
-\begin{equation}
-    \Delta E = g_{LS} \mu_B B M_J, \quad \text{donde} \quad g_{LS} = 1 + \frac{J(J+1) - L(L+1) + S(S+1)}{2J(J+1)}.
-\end{equation}
-
-En este régimen, el factor $g$ es una constante intrínseca rígidamente determinada por los números cuánticos del multiplete. Por ejemplo, analizando el nivel espectroscópico con $J=2$ para nuestra configuración $np^2$:
-\begin{itemize}
-    \item El estado triplete puramente acoplado $^3P_2$ ($L=1, S=1$) impone invariablemente un factor $g(^3P_2) = 1.50$.
-    \item El estado singlete $^1D_2$ ($L=2, S=0$) exige un factor diamagnético $g(^1D_2) = 1.00$.
-\end{itemize}
-
-\subsection{El Factor de Landé en Acoplamiento Intermedio}
-
-Sin embargo, como hemos demostrado computacionalmente, nuestro esquema de acoplamiento intermedio (gobernado por la diagonalización completa de la matriz de Breit-Pauli) rompe la conservación aislada de $L$ y $S$. El autoestado físico resultante $| \psi_{J=2} \rangle$ no es puro, sino una superposición lineal ortonormal de los estados base del subespacio: 
+Para un estado de acoplamiento $LS$ puro, los vectores $\mathbf{L}$ y $\mathbf{S}$ precesan rápidamente alrededor de $\mathbf{J}$ por efecto de la interacción espín-órbita, mientras que $\mathbf{J}$ precesa lentamente alrededor de la dirección del campo. Al aplicar el teorema de Wigner-Eckart para proyectar el operador vectorial $\mathbf{L} + g_s\mathbf{S}$ sobre $\mathbf{J}$, el desdoblamiento resulta lineal y proporcional al factor de Landé:
 
 \begin{equation}
-    | \psi \rangle = c_1 | ^3P_2 \rangle + c_2 | ^1D_2 \rangle.
+    \label{eq:lande_g}
+    \Delta E = g_{LS}\, \mu_B B M_J, \quad \text{donde} \quad g_{LS} = 1 + (g_s - 1)\,\frac{J(J+1) - L(L+1) + S(S+1)}{2J(J+1)}.
 \end{equation}
 
-Dado que la corrección de Zeeman en campo débil es un operador diagonal en $J$ de primer orden de perturbación, el factor $g$ efectivo que mediría el experimento es el valor esperado del operador sobre el estado mezclado, es decir, el promedio probabilístico ponderado de las aportaciones puras:
+En este régimen el factor $g$ queda rígidamente determinado por los números cuánticos del multiplete. Conviene detenerse en el valor del término $^3P_2$, porque la comparación con el experimento depende de un detalle que resulta fácil pasar por alto. Con la aproximación $g_s = 2$, la Ecuación \eqref{eq:lande_g} da exactamente $g(^3P_2) = 3/2$. El electrón real tiene sin embargo $g_s = 2.00232$, y con ese valor el triplete puro vale $g(^3P_2) = 1.50116$. Los factores tabulados por el NIST son medidas del átomo real y llevan por tanto el $g_s$ verdadero, de manera que contrastarlos contra $1.500$ atribuye a la mezcla una diferencia que en realidad es la anomalía del momento magnético del electrón. Todos los valores calculados que se presentan a continuación emplean el $g_s$ real, y la referencia de estado puro contra la que deben leerse es $1.50116$ y no $1.5$. El término $^1D_2$, con $S=0$, no recibe contribución de espín y vale exactamente $g(^1D_2) = 1$ en cualquiera de las dos convenciones.
+
+\subsection{El factor de Landé en acoplamiento intermedio}
+
+En el esquema de acoplamiento intermedio el autoestado físico de $J=2$ no es puro sino una superposición de los dos términos que comparten ese momento angular total,
 
 \begin{equation}
-    g_{\text{eff}} = \langle \psi | \hat{g} | \psi \rangle = |c_1|^2 g_{LS}(^3P_2) + |c_2|^2 g_{LS}(^1D_2) = |c_1|^2 (1.50) + |c_2|^2 (1.00).
+    | \psi \rangle = c_1 | {}^3P_2 \rangle + c_2 | {}^1D_2 \rangle .
 \end{equation}
 
-Utilizando los coeficientes obtenidos directamente de nuestro motor numérico B-spline:
-\begin{itemize}
-    \item Para el \textbf{Carbono ($Z=6$)}, el Hamiltoniano es asintóticamente electrostático. La mezcla es marginal ($c_1 \approx 1.0$, $c_2 \approx 0.0$). El factor calculado arroja $g_{\text{eff}} = 1.500$, corroborando teóricamente que el átomo se comporta como un triplete ideal $^3P_2$.
-    \item Para el \textbf{Germanio ($Z=32$)}, la interacción magnética espín-órbita no-diagonal induce una perturbación visible en el espacio de Hilbert. Nuestro cálculo teórico estricto en el límite Hartree-Fock predice una mezcla incipiente ($99.5\%$ del triplete $^3P$ y $0.5\%$ del singlete $^1D$), lo que resulta en un factor de Landé efectivo de \textbf{$g_{\text{eff}} = 1.4975$}. 
-\end{itemize}
+Como la corrección de Zeeman en campo débil es diagonal en $J$ a primer orden, el factor $g$ que mediría el experimento es el valor esperado del operador sobre el estado mezclado, es decir, el promedio de las aportaciones puras ponderado por las probabilidades:
 
-El veredicto definitivo de esta fractura del acoplamiento $LS$ proviene del experimento. La base de datos del NIST reporta un valor empírico para el nivel $^3P_2$ del Germanio de \textbf{$g_{\text{exp}} = 1.496$}. Inyectando este valor medido en el laboratorio en nuestra fórmula probabilística, la naturaleza revela que el estado físico opera con una mezcla de aproximadamente $99.2\%$ del estado $^3P$ y $0.8\%$ del estado $^1D$. 
+\begin{equation}
+    \label{eq:g_efectivo}
+    g_{\text{eff}} = |c_1|^2\, g(^3P_2) + |c_2|^2\, g(^1D_2).
+\end{equation}
 
-El hecho de que nuestro modelo SCF de campo medio capture la caída del factor $g$ desde $1.500$ hasta $1.4975$ demuestra la precisión del método B-spline. Sin embargo, aún queda una pequeña brecha respecto al $1.496$ experimental. Como discutimos en el capítulo de Resultados, la aproximación de campo medio sobreestima la repulsión electrostática $F^2$, manteniendo los estados artificialmente separados. 
+Invertir la Ecuación \eqref{eq:g_efectivo} permite traducir cualquier factor $g$, calculado o medido, en un peso del carácter $^1D_2$. El Cuadro \ref{tab:lande} recoge esa traducción para los cuatro elementos y su lectura contradice lo que el modelo parecería sugerir.
 
-Para comprobar el origen de esta brecha y probar por qué ocurre, implementamos un cálculo de Interacción de Configuraciones (CI) restringido a la capa de valencia. Un detalle teórico profundo de este método radica en el \textbf{Teorema de Brillouin}, el cual establece que la función de onda de Hartree-Fock no interactúa directamente con excitaciones simples ($\langle \Psi_{\text{HF}} | \hat{H} | \Psi_{S} \rangle = 0$). Este postulado revela que la correlación electrónica estática no puede ser extraída moviendo un solo electrón. Por lo tanto, fue computacionalmente necesario recurrir a excitaciones dobles ($np^2 \to nd^2$) hacia los pseudo-estados virtuales extraídos de nuestra base B-spline. 
+En el carbono y el silicio la mezcla es inferior al $0.02\%$ y el acuerdo con el experimento es completo, lo que confirma que la descripción de Russell-Saunders es exacta a efectos prácticos en la parte alta del grupo. En el germanio el ASD reporta $g = 1.49458$, que corresponde a un $1.31\%$ de carácter $^1D_2$, mientras que nuestro modelo entrega $1.49731$, es decir, $0.77\%$. En el estaño la discrepancia es del mismo tipo y mayor en magnitud absoluta: $9.81\%$ medido frente a $5.47\%$ calculado. El modelo mezcla aproximadamente la mitad de lo que mezcla el átomo real en ambos elementos pesados.
 
-Al incluir estas configuraciones excitadas doblemente, la correlación electrónica reduce exitosamente la integral efectiva $F^2$. Esta compresión del espectro fortalece el peso relativo de la interacción espín-órbita $\zeta_{4p}$, incrementando la mezcla singlete-triplete y empujando el factor de Landé teórico hacia el valor experimental, trazando así de manera elegante y concluyente la frontera entre el límite de partícula independiente y la realidad de los sistemas multielectrónicos.
+Conviene corregir de paso una caracterización que la magnitud de estos números no sostiene. El germanio no es un átomo fuertemente mezclado: con un $1.31\%$ de contaminación en su nivel $^3P_2$, sus etiquetas $LS$ siguen siendo descripciones razonables y la ruptura del esquema es todavía incipiente. El estaño, con cerca de un diez por ciento, sí se encuentra en un régimen donde las etiquetas sobreviven como convención y no como descripción, y es el único elemento de la secuencia del que puede afirmarse tal cosa.
+
+\subsection{Origen del déficit de mezcla}
+
+La subestimación tiene una explicación que conecta con los dos errores documentados en el Capítulo \ref{ch:resultados}, y que el propio formalismo hace transparente. A primer orden en teoría de perturbaciones, el coeficiente de mezcla entre los dos estados de $J=2$ es proporcional al elemento no diagonal de la matriz de Breit-Pauli dividido por la separación entre los estados que conecta,
+
+\begin{equation}
+    \label{eq:mezcla_perturbativa}
+    c_2 \sim \frac{\langle {}^3P_2 | \hat{H}_{SO} | {}^1D_2 \rangle}{E(^1D_2) - E(^3P_2)} \propto \frac{\zeta_{np}}{E(^1D) - E(^3P)} .
+\end{equation}
+
+Los dos factores de la Ecuación \eqref{eq:mezcla_perturbativa} están sesgados en el mismo sentido en nuestro cálculo. El numerador es demasiado pequeño, porque el Cuadro \ref{tab:zeta} muestra que $\zeta_{np}$ se queda un $10\%$ por debajo del valor requerido en el germanio y un $16\%$ en el estaño. El denominador es demasiado grande, porque el término $^1D_2$ queda sistemáticamente alto respecto al experimento en los dos elementos. Un numerador deficitario y un denominador excesivo se combinan de forma multiplicativa, y su efecto conjunto da cuenta holgadamente del factor cercano a dos que separa la mezcla calculada de la observada.
+
+Esta lectura permite además descartar la explicación que resultaría más natural, que sería atribuir el déficit a un espacio de configuraciones insuficiente. La Sección \ref{sec:convergencia_ci} estableció que ese espacio está convergido, y el cálculo no se limita a excitaciones hacia un canal particular sino que incluye todas las parejas $nl^2$ compatibles con la simetría del término hasta $l_{\max}=3$. Ampliarlo no modificaría de manera apreciable ninguno de los dos factores de la Ecuación \eqref{eq:mezcla_perturbativa}. La corrección de polarización del core sí actúa sobre el numerador y desplaza el factor $g$ en la dirección correcta, hasta un $0.94\%$ de mezcla en el germanio y un $6.69\%$ en el estaño, pero no alcanza a cerrar la brecha porque simultáneamente empeora el denominador al elevar el término $^1D_2$.
+
+\section{Las Limitaciones del Modelo y su Alcance}
+
+Las discrepancias discutidas hasta aquí, junto con las del Capítulo \ref{ch:resultados}, se reducen a un conjunto acotado de aproximaciones cuyo efecto conviene enunciar por separado. El orden que sigue va de las que afectan a los observables reportados a las que solo afectan a su precisión numérica.
+
+\subsection{El parámetro de espín-órbita de un cuerpo}
+
+El modelo representa toda la estructura fina mediante un único parámetro $\zeta_{np}$ de un cuerpo, y esa elección falla en los dos extremos de la secuencia por razones opuestas. En los elementos ligeros faltan los términos de dos cuerpos del Hamiltoniano de Breit-Pauli, cuya ausencia se manifiesta en la desviación de la razón $R$ del carbono y no puede corregirse ajustando ningún parámetro radial. En los pesados el problema es de magnitud: como se estableció en la Sección \ref{sec:zeta_diagnostico}, el $\zeta$ que exigen los niveles medidos del germanio y el estaño supera al que produciría un núcleo completamente desnudo sobre los orbitales calculados, de modo que la carencia no está en el apantallamiento sino en la propia función de onda, que debería estar más contraída de lo que el cálculo no relativista la produce.
+
+\subsection{La casi degeneración \texorpdfstring{$ns^2np^2 \leftrightarrow np^4$}{ns2np2 <-> np4}}
+
+El error persistente de los términos singlete tiene un origen distinto y bien caracterizado. El modelo correlaciona únicamente la pareja de valencia sobre un core congelado, lo que excluye por construcción la mezcla entre las configuraciones $ns^2np^2$ y $np^4$, próximas en energía porque la promoción de los dos electrones $ns$ a la subcapa $np$ cuesta poco cuando ambas pertenecen a la misma capa principal. Un cálculo de dos configuraciones por término, con los orbitales del campo medio congelados, permite estimar el tamaño del efecto sin construir el motor que lo trataría de forma consistente.
+
+El resultado es que el efecto es grande y que actúa casi exclusivamente sobre el término $^1S$. En el carbono el peso de la configuración $np^4$ es del $7.40\%$ en el $^1S$ frente a un $2.21\%$ en el $^3P$, y esa asimetría deprime la separación $^1S - {}^3P$ en $\num{10444}\ \text{cm}^{-1}$; en el resto de la secuencia el descenso se sitúa entre $\num{5277}$ y $\num{6315}\ \text{cm}^{-1}$. El término $^1D$ no se ve afectado en este modelo, porque el acoplamiento y la separación entre configuraciones son idénticos para él y para el $^3P$. La firma coincide con lo observado en el Capítulo \ref{ch:resultados}, donde el error del $^1S_0$ del carbono es aproximadamente el doble que el del $^1D_2$.
+
+Lo que impide incorporar la corrección sin más es que los dos mecanismos no son aditivos, y este es el punto que conviene subrayar. Si la bajada estimada se sumara al resultado del CI de pareja, el $^1S_0$ del carbono quedaría $\num{8198}\ \text{cm}^{-1}$ por debajo del valor medido, sobrecorrigiendo por un factor cercano a cuatro, y los otros tres elementos caerían entre $\num{4991}$ y $\num{7035}\ \text{cm}^{-1}$ por debajo. La razón es que el CI de pareja, con orbitales que no son los óptimos para cada configuración, ya describe con sus propios medios parte de la física que la casi degeneración representa. Aplicada en solitario sobre el campo medio, en cambio, la casi degeneración reproduce la separación $^1S - {}^3P$ del carbono con notable fidelidad, ya que $0.6F^2$ menos la bajada calculada da $\num{21595}\ \text{cm}^{-1}$ frente a los $\num{21648}$ medidos, pero deja el $^1D - {}^3P$ en su valor de Hartree-Fock, $0.24F^2$, que excede al experimento en un veintiséis por ciento. Cada mecanismo corrige un término y no el otro. Tratarlos conjuntamente exige un cálculo de interacción de configuraciones de cuatro electrones con las subcapas $ns$ y $np$ simultáneamente activas, es decir, un motor multirreferencial distinto del implementado aquí y no una corrección añadida a él.
+
+\subsection{La polarizabilidad efectiva}
+
+El parámetro $\alpha_d$ se determinó por ajuste espectroscópico contra los intervalos del tripleto, según se describe en la Sección \ref{sec:impl_polarizacion}, y la prueba cruzada del potencial de ionización mostró que no debe interpretarse como la polarizabilidad dipolar del core. Al reproducir el tripleto dentro del $2\%$ y simultáneamente deteriorar la energía de ionización, el parámetro delata que está absorbiendo más física que la respuesta dipolar del core, y el candidato más probable son los efectos relativistas escalares que contraen los orbitales y que un tratamiento de Breit-Pauli a primer orden sobre orbitales no relativistas no incorpora. La comparación de los valores ajustados con polarizabilidades de referencia habría permitido acotar esa contaminación, pero no dispusimos de valores primarios verificables para los cores del germanio y el estaño.
+
+\subsection{Limitaciones de precisión numérica}
+
+Tres decisiones de implementación afectan a la precisión sin alterar ninguna conclusión física, y se enuncian para completar el cuadro. La primera es la ortogonalización por Gram-Schmidt en lugar de multiplicadores de Lagrange, discutida en la Sección \ref{sec:parametros_fina}, que deja la solución fuera del punto estacionario exacto y explica una desviación de entre el $0.2\%$ y el $0.3\%$ en el momento $\langle r^{-3} \rangle$ de los elementos con core $p$; es uno o dos órdenes de magnitud menor que los errores físicos del modelo. La segunda es que la energía total se extrae de los autovalores del problema generalizado y no del cociente de Rayleigh sobre los orbitales convergidos; como el orbital de valencia pasa por Gram-Schmidt después de la diagonalización, deja de ser autovector de su propia matriz de Fock y las dos expresiones dejan de coincidir. La diferencia es de $-1.7\times10^{-6}$ Hartree en el silicio y menor que $6\times10^{-7}$ en el germanio y el estaño, en todos los casos por debajo de la precisión con que la referencia tabula la energía. La tercera es el truncamiento del espacio de configuraciones en $l_{\max}=3$, cuyo efecto residual está acotado por las extrapolaciones de la Sección \ref{sec:convergencia_ci} en unas pocas decenas de $\text{cm}^{-1}$.
+
+\section{Balance}
+
+El conjunto de la discusión admite una lectura unificada. El motor de B-splines reproduce el límite Hartree-Fock no relativista con una precisión que sitúa todos los errores espectroscópicos fuera de la parte numérica del cálculo, y la secuencia $np^2$ documenta de manera cuantitativa el tránsito del acoplamiento de Russell-Saunders al intermedio, con la razón de intervalos cayendo de $1.98$ a $1.14$ y la mezcla del nivel $^3P_2$ pasando de ser inapreciable a superar el cinco por ciento. Las tres discrepancias que subsisten se explican por las tres aproximaciones del modelo, y en los tres casos la explicación predice correctamente el signo del error: un $\zeta$ de un cuerpo que falla por exceso donde los términos de dos cuerpos importan y por defecto donde falta contracción orbital, un core congelado que deja alto al $^1S$ por omitir una casi degeneración específica de ese término, y una polarizabilidad ajustada que corrige el síntoma magnético a costa de la energía.
+
+Ninguna de esas limitaciones se resuelve refinando la implementación existente, y conviene decirlo con claridad porque marca dónde termina el alcance de este trabajo. Los términos de dos cuerpos exigen ampliar el Hamiltoniano, la casi degeneración exige un cálculo multirreferencial de cuatro electrones y la contracción relativista exige abandonar el punto de partida no relativista. Cada una de ellas define una extensión natural del motor construido aquí, y el Capítulo \ref{ch:conclusiones} las recoge como líneas de trabajo futuro.
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:

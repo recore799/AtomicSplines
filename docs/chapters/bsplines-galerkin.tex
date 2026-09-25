@@ -37,7 +37,7 @@ La propiedad computacional definitoria de los B-splines es su \textbf{soporte co
 
 Esta localidad tiene dos consecuencias críticas:
 \begin{enumerate}
-    \item \textbf{Matrices Banda:} Al integrar el producto de dos funciones base, $\int B_i(r) B_j(r) dr$, el resultado es distinto de cero solo si sus soportes se intersectan ($|i-j| \leq p$). Las matrices resultantes (solapamiento, energía cinética) no son densas, sino matrices de banda (\textit{banded matrices}). Esto reduce drásticamente el costo computacional de almacenamiento y resolución del sistema lineal de $O(N^3)$ a $O(N)$, permitiendo usar mallas de altísima resolución.
+    \item \textbf{Matrices Banda:} Al integrar el producto de dos funciones base, $\int B_i(r) B_j(r) dr$, el resultado es distinto de cero solo si sus soportes se intersectan ($|i-j| \leq p$). Las matrices resultantes (solapamiento, energía cinética) son matrices de banda (\textit{banded matrices}), con un ancho fijado por el orden del spline. Un solucionador que aproveche esa estructura resuelve un sistema lineal con costo $O(N)$ en lugar de $O(N^3)$; nuestro motor la conoce pero almacena las matrices en formato denso, por las razones que se discuten en la Sección \ref{sec:repositorio}.
     \item \textbf{Control Local:} La alteración de un coeficiente $c_k$ en la expansión de la función de onda altera la curva \textit{exclusivamente} dentro de su región de influencia local $[t_k, t_{k+p+1})$. Esto permite capturar detalles muy finos (como la cúspide nuclear) sin inducir oscilaciones espurias (fenómeno de Runge) en otras regiones del dominio, otorgando una robustez muy superior a las bases globales (ver Figura \ref{fig:control_local_fem}).
 \end{enumerate}
 
@@ -147,16 +147,9 @@ Evaluar (\ref{eq:Yk-metodo}) directamente por cuadratura es costoso y genera mat
   \qty( -\dv[2]{r} + \frac{k(k+1)}{r^2} ) Y^k(a,b;r) = \frac{2k+1}{r} P_a(r) P_b(r),
 \end{equation}
 
-sujeta a las condiciones de frontera $Y^k(0) = 0$ y a un comportamiento asintótico fijado por el momento multipolar de la densidad de par,
+sujeta a la condición $Y^k(0) = 0$ en el origen y al comportamiento asintótico $Y^k \to M_k\,r^{-k}$, donde $M_k = \int_0^\infty s^k P_a(s)P_b(s) \dd{s}$ es el momento multipolar de la densidad de par. Como $M_k$ depende de la densidad que se está calculando, en el borde $R_{\text{max}}$ no se impone su valor sino una condición de Robin que lo elimina, la Ecuación \eqref{eq:robin} del Capítulo \ref{ch:ciclo-scf}. La equivalencia entre la definición integral (\ref{eq:Yk-metodo}) y la forma diferencial (\ref{eq:poisson-metodo}), junto con el comportamiento de $Y^k$ en los dos extremos del dominio, se demuestra en el Apéndice \ref{ap:galerkin-poisson}.
 
-\begin{equation}
-\label{eq:bc-metodo}
-  Y^k(R_{\text{max}}) = \frac{1}{R_{\text{max}}^{k}} \int_0^{R_{\text{max}}} s^k P_a(s)P_b(s) \dd{s}.
-\end{equation}
-
-La equivalencia entre la definición integral (\ref{eq:Yk-metodo}) y la forma diferencial (\ref{eq:poisson-metodo}), así como la derivación de estas condiciones de frontera, se demuestran formalmente en el Apéndice \ref{ap:galerkin-poisson} mediante diferenciación bajo el signo integral (regla de Leibniz generalizada).
-
-Proyectamos (\ref{eq:poisson-metodo}) sobre la base con el mismo procedimiento de la sección anterior. Multiplicando por $B_i(r)$, integrando por partes el término de segunda derivada y expandiendo $Y^k(r) \approx \sum_j y_j B_j(r)$, obtenemos la forma débil
+Proyectamos (\ref{eq:poisson-metodo}) sobre la base con el mismo procedimiento de la sección anterior. Multiplicando por $B_i(r)$, integrando por partes el término de segunda derivada y expandiendo $Y^k(r) \approx \sum_j y_j B_j(r)$, obtenemos la forma débil, salvo el término de borde en $R_{\text{max}}$, que aporta la condición de Robin,
 
 \begin{equation}
 \label{eq:poisson-weak-metodo}
@@ -170,7 +163,7 @@ que en notación matricial es simplemente un sistema lineal,
   \bm{A}^{(k)} \bm{y} = \bm{b}, \qquad \bm{A}^{(k)} = 2\bm{T} + k(k+1)\bm{V}^{(2)},
 \end{equation}
 
-donde $\bm{T}$ es la misma matriz cinética de (\ref{eq:matrix-elements}) y $\bm{V}^{(2)}$ es la matriz del operador $r^{-2}$. El resultado es notable por dos razones. Primero, el operador $\bm{A}^{(k)}$ depende únicamente de la malla de nudos y del orden multipolar $k$: es completamente independiente de la densidad electrónica y, por lo tanto, invariante a lo largo del ciclo autoconsistente. Segundo, $\bm{A}^{(k)}$ hereda de la base la misma estructura de banda simétrica que $\bm{H}$ y $\bm{S}$, de modo que resolver el potencial de Hartree-Fock cuesta lo mismo que resolver la propia función de onda.
+donde $\bm{T}$ es la misma matriz cinética de (\ref{eq:matrix-elements}) y $\bm{V}^{(2)}$ es la matriz del operador $r^{-2}$. El resultado es notable por dos razones. Primero, el operador $\bm{A}^{(k)}$ depende únicamente de la malla de nudos y del orden multipolar $k$: es completamente independiente de la densidad electrónica y, por lo tanto, invariante a lo largo del ciclo autoconsistente. Segundo, $\bm{A}^{(k)}$ hereda de la base la misma estructura de banda simétrica que $\bm{H}$ y $\bm{S}$ y es definida positiva, de modo que admite una factorización de Cholesky que se calcula una sola vez y se reutiliza durante todo el ciclo.
 
 Así, un único formalismo variacional discretiza el operador de Fock y los potenciales de interacción $Y^k$, unificando la arquitectura del solucionador. En el Capítulo \ref{ch:ciclo-scf} explotamos la invariancia de $\bm{A}^{(k)}$ y de los operadores de un cuerpo para reorganizar el ciclo SCF como una secuencia de contracciones algebraicas.
 

@@ -27,9 +27,9 @@ Posterior a esta sustracción escalar, el orbital de valencia purificado es reno
 \section{Cuadratura de Gauss-Legendre en B-splines}
 \label{sec:gauss-legendre}
 
-La evaluación de los elementos matriciales de Galerkin $\int B_i(r) \mathcal{L} B_j(r) dr$ en la Ecuación de Poisson y el Hamiltoniano exige un esquema de integración numérica impecable \cite{Bachau2001}. Dado que los B-splines de orden $k$ son funciones polinómicas por partes de grado $p = k-1$, el integrando para la matriz de solapamiento es un polinomio exacto de grado $2p$. 
+Los elementos matriciales de Galerkin $\int B_i(r)\,\mathcal{L}\,B_j(r)\,dr$ del Hamiltoniano y de la ecuación de Poisson se evalúan por cuadratura de Gauss-Legendre sobre cada intervalo de la malla \cite{Bachau2001}. Una regla gaussiana de $N_q$ puntos integra exactamente cualquier polinomio de grado hasta $2N_q - 1$. Como los B-splines de orden $k$ son polinomios por partes de grado $k-1$, los integrandos de las matrices de solapamiento y cinética son polinomios de grado a lo sumo $2k-2$ en cada intervalo, y el motor emplea $N_q = k+6$ puntos, de modo que esas dos matrices se obtienen sin error de cuadratura.
 
-Para evitar cualquier error de truncamiento en la aproximación integral, empleamos la \textbf{Cuadratura de Gauss-Legendre}. Un teorema fundamental del análisis numérico dicta que una cuadratura gaussiana de $N_q$ puntos evalúa exactamente la integral de cualquier polinomio de grado hasta $2N_q - 1$. Por ende, la selección estricta $N_q = k$ garantiza la integración exacta de polinomios de grado $2k - 1 > 2k - 2$.
+Los demás integrandos contienen factores $1/r$, $1/r^2$ o $r^{-4}$, o productos de tres funciones base con un factor $1/r$, y no son polinómicos. Para ellos la cuadratura no es exacta. Los seis puntos adicionales reducen su error, y la malla exponencial, que concentra intervalos cortos cerca del origen, donde esos factores varían más rápido, contribuye a mantenerlo pequeño.
 
 Las reglas de cuadratura canónicas están definidas sobre el dominio estándar $[-1, 1]$ mediante la sumatoria ponderada:
 \begin{equation}
@@ -43,13 +43,13 @@ Debido a que nuestros polinomios B-spline están definidos en los subintervalos 
     r(x) = \frac{t_{i+1} - t_i}{2} x + \frac{t_{i+1} + t_i}{2}, \quad \text{con diferencial } dr = \frac{t_{i+1} - t_i}{2} dx.
 \end{equation}
 
-Sustituyendo el diferencial de transformación o Jacobiano unidimensional $J_i = \frac{t_{i+1} - t_i}{2}$, la integral exacta sobre un subdominio local colapsa en la forma vectorial pura que computa nuestro motor matricial:
+Con el jacobiano $J_i = \frac{t_{i+1} - t_i}{2}$, la integral sobre cada intervalo se aproxima por
 
 \begin{equation}
-    \int_{t_i}^{t_{i+1}} f(r) dr = J_i \sum_{q=1}^{N_q} w_q f(r(x_q)).
+    \int_{t_i}^{t_{i+1}} f(r) dr \approx J_i \sum_{q=1}^{N_q} w_q f(r(x_q)),
 \end{equation}
 
-Esta evaluación exacta permite inyectar el tensor espacial $\mathbf{E}$ de colocación geométrica sin pérdida de propiedades de conservación, encapsulando así toda la métrica en un operador lineal hermítico esparcido y ultraeficiente.
+con igualdad exacta cuando $f$ es un polinomio de grado a lo sumo $2N_q - 1$. Los valores de la base y de sus derivadas en los puntos $r(x_q)$ forman los tensores de colocación de la Sección \ref{sec:estructura-algebraica}.
 
 \section{Reducción del Potencial de Polarización del Core al Caso Atómico}
 \label{sec:cpp-muller}
@@ -79,7 +79,7 @@ En primer lugar, un átomo aislado posee un solo centro polarizable, de modo que
     \label{eq:cpp_campo_atomico}
     \bm{f} = \sum_i \frac{\bm{r}_i}{r_i^3}\,W(r_i),
 \end{equation}
-donde hemos escrito $W(r)$ por la función de corte, que en nuestra implementación adopta la forma $W_6(r/r_c) = 1 - e^{-(r/r_c)^6}$ de la Ecuación \eqref{eq:vpol_cutoff}.
+donde $W(r)$ es la función de corte del campo, que se anula en el interior del core y tiende a la unidad fuera de él.
 
 En segundo lugar, el core de nuestros sistemas es una capa cerrada y por tanto esféricamente simétrico, según el teorema de Unsöld de la Sección \ref{sec:unsold}. Una distribución de carga esférica no admite momento dipolar permanente, de manera que $\bm{\mu}^{\circ} = \bm{0}$ y los dos últimos términos de \eqref{eq:cpp_general} se desvanecen. Esta es la diferencia esencial con el caso molecular, donde los enlaces deforman la nube electrónica de forma permanente.
 
@@ -101,7 +101,7 @@ Los términos diagonales, con $i=j$, involucran el producto de un vector consigo
     \label{eq:cpp_un_cuerpo}
     V_{\text{pol}}^{(1)} = -\frac{1}{2}\alpha_d \sum_i \frac{W^2(r_i)}{r_i^4},
 \end{equation}
-que es exactamente el potencial central que se suma a la atracción nuclear en la Ecuación \eqref{eq:vpol_efectivo} y el que interviene en el ciclo SCF. La dependencia $r^{-4}$, introducida en el Capítulo \ref{ch:correlacion-estructura-fina} por vía electrostática, emerge aquí como consecuencia puramente algebraica del producto punto.
+En nuestra implementación el cuadrado $W^2(r)$ se toma como $W_6(r/r_c) = 1 - e^{-(r/r_c)^6}$, de modo que \eqref{eq:cpp_un_cuerpo} coincide con la forma \eqref{eq:vpol_cutoff} del Capítulo \ref{ch:correlacion-estructura-fina} y con el potencial central que se suma a la atracción nuclear en la Ecuación \eqref{eq:vpol_efectivo}, que es el que interviene en el ciclo SCF. Con esa elección el corte del campo es $W = W_6^{1/2}$, y es este el que aparecería en el término de dos cuerpos. La dependencia $r^{-4}$, introducida en el Capítulo \ref{ch:correlacion-estructura-fina} por vía electrostática, emerge aquí como consecuencia puramente algebraica del producto punto.
 
 Los términos cruzados, con $i \neq j$, sobreviven en cambio como un operador de dos cuerpos. Para la capa de valencia $np^2$ solo hay dos electrones y por tanto dos combinaciones cruzadas, $(1,2)$ y $(2,1)$, que al ser el producto punto conmutativo se suman y cancelan el factor $1/2$ frontal:
 \begin{equation}
@@ -132,9 +132,9 @@ La comparación entre elementos muestra que el tiempo sí depende de $Z$, aunque
 
 Para salvaguardar la pureza teórica del manuscrito y mantener el rigor físico, se ha omitido la inclusión directa de código fuente a lo largo de esta tesis. Sin embargo, todos los métodos, derivaciones y algoritmos descritos (generación de mallas nodales, ortogonalización de Gram-Schmidt, rutinas de Campo Autoconsistente y resolución de la ecuación de Poisson por Galerkin) fueron programados y ensamblados desde cero en una librería de desarrollo propio bautizada como \textbf{AtomicSplines}.
 
-La arquitectura del motor numérico fue construida utilizando \textbf{Julia} como lenguaje de cómputo científico de alto rendimiento, aprovechando el poder de paralelización y velocidad que ofrece. Inicialmente se exploró el uso de estructuras de datos esparsas especializadas (como las provistas por \texttt{BandedMatrices.jl}) debido a que el método de Galerkin con B-splines produce naturalmente matrices diagonales por bandas. No obstante, se determinó empíricamente que el sobrecosto de gestión de memoria (\textit{overhead}) de estas estructuras era prohibitivo para la escala de nuestras discretizaciones. Por lo tanto, se optó por una arquitectura mucho más veloz basada en el ecosistema básico de \texttt{LinearAlgebra.jl} auxiliado en ciertas rutinas críticas por \texttt{StaticArrays.jl}, lo que acelera drásticamente las operaciones algebraicas en memoria contigua.
+El motor está escrito en \textbf{Julia}, un lenguaje compilado de cómputo científico. Inicialmente se exploró el uso de estructuras de datos esparsas especializadas (como las provistas por \texttt{BandedMatrices.jl}) debido a que el método de Galerkin con B-splines produce naturalmente matrices diagonales por bandas. No obstante, se determinó empíricamente que el sobrecosto de gestión de memoria (\textit{overhead}) de estas estructuras era prohibitivo para la escala de nuestras discretizaciones. Por lo tanto, se optó por una arquitectura mucho más veloz basada en el ecosistema básico de \texttt{LinearAlgebra.jl} auxiliado en ciertas rutinas críticas por \texttt{StaticArrays.jl}, lo que acelera drásticamente las operaciones algebraicas en memoria contigua.
 
-Para las diagonalizaciones críticas del ciclo SCF y de Interacción de Configuraciones (CI), el motor se enlaza nativamente con \textbf{ARPACK}, lo que permite extraer numéricamente solo los vectores propios físicos del extremo inferior del espectro, ignorando miles de estados virtuales que residen en el continuo matemático, haciendo que el cálculo de átomos pesados sea altamente eficiente. Además, se implementó la librería \texttt{WignerSymbols.jl} para proveer un marco analítico y exacto del álgebra de Racah, garantizando una línea de acción sólida para aplicaciones futuras donde el cálculo de Coeficientes de Parentesco Fraccional (CFP) y factores matriciales $F^k$ adquieran mayor complejidad.
+Las diagonalizaciones del ciclo SCF y del cálculo de interacción de configuraciones son completas y densas, mediante las rutinas de LAPACK que expone la biblioteca estándar de álgebra lineal de Julia. Con bases de unos cientos de funciones y espacios de configuraciones de unos pocos miles, su costo no domina el cálculo, que como muestra la Sección \ref{sec:costo_ci} lo fija el ensamblado de las integrales $R^k$. Los símbolos $3j$ y $6j$ que requiere el cálculo de interacción de configuraciones se evalúan con la biblioteca \texttt{WignerSymbols.jl}.
 
 Fomentando el paradigma de ciencia abierta y reproducibilidad, el código fuente completo, junto con los módulos de álgebra de tensores y la documentación técnica, se encuentra versionado y disponible públicamente en el siguiente repositorio de GitHub:
 

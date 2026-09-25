@@ -1,5 +1,9 @@
 # Siguientes pasos: del código congelado al manuscrito
 
+> **2026-09-24:** el manuscrito compilado tiene 166 páginas y la fase en curso es su revisión y
+> reducción. El punto de entrada ahora es `PLAN-REDUCCION.md`; este archivo queda como registro de
+> la redacción y de las reglas, que siguen vigentes.
+
 Escrito el 2026-09-20, con el código congelado en `1f22fc9`. Este archivo es el punto de entrada
 para una sesión nueva: dice qué hay hecho, qué se puede tocar y en qué orden escribir. El detalle
 de los números está en `REVISION-RESULTADOS-2026-09-13.md`, y el de la regeneración, en

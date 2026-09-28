@@ -31,9 +31,21 @@ Páginas impresas de la compilación del 2026-09-24. El objetivo por bloque es o
 | bibliografía | 2 | 2 | |
 | **total** | **166** | **~92** | |
 
-Aparte está el formato: `config/preamble.tex` tiene `geometry` comentado, así que rigen los
-márgenes por omisión de `book` y el texto ocupa menos de la mitad de la hoja A4. Con márgenes de
-2.5 cm el mismo contenido bajaría cerca de un 25 %. **Pendiente:** reglas de formato de la facultad.
+**Formato adoptado el 2026-09-27** (la facultad no fija reglas; el usuario pidió uno estándar): A4,
+12 pt, interlineado sencillo, márgenes de 2.5 cm y 3 cm del lado del lomo, encabezado en
+minúsculas con `fancyhdr`, leyendas en `\small`, índice hasta secciones. Solo el formato bajó la
+tesis de 167 a 129 páginas; con la fase B quedó en **116** (cuerpo 1-60, apéndices 61-109).
+Desde esa fecha Claude compila y revisa el PDF (regla 1 de `CLAUDE.md`).
+
+| bloque (tras la fase B) | páginas |
+|---|---|
+| preliminares | 5 |
+| prólogo, introducción, portadillas | 7 |
+| caps. 2-5 | 36 |
+| cap. 6 resultados y discusión | 14 |
+| cap. 7 conclusiones | 3 |
+| apéndices A-F | 49 |
+| bibliografía | 2 |
 
 ---
 
@@ -71,23 +83,31 @@ Se dejan para la fase en la que se reescribe el pasaje, porque el pasaje se va o
 apéndice C §C.5 (describe una evaluación de 3j con log-gamma y memoización que el código no tiene:
 el CI usa `WignerSymbols.jl`), apéndice D "Estados espurios", apéndice E (O(N²) → O(N)).
 
-## Fase B. Resultados y discusión
+## Fase B. Resultados y discusión (hecha el 2026-09-27)
 
-Orden propuesto para el capítulo 6:
+Resultados y discusión quedaron en un solo capítulo, "Resultados y Discusión", con este orden:
 
 1. Límite Hartree-Fock: energía y virial; F^k y ⟨r⁻³⟩ en un cuadro; Gram-Schmidt en un párrafo.
 2. Espectro HF+CI de los cuatro elementos contra el NIST, con la convergencia en m resumida.
-3. Del acoplamiento LS al intermedio: ζ frente a la separación ¹D−³P (no frente a F²), razón R,
-   factor g y mezcla. Es el resultado central y debe ser el clímax.
+3. Del acoplamiento LS al intermedio: ζ frente a la separación (6/25)F² (no frente a F²), razón R,
+   factor g y mezcla, con la estimación perturbativa ζ²/2Δ² que reproduce tanto la mezcla medida
+   (con ζ_NIST y niveles del ASD) como la del modelo.
 4. Déficit de ζ y V_pol en Ge y Sn, con la prueba cruzada de la ionización.
+5. Limitaciones (antes §7.3), sin síntesis final propia: la hace el capítulo de conclusiones.
 
-- [ ] §6.2 a una figura de dos paneles y un párrafo.
-- [ ] C-DIIS (cuadro y figura) al apéndice; una frase en resultados.
-- [ ] Convergencia de singletes (cuadro) al apéndice.
-- [ ] Discusión: quitar lo que repite resultados (R, mezcla, Gram-Schmidt, cota de núcleo desnudo,
-      α_d efectivo); mover la teoría de Zeeman y g al cap. 3.
-- [ ] Una sola síntesis final en lugar de cuatro (§1.2, §6.8, §7.4, §8.1-8.2).
-- [ ] "Reproduce de manera cuantitativa una vez calibrada" → es un ajuste; destacar las pruebas cruzadas.
+- [x] §6.2 a una figura y dos párrafos (fuera el pozo de V_rad y las figuras de potenciales,
+      orbitales y densidades).
+- [x] C-DIIS (cuadro y figura) al apéndice F; un párrafo en resultados.
+- [x] Cuadros de convergencia (E_corr y singletes) al apéndice F; queda la figura de singletes.
+- [x] Discusión fundida; la teoría de Zeeman y g, con la mezcla perturbativa, pasó al cap. 3
+      (`sec:lande_teoria`). Fuera `discusion.tex`, §6.8, §7.4 y "Alcance del trabajo".
+- [x] "Reproduce de manera cuantitativa una vez calibrada" eliminado.
+- [x] Cuadros rediseñados en la etapa 3 (mismos números, comprobado contra la versión anterior):
+      `parametros_radiales`, `ionizacion`, `niveles`, `niveles_vpol`, `barrido_vpol` (ζ en cm⁻¹),
+      `acoplamiento` (nuevo), y encabezados agrupados en `convergencia_ci`, `cdiis`, `lande`.
+      `scaling_law.pdf` grafica (6/25)F² en vez de F².
+- [x] "Cuadro" → "Tabla" en el texto, como ya decían las leyendas.
+- [ ] Figura de funciones de onda: tiene título interno y ejes poco legibles (etapa 4).
 
 ## Fase C. Apéndices
 
@@ -124,11 +144,13 @@ Números del texto que no están en `valores_texto.md`. Agregarlos es de lo perm
 - [ ] Prueba de malla del silicio (`resultados.tex`, 100/200/300 intervalos).
 - [ ] Diferencias autovalor-Rayleigh (`discusion.tex`, limitaciones numéricas).
 - [ ] Memoria del CI (apéndice F: 17 bytes por casilla, 1.1 y 1.7 GB).
-- [ ] ζ / (E(¹D) − E(³P)) de HF por elemento, para la comparación de escalas de la fase B.
+- [x] ζ / (6/25)F² de HF por elemento: en el cuadro `acoplamiento`.
+- [x] Peso perturbativo de ¹D₂ (ζ²/2Δ²) del modelo y del NIST: en `valores_texto.md`.
 
-## Decisiones abiertas
+## Decisiones (resueltas el 2026-09-27)
 
-- **Formato:** márgenes, interlineado y tamaño de letra que exige la facultad.
-- **Fusionar cuadros** (F^k con ⟨r⁻³⟩, barridos de Ge y Sn, ionización de Ge y Sn): toca el formato
-  de `etapa3_tablas.jl`, no los números; el congelamiento no lo menciona.
-- **Estructura:** discusión como capítulo corto aparte, o "Resultados y discusión" en uno.
+- **Formato:** estándar elegido por Claude (ver §0); la facultad no fija reglas.
+- **Fusionar cuadros:** autorizado; hecho en la fase B.
+- **Estructura:** "Resultados y Discusión" en un solo capítulo; hecho.
+
+Queda abierta la eliminación de las tres portadillas de parte (3 páginas).

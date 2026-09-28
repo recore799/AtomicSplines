@@ -7,9 +7,11 @@
 %   Trazas de diis_benchmark.jl (estado 3P, |dE| < 1e-10 Ha, mismo punto de partida). Las sin C-DIIS de Ge y Sn se reconstruyeron del log impreso, con E a 8 decimales.
 \begin{tabular}{lrrrc}
     \toprule
-    \textbf{Elemento} & \textbf{Iter. sin C-DIIS} & \textbf{Iter. con C-DIIS} & \textbf{Factor} & $|\Delta E|$ entre ambos (Ha) \\
+     & \multicolumn{2}{c}{\textbf{Iteraciones}} &  &  \\
+    \cmidrule(lr){2-3}
+    \textbf{Elemento} & sin C-DIIS & con C-DIIS & \textbf{Factor} & $|\Delta E|$ (Ha) \\
     \midrule
-    Carbono & 26 & 12 & 2.2 & 4.0e-12 \\
+    Carbono & 26 & 12 & 2.2 & $4.0\times10^{-12}$ \\
     Silicio & 27 & 28 & 1.0 & $<10^{-12}$ \\
     Germanio & 241 & 85 & 2.8 & $<10^{-8}$ \\
     Estaño & 250 & 52 & 4.8 & $<10^{-8}$ \\

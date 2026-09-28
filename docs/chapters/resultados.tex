@@ -1,351 +1,235 @@
-\chapter{Resultados}
+\chapter{Resultados y Discusión}
 \label{ch:resultados}
 
-El objetivo de este capítulo es presentar los resultados obtenidos mediante nuestro motor numérico para la secuencia homóloga $np^{2}$, que comprende los átomos de Carbono ($Z=6$), Silicio ($Z=14$), Germanio ($Z=32$) y Estaño ($Z=50$).
-El interés de abordar esta secuencia radica en que, al transitar del carbono al estaño, la simetría angular de la subcapa de valencia se mantiene invariante. Esto nos permite aislar el problema angular y enfocar el análisis en la física radial, la cual incrementa su complejidad drásticamente por el apantallamiento impuesto por el llenado progresivo de capas internas cerradas.
+Este capítulo presenta los resultados del motor numérico para la secuencia $np^2$, formada por el carbono ($Z=6$), el silicio ($Z=14$), el germanio ($Z=32$) y el estaño ($Z=50$), y los interpreta en términos de las aproximaciones del modelo. El orden sigue el del cálculo. Primero se establece que el campo medio reproduce el límite Hartree-Fock no relativista (Sección \ref{sec:validacion_hf}); después se construye el espectro de la configuración y se contrasta con el experimento (Sección \ref{sec:espectro}), se sigue el tránsito del acoplamiento $LS$ al intermedio a lo largo de la secuencia (Sección \ref{sec:regimen_acoplamiento}) y se examina el parámetro de espín-órbita junto con la corrección de polarización del core (Sección \ref{sec:zeta_diagnostico}). La Sección \ref{sec:limitaciones} reúne las limitaciones que explican las discrepancias restantes.
 
-\section{Validación Numérica y Teorema del Virial}
+\section{El Límite de Hartree-Fock}
+\label{sec:validacion_hf}
 
-Antes de extraer cualquier parámetro espectroscópico es necesario establecer que el estado fundamental producido por el motor de B-splines es correcto. La validación descansa en dos criterios complementarios. El primero es la comparación directa de la energía total contra los valores tabulados por Froese Fischer \cite{fischer1977}, que constituyen la referencia estándar del límite Hartree-Fock no relativista. El segundo es el cociente del virial $-V/T$, que por el teorema demostrado en la Sección \ref{sec:virial} debe valer exactamente $2$ para un sistema ligado por un potencial coulombiano; su desviación cuantifica de forma global tanto la convergencia del ciclo SCF como la capacidad de la malla radial para representar simultáneamente la región nuclear y la cola asintótica de la función de onda.
+Antes de extraer cualquier parámetro espectroscópico hay que establecer que el estado fundamental que produce el motor es correcto. La validación descansa en dos criterios. El primero es la comparación de la energía total con los valores de \textcite{fischer1977}, referencia estándar del límite Hartree-Fock no relativista. El segundo es el cociente del virial $-V/T$, que por el teorema de la Sección \ref{sec:virial} vale exactamente $2$ para un sistema coulombiano y cuya desviación mide a la vez la convergencia del ciclo y la capacidad de la malla para representar la región nuclear y la cola asintótica de la función de onda.
 
 \begin{table}[htbp]
     \centering
     \input{tablas/energia_global}
-    \caption{Parámetros energéticos y cumplimiento del teorema del virial para la secuencia $np^2$, contrastados frente a los valores de referencia de Froese Fischer (F.F.) \cite{fischer1977}. La columna $\Delta$ reporta la diferencia absoluta respecto a la referencia, en Hartree para $E$ y $T$ y adimensional para el cociente.}
+    \caption{Energía total, energía cinética y cociente del virial frente a los valores de \textcite{fischer1977}. La última columna es la diferencia absoluta, en Hartree para $E$ y $T$.}
     \label{tab:resultados_energia_global}
 \end{table}
 
-El Cuadro \ref{tab:resultados_energia_global} reúne ambos criterios para los cuatro elementos de la secuencia. El acuerdo en la energía total alcanza ocho cifras significativas en el carbono y se mantiene por debajo de $3.3\times10^{-5}$ Hartree en el resto, sin que el error crezca de manera monótona con $Z$: el estaño, con cincuenta electrones, reproduce la referencia mejor que el germanio. El cociente del virial se desvía de $2$ en menos de $1.5\times10^{-5}$ en los cuatro casos, lo que confirma que el ciclo autoconsistente alcanzó un punto estacionario y que la malla exponencial resuelve de forma adecuada el rango radial completo.
+La Tabla \ref{tab:resultados_energia_global} reúne ambos criterios. El acuerdo en la energía total alcanza ocho cifras significativas en el carbono y se mantiene por debajo de $3.3\times10^{-5}$ Hartree en el resto, sin crecer de manera monótona con $Z$: el estaño reproduce la referencia mejor que el germanio. El cociente del virial se aparta de $2$ en menos de $1.5\times10^{-5}$ en los cuatro elementos, lo que confirma que el ciclo alcanzó un punto estacionario y que la malla exponencial resuelve el rango radial completo. La energía cinética, en cambio, se aparta de la referencia entre $2.9$ y $4.4$ milihartree en el silicio, el germanio y el estaño, dos órdenes de magnitud más que la energía total.
 
-Conviene detenerse en una asimetría del cuadro que resulta informativa. Mientras la energía total coincide con la referencia a $10^{-5}$ Hartree o mejor, la energía cinética se aparta sistemáticamente entre $2.9$ y $4.4$ milihartree en el silicio, el germanio y el estaño, es decir, dos órdenes de magnitud por encima. Esta jerarquía es la firma de una solución que está próxima al punto estacionario pero no exactamente sobre él: la energía, por ser estacionaria, se desvía a segundo orden en el error del orbital, mientras que un valor esperado cualquiera lo hace a primer orden. El origen de esa desviación se discute en la Sección \ref{sec:parametros_fina}, donde vuelve a aparecer en el momento $\langle r^{-3} \rangle$, y se atribuye al esquema de ortogonalización de la Sección \ref{sec:gram-schmidt}.
+\subsection{Parámetros radiales de la valencia}
+\label{sec:parametros_fina}
 
-Conviene precisar que el core responsable del apantallamiento es distinto en cada caso: $[\mathrm{Ar}]\,3d^{10}\,4s^{2}$ para el germanio y $[\mathrm{Kr}]\,4d^{10}\,5s^{2}$ para el estaño. En ambos, la subcapa $d$ llena que antecede inmediatamente a la valencia es la que domina el comportamiento radial y, como veremos más adelante, la que hace indispensable la corrección de polarización del core. Esa misma proximidad energética entre la valencia y los orbitales virtuales es la que compromete la convergencia del ciclo SCF en los sistemas pesados, y obliga a las técnicas de aceleración que se examinan a continuación.
-
-\subsection{Aceleración de la Convergencia: C-DIIS}
-\label{sec:cdiis_resultados}
-
-En el germanio y el estaño el ciclo de punto fijo descrito en la Sección \ref{sec:fock_operator} se estabiliza con el desplazamiento de nivel de la Sección \ref{sec:level_shifting}, que eleva en $3$ Hartree las energías del espacio virtual. La justificación está en la estructura del core: el apantallamiento reduce la separación energética entre el orbital de valencia y los virtuales de la misma simetría, y el desplazamiento la ensancha artificialmente. Mantenido durante todo el ciclo, sin embargo, el desplazamiento también amortigua cada paso, y la convergencia exige del orden de doscientas cincuenta iteraciones.
-
-La alternativa que adoptamos es la extrapolación de Pulay en su variante sobre el conmutador, conocida como C-DIIS, cuya formulación y cuyas particularidades en un esquema ROHF se detallan en la Sección \ref{sec:cdiis_metodo}. El método conserva el historial de matrices de Fock sin desplazar y construye en cada paso la combinación lineal que minimiza la norma del conmutador entre las matrices de Fock y de densidad, proyectado fuera del espacio ocupado para que se anule en la solución autoconsistente de nuestro esquema. En nuestra implementación el desplazamiento de nivel no desaparece, sino que queda relegado a un régimen de arranque: opera mientras el residuo permanece por encima del umbral de activación y se apaga en cuanto la extrapolación toma el control.
+Los parámetros que alimentan el espectro muestran la misma jerarquía (Tabla \ref{tab:parametros_radiales}). Las integrales de Slater $F^0$ y $F^2$ de la subcapa de valencia coinciden con la referencia dentro de $1.8\times10^{-5}$ Hartree, del mismo orden que la energía, de modo que la parte electrostática del campo medio no puede explicar ninguna de las discrepancias espectroscópicas que aparecerán más adelante. El momento $\langle r^{-3}\rangle$, que gobierna el parámetro de espín-órbita (Ecuación \eqref{eq:zeta_spin_orbit}), coincide a una parte en un millón en el carbono, pero en los otros tres elementos se desvía entre un $0.17\%$ y un $0.34\%$.
 
 \begin{table}[htbp]
     \centering
-    \input{tablas/cdiis}
-    \caption{Iteraciones necesarias para alcanzar $|\Delta E| < 10^{-10}$ Hartree con y sin C-DIIS, partiendo del mismo punto inicial y en el estado $^3P$. La última columna reporta la diferencia entre las dos energías convergidas, que acota el sesgo introducido por la aceleración.}
-    \label{tab:cdiis}
+    \input{tablas/parametros_radiales}
+    \caption{Integrales de Slater y momento $\langle r^{-3}\rangle$ del orbital de valencia frente a los valores de \textcite{fischer1977}.}
+    \label{tab:parametros_radiales}
 \end{table}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/cdiis_convergencia.pdf}
-    \caption{Historia de convergencia del ciclo SCF con y sin C-DIIS para los cuatro elementos de la secuencia. La escala logarítmica hace visible el cambio de régimen: la extrapolación sustituye el decaimiento lineal del punto fijo por uno considerablemente más rápido una vez que se activa.}
-    \label{fig:cdiis}
-\end{figure}
+La separación entre el carbono y el resto admite una explicación estructural. El carbono es el único elemento de la secuencia cuyo core carece de electrones $p$, de modo que su orbital de valencia no necesita ortogonalizarse contra ningún orbital del core de la misma simetría. En los otros tres, el orbital de valencia se obtiene de su propio operador de Fock y se ortogonaliza después contra los $p$ internos por el procedimiento de Gram-Schmidt de la Sección \ref{sec:gram-schmidt}, en lugar de imponer la restricción con multiplicadores de Lagrange dentro del problema variacional. La solución queda así ligeramente fuera del punto estacionario exacto: la energía, por ser estacionaria, se desvía a segundo orden en el error del orbital, mientras que $T$ y $\langle r^{-3}\rangle$, valores esperados ordinarios, lo hacen a primer orden, que es la jerarquía que muestran las dos tablas.
 
-El Cuadro \ref{tab:cdiis} cuantifica el efecto y muestra que su magnitud depende del elemento. En el germanio y el estaño, los dos elementos que necesitan el desplazamiento de nivel, la aceleración reduce el conteo de iteraciones por factores de $2.8$ y $4.8$, de doscientas cuarenta y doscientas cincuenta iteraciones a ochenta y cinco y cincuenta y dos respectivamente. En el carbono, que converge sin desplazamiento, el factor es de $2.2$, y en el silicio el método no aporta ninguna ganancia: el ciclo simple ya converge en veintisiete iteraciones y la extrapolación necesita veintiocho. La ganancia grande procede, por tanto, de soltar el desplazamiento de nivel en cuanto el ciclo entra en la cuenca de atracción, y no de una lentitud genérica del punto fijo.
+La explicación alternativa, un defecto de la malla, queda descartada. Repetir el ciclo del silicio con $100$, $200$ y $300$ intervalos mueve la energía en $1.7\times10^{-6}$ Hartree entre los dos primeros y deja sin cambio las cifras impresas entre los dos últimos, mientras que $\langle r^{-3}\rangle$ se desplaza $2\times10^{-5}$ en dirección contraria a la referencia. La magnitud del efecto, entre el $0.2\%$ y el $0.3\%$, es uno o dos órdenes menor que los errores físicos que se documentan en las secciones siguientes, y se trata como una limitación de la implementación que no altera las conclusiones (Sección \ref{sec:limitaciones}).
 
-El dato decisivo del cuadro es la última columna. Las energías obtenidas con y sin aceleración coinciden dentro de $4\times10^{-12}$ Hartree en el carbono y por debajo de $10^{-8}$ Hartree en el germanio y el estaño, muy por debajo de cualquier escala física del problema. Esto certifica que C-DIIS actúa exclusivamente sobre la trayectoria del ciclo y no sobre su punto fijo, de modo que los resultados de este capítulo describen la misma solución Hartree-Fock que produciría el ciclo sin acelerar. La Figura \ref{fig:cdiis} muestra el cambio de régimen en la historia del residuo.
+El ciclo que produce estas soluciones requiere, en el germanio y el estaño, el desplazamiento de nivel de la Sección \ref{sec:level_shifting}. La extrapolación C-DIIS de la Sección \ref{sec:cdiis_metodo} reduce en esos dos elementos el número de iteraciones por factores de $2.8$ y $4.8$ sin desplazar el punto fijo, ya que las energías con y sin aceleración coinciden por debajo de $10^{-8}$ Hartree. La comparación completa está en la Sección \ref{sec:cdiis_resultados} del Apéndice \ref{ap:metodos-auxiliares}.
 
-\section{Evolución de Orbitales y Potenciales Efectivos}
+\subsection{Orbitales de valencia}
 
-Una vez superada la convergencia global de la energía, enfocamos nuestra atención en la topografía local de los orbitales de valencia. La Figura \ref{fig:wavefunctions} expone gráficamente las funciones de onda radiales $P_{np}(r)$ correspondientes a las capas de valencia activas del Carbono ($2p$), Silicio ($3p$), Germanio ($4p$) y Estaño ($5p$).
+La Figura \ref{fig:wavefunctions} muestra las funciones radiales de valencia $P_{np}(r)$. El número de nodos crece con el número cuántico principal, de cero en el $2p$ a tres en el $5p$, porque cada orbital de valencia debe ser ortogonal a los $p$ internos, y esas oscilaciones ocurren cerca del núcleo. El grueso de la densidad de valencia queda, sin embargo, a radios del mismo orden en los cuatro elementos, aunque $Z$ se multiplica por más de ocho: el apantallamiento del core compensa casi por completo el aumento de la carga nuclear.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.8\textwidth]{figures/np2_valence_wavefunctions.pdf}
-    \caption{Funciones de onda radiales $P_{np}(r)$ para los electrones de valencia de la secuencia homóloga $np^2$. La normalización se mantiene y se aprecia la correcta conservación de la estructura nodal.}
+    \includegraphics[width=0.75\textwidth]{figures/np2_valence_wavefunctions.pdf}
+    \caption{Funciones de onda radiales de valencia $P_{np}(r)$ de la secuencia $np^2$.}
     \label{fig:wavefunctions}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/np2_all_orbitals.pdf}
-    \caption{Distribución radial de todos los orbitales ocupados para Carbono, Silicio, Germanio y Estaño. Se observa el aumento en la complejidad nodal y cómo los orbitales internos se contraen hacia el origen al incrementar la carga nuclear $Z$.}
-    \label{fig:all_orbitals}
-\end{figure}
+Esta estructura es la que gobierna la física de la estructura fina. Los lóbulos internos pesan poco en la normalización, pero dominan el momento $\langle r^{-3}\rangle$, cuyo integrando crece como $r^{-3}$ cerca del núcleo, y es a través de ellos que el electrón de valencia percibe la carga nuclear casi sin apantallar. La cola exterior, en cambio, fija las integrales de Slater de valencia, lo que explica que $F^2$ cambie poco a partir del silicio mientras $\zeta_{np}$ crece (Sección \ref{sec:regimen_acoplamiento}).
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/np2_total_densities.pdf}
-    \caption{Densidad electrónica radial total $D(r)$ del átomo para Carbono, Silicio, Germanio y Estaño. Las curvas ilustran la acumulación estriada de la densidad probabilística debida a la superposición y ocupación secuencial de las capas cerradas y la valencia.}
-    \label{fig:total_densities}
-\end{figure}
+\section{El Espectro de la Configuración \texorpdfstring{$np^2$}{np2}}
+\label{sec:espectro}
 
-Como se aprecia en la Figura \ref{fig:all_orbitals}, el aumento del número cuántico principal $n$ se traduce directamente en la estructura nodal de la valencia: cero nodos para $2p$, uno para $3p$, dos para $4p$ y tres para $5p$. La gráfica superpone todas las funciones de onda radiales ocupadas del átomo neutro y hace visible el efecto del principio de exclusión, ya que conforme el \textit{core} se satura y se contrae bajo la atracción nuclear, los orbitales de valencia son desplazados hacia el exterior para mantener la ortogonalidad. La suma de estos autoestados, ponderada por su número de ocupación, produce la densidad electrónica radial total $D(r)$ de la Figura \ref{fig:total_densities}. En ella la densidad desarrolla picos pronunciados cerca del origen, dominados por las capas $1s$, $2s$ y $2p$, que se estrechan y crecen al aumentar $Z$, mientras que la cola exterior se extiende de manera progresiva al descender en el grupo. Esa cola cada vez más difusa es la manifestación de una nube electrónica más deformable frente a un campo externo, es decir, de una polarizabilidad dipolar $\alpha_d$ creciente; el efecto se vuelve cuantitativamente importante en el germanio y el estaño, y lo retomaremos al introducir el potencial de polarización de la Sección \ref{sec:core_polarization}.
-
-La interacción multielectrónica que subyace a esta evolución se hace explícita al inspeccionar los campos medios generados. La Figura \ref{fig:potentials_eff} muestra el potencial electrostático central efectivo $V_{\text{eff}}(r)$ que percibe cada electrón de valencia $np$. Al ser un término puramente atractivo y estar dominado a distancias cortas por el campo nuclear sin apantallar $-Z/r$, el potencial diverge hacia $-\infty$ en el origen. Para comparar en una sola gráfica la divergencia del estaño con la del carbono sin perder resolución en la región de valencia, empleamos una escala pseudo-logarítmica definida por la transformación $y = \operatorname{sgn}(V) \log_{10}\left(1 + |V|/0.1\right)$, que se comporta linealmente para valores cercanos a cero y comprime de forma logarítmica las magnitudes de cientos de Hartree presentes en la cercanía nuclear.
-
-La dinámica de un electrón $p$ ($l=1$) no está regida, sin embargo, por $V_{\text{eff}}$ sino por el potencial radial efectivo $V_{\text{rad}}(r) = V_{\text{eff}}(r) + l(l+1)/2r^2$, que incorpora la repulsión centrífuga. Como se observa en la Figura \ref{fig:potentials_rad}, el término centrífugo domina cerca del origen y empuja el potencial hacia $+\infty$, de modo que es él, y no la atracción nuclear, el responsable de que la curva adopte la forma de un pozo con un mínimo bien definido.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/np2_effective_potentials.pdf}
-    \caption{Potencial central electrostático puro $V_{\text{eff}}(r)$ en escala pseudo-logarítmica. Nótese cómo la interacción colapsa asintóticamente a $-\infty$ al aproximarse al origen donde el campo nuclear $-Z/r$ domina sin apantallamiento.}
-    \label{fig:potentials_eff}
-\end{figure}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/np2_radial_potentials.pdf}
-    \caption{Potencial radial efectivo $V_{\text{rad}}(r) = V_{\text{eff}}(r) + \frac{l(l+1)}{2r^2}$ en escala lineal. La inclusión del término centrífugo ($l=1$) conforma el pozo cuántico con un mínimo local bien definido.}
-    \label{fig:potentials_rad}
-\end{figure}
-
-Como se aprecia en la gráfica radial, el pozo desciende desde $+\infty$ hasta un mínimo local y luego converge asintóticamente a cero. De los datos autoconsistentes, el fondo del pozo del carbono se ubica en $V_{\text{rad}} \approx -1.02 \ \text{Ha}$ a un radio $r = 0.490 \, a_0$. En el silicio, el aumento de la carga efectiva lo desplaza hasta $-15.77 \ \text{Ha}$ en $r = 0.165 \, a_0$; en el germanio, hasta $-138.88 \ \text{Ha}$ en $r = 0.067 \, a_0$, y en el estaño, hasta $-399.43 \ \text{Ha}$ en $r = 0.042 \, a_0$.
-
-Conviene distinguir con claridad qué describe esta curva, porque su profundidad invita a una lectura equivocada. El potencial $V_{\text{rad}}$ gobierna exclusivamente la dinámica de \textit{un solo} electrón $np$ moviéndose en el campo promedio de los demás. El fondo de $\approx -138.88 \ \text{Ha}$ del germanio no debe confundirse con la energía potencial total del átomo que fija el teorema del virial de la Sección \ref{sec:virial}, $\ev{\hat{V}} = 2E \approx -4150 \ \text{Ha}$, la cual resulta de sumar las interacciones coulombianas de los treinta y dos electrones del sistema.
-
-La evolución de $V_{\text{rad}}$ a lo largo de la secuencia muestra una tendencia consistente. El pozo del carbono es somero y ancho; al aumentar $Z$ el core se contrae y, pese al apantallamiento adicional que introduce, el campo coulombiano residual desplaza el mínimo hacia radios menores y profundidades mayores, hasta los $0.042 \, a_0$ del estaño. Esta contracción acerca al electrón de valencia a la región donde $\langle r^{-3} \rangle$ crece con mayor rapidez, y constituye el mecanismo geométrico que subyace al incremento del acoplamiento espín-órbita que cuantificaremos en la sección siguiente.
-
-Resulta instructivo confrontar estas profundidades con las distribuciones radiales de la Figura \ref{fig:all_orbitals}, porque la intuición clásica falla. Una partícula clásica reposaría en el mínimo del pozo, mientras que la cuántica se distribuye sobre toda la región permitida. Dada la marcada asimetría de $V_{\text{rad}}$, con un muro centrífugo hacia el núcleo y un decaimiento suave hacia el exterior, la función de onda se acumula preferentemente a radios mayores. Así, aunque el mínimo del carbono se sitúa en $r = 0.490 \, a_0$, el máximo de su densidad de valencia se encuentra en $r \approx 2.0 \, a_0$.
-
-En el silicio, el germanio y el estaño este desplazamiento hacia el exterior se acentúa por el principio de exclusión. Para mantenerse ortogonal a los orbitales del core, la función de onda de valencia debe oscilar en la región de mayor atracción nuclear, lo que genera los nodos y los picos secundarios visibles cerca del origen. El resultado es que el grueso de su densidad de probabilidad queda expulsado hacia la región exterior, muy lejos del mínimo espacial del potencial que acabamos de reportar.
-
-\section{Extracción de Parámetros de Estructura Fina}
-\label{sec:parametros_fina}
-
-Para calcular el espectro en acoplamiento intermedio necesitamos dos familias de parámetros, ambas extraídas directamente de la solución de campo medio. La primera son las repulsiones coulombianas dentro de la subcapa de valencia, cuantificadas por las integrales de Slater $F^k$ introducidas en la Sección \ref{sec:slater_integrals}; son las responsables de separar energéticamente los términos $^3P$, $^1D$ y $^1S$ de la configuración. La segunda es el momento radial inverso $\langle r^{-3} \rangle$, que fija el parámetro de estructura fina $\zeta_{np}$ mediante la Ecuación \eqref{eq:zeta_spin_orbit} y determina con ello el desdoblamiento de cada término en sus componentes $J$.
-
-Los Cuadros \ref{tab:momentos_inversos} y \ref{tab:integrales_slater} contrastan los valores obtenidos por nuestro código frente a los reportados en la literatura para las cuatro especies de la secuencia.
+Los niveles de estructura fina se obtienen en dos etapas sobre los orbitales convergidos (Sección \ref{sec:ci_method}). Un cálculo de interacción de configuraciones correlaciona la pareja de valencia sobre el core congelado y produce las energías de los términos $^3P$, $^1D$ y $^1S$; esas energías entran como elementos diagonales de las matrices de Breit-Pauli de la Sección \ref{sec:matrices_bp}, que se diagonalizan con el parámetro $\zeta_{np}$ calculado. Los niveles experimentales proceden de la base ASD del NIST (Sección \ref{sec:nist_asd}) para las especies neutras C I, Si I, Ge I y Sn I, y todos se refieren al nivel $^3P_0$.
 
 \begin{table}[htbp]
     \centering
-    \input{tablas/momentos_inversos}
-    \caption{Momentos inversos $\langle r^{-3} \rangle$ de los orbitales de valencia $np$, en $a_0^{-3}$. V.C. denota los valores calculados por nuestro código y F.F. los de Froese Fischer \cite{fischer1977}.}
-    \label{tab:momentos_inversos}
+    \input{tablas/niveles}
+    \caption{Niveles de estructura fina (cm$^{-1}$) de la configuración $np^2$ con el modelo de correlación de valencia (HF+CI), referidos al $^3P_0$, frente al NIST. $\Delta$ es el error relativo.}
+    \label{tab:niveles}
 \end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/np2_energy_levels.pdf}
+    \caption{Niveles de la configuración $np^2$ a lo largo de la secuencia. En el germanio y el estaño se muestran además los niveles con la corrección de polarización del core de la Sección \ref{sec:vpol_resultados}.}
+    \label{fig:np2_levels}
+\end{figure}
+
+El modelo reproduce el ordenamiento de los cinco niveles en los cuatro elementos (Tabla \ref{tab:niveles} y Figura \ref{fig:np2_levels}), y el error de los intervalos del término fundamental cambia de signo a lo largo de la secuencia. En el carbono el modelo abre el tripleto de más, con desviaciones de $+28.8\%$ y $+45.3\%$ sobre intervalos de apenas decenas de cm$^{-1}$. En los otros tres lo abre de menos, y el déficit se agrava al descender en el grupo, del $-6\%$ en el silicio al $-19.2\%$ y $-14.8\%$ en el estaño. Esos errores proceden del parámetro $\zeta_{np}$, cuyo diagnóstico ocupa la Sección \ref{sec:zeta_diagnostico}.
+
+Los singletes siguen otro patrón. El $^1D_2$ queda por encima del valor medido en los cuatro elementos, con el error mayor en el silicio ($+15.7\%$), y el $^1S_0$ queda alto en el carbono y bajo en los otros tres. Como ambos dependen de la separación electrostática, y las integrales de Slater coinciden con la referencia (Tabla \ref{tab:parametros_radiales}), la explicación no puede estar en la parte radial del campo medio. Antes de atribuirla a la física que el modelo omite hay que descartar que se trate de un artefacto del tamaño del espacio de configuraciones.
+
+\subsection{Convergencia del espacio de configuraciones}
+\label{sec:convergencia_ci}
+
+El espacio activo queda definido por el número $m$ de orbitales que se retienen en cada canal de momento angular, hasta $l_{\max}=3$, y el número de configuraciones crece como $m^2$. Las Tablas \ref{tab:convergencia_ci} y \ref{tab:convergencia_singletes} del Apéndice \ref{ap:metodos-auxiliares} recogen la energía de correlación y los singletes para cada tamaño. El silicio, el germanio y el estaño alcanzan su energía de correlación asintótica con rapidez, ya que entre $m=16$ y $m=20$ cambia en menos de $0.1$ milihartree, lo que justifica $m=20$ como tamaño de producción. El carbono converge más despacio y se llevó hasta $m=40$, donde el último incremento es de $0.06$ milihartree.
+
+La estabilidad de los intervalos del tripleto es el resultado más nítido del análisis. A lo largo de toda la curva del carbono, entre $m=4$ y $m=40$, el intervalo $^3P_2$ se mueve $0.13\ \text{cm}^{-1}$ y el $^3P_1$ apenas $0.03$; en el silicio ambos se mantienen dentro de $0.2\ \text{cm}^{-1}$. En el germanio y el estaño el movimiento es mayor, de $8.9$ y $40.8\ \text{cm}^{-1}$ en el $^3P_1$, pero sigue siendo un orden de magnitud menor que la discrepancia con el experimento, que en el estaño supera los $300\ \text{cm}^{-1}$. Los errores del tripleto no proceden, por tanto, del truncamiento del espacio activo.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/convergencia_singletes.pdf}
+    \caption{Error de los términos $^1D_2$ y $^1S_0$ frente al NIST en función del número $m$ de orbitales por canal.}
+    \label{fig:convergencia_singletes}
+\end{figure}
+
+Los singletes sí dependen del tamaño del espacio (Figura \ref{fig:convergencia_singletes}). Ambos descienden de manera monótona al ampliar la base, y en el carbono el $^1S_0$ baja de $\num{28259}$ a $\num{23894}\ \text{cm}^{-1}$ entre $m=4$ y $m=40$. Para estimar la cola restante extrapolamos los tres últimos tamaños de cada curva de dos maneras, suponiendo que los incrementos decrecen en razón geométrica constante y ajustando la forma $E(m) = E_\infty + A\,m^{-p}$. En el carbono, en el germanio, en el $^1D_2$ del silicio y en el $^1S_0$ del estaño las dos estimaciones coinciden y desplazan el error relativo frente al NIST en un punto porcentual o menos. El $^1S_0$ del silicio converge más despacio, ya que extrapola a un error de entre $-5.3\%$ y $-6.2\%$ según el método, frente al $-4.7\%$ de $m=20$, aunque el signo de la discrepancia no cambia. El caso difícil es el $^1D_2$ del estaño, que desciende con incrementos casi constantes entre $m=12$ y $m=20$ (razón $0.93$) y no admite una extrapolación fiable: la geométrica lo situaría un $2.6\%$ por debajo del valor medido, cuando en $m=20$ queda un $1.1\%$ por encima, de modo que el signo de su error queda indeterminado con el espacio de producción.
+
+Esas estimaciones bastan para el argumento principal, que se apoya en el carbono. Allí el $^1S_0$ extrapolado queda un $10\%$ por encima del valor medido y el $^1D_2$ entre un $5.5\%$ y un $5.7\%$, discrepancias de unos dos mil doscientos y unos seiscientos cm$^{-1}$ frente a una cola de convergencia de unas decenas. La discrepancia de los singletes del carbono no es un artefacto del truncamiento sino una carencia del modelo, y el patrón, con un error relativo del $^1S_0$ cercano al doble del del $^1D_2$, apunta a la casi degeneración entre las configuraciones $ns^2np^2$ y $np^4$, que un CI de pareja con el core congelado no puede contener por construcción. En los otros tres elementos el patrón es distinto, porque su $^1S_0$ queda por debajo del valor medido; la Sección \ref{sec:casi_degeneracion} examina esa asimetría.
+
+\section{Del Acoplamiento \texorpdfstring{$LS$}{LS} al Intermedio}
+\label{sec:regimen_acoplamiento}
+
+La secuencia se eligió porque fija la simetría angular de la valencia mientras varía la carga nuclear, de modo que el tránsito del carbono al estaño aísla un solo fenómeno: el paso del acoplamiento de Russell-Saunders al intermedio. Lo que decide el régimen es la competencia entre dos escalas de energía (Sección \ref{sec:acoplamiento_ls}). Una es la separación electrostática entre términos, que para $p^2$ vale $E(^1D) - E(^3P) = \tfrac{6}{25}F^2$ según las Ecuaciones \eqref{eq:termino_3P} y \eqref{eq:termino_1D}; la otra es el parámetro $\zeta_{np}$, que desdobla cada término en sus niveles $J$. La Tabla \ref{tab:acoplamiento} reúne ambas escalas junto con un indicador que no depende de su valor absoluto, la razón de intervalos del tripleto.
 
 \begin{table}[htbp]
     \centering
-    \input{tablas/integrales_slater}
-    \caption{Integrales de Slater de repulsión electrostática evaluadas para la subcapa de valencia $np^2$, expresadas en Hartree ($E_h$). V.C. indica valores calculados y F.F. los resultados de Froese Fischer \cite{fischer1977}.}
-    \label{tab:integrales_slater}
+    \input{tablas/acoplamiento}
+    \caption{Escalas del régimen de acoplamiento, en cm$^{-1}$: el parámetro de espín-órbita calculado y la separación electrostática $E(^1D)-E(^3P) = \frac{6}{25}F^2$ de Hartree-Fock. La razón $R = (E_{^3P_2} - E_{^3P_1})/(E_{^3P_1} - E_{^3P_0})$ vale $2$ para una $\zeta$ de un cuerpo en acoplamiento $LS$ puro, por la regla de intervalos de Landé (Apéndice \ref{ap:momento-angular}).}
+    \label{tab:acoplamiento}
 \end{table}
-
-Las integrales de Slater del Cuadro \ref{tab:integrales_slater} coinciden con la referencia en los cuatro elementos dentro de $1.8\times10^{-5}$ Hartree, un acuerdo del mismo orden que el de la energía total y que no deja margen para atribuir a la parte electrostática ninguna de las discrepancias espectroscópicas que aparecerán más adelante. El momento inverso del Cuadro \ref{tab:momentos_inversos} se comporta de otro modo. En el carbono la coincidencia es de una parte en un millón, pero en el silicio, el germanio y el estaño la diferencia relativa se sitúa entre el $0.17\%$ y el $0.34\%$, tres órdenes de magnitud por encima.
-
-Esa separación entre el carbono y el resto no es accidental y admite una explicación estructural. El carbono es el único elemento de la secuencia cuyo core carece de electrones $p$, de modo que su orbital de valencia $2p$ no necesita ser ortogonalizado contra ningún orbital del core de la misma simetría. En los otros tres, el orbital de valencia se resuelve en su propio operador de Fock y se ortogonaliza después contra los $p$ internos mediante el procedimiento de Gram-Schmidt de la Sección \ref{sec:gram-schmidt}, en lugar de imponer la restricción con multiplicadores de Lagrange dentro del problema variacional. La solución resultante queda ligeramente fuera del punto estacionario exacto, y eso explica la jerarquía observada en el Cuadro \ref{tab:resultados_energia_global}: la energía se desvía a segundo orden y coincide a $10^{-5}$ Hartree, mientras que $\langle r^{-3} \rangle$ y la energía cinética, valores esperados ordinarios, se desvían a primer orden.
-
-Conviene descartar la explicación alternativa más obvia, que sería un defecto de la malla. Repetir el ciclo autoconsistente del silicio con $100$, $200$ y $300$ intervalos mueve la energía en $1.7\times10^{-6}$ Hartree entre los dos primeros y deja sin cambio todas las cifras impresas entre los dos últimos, mientras que $\langle r^{-3} \rangle$ se desplaza en $2\times10^{-5}$ en dirección contraria a la referencia. Un refinamiento que no reduce la discrepancia, y que en el margen la aumenta, no puede ser su causa. La magnitud del efecto, entre el $0.2\%$ y el $0.3\%$, es en todo caso uno o dos órdenes menor que los errores físicos del modelo que documentaremos en las secciones siguientes, por lo que lo registramos como una limitación metodológica y no como un obstáculo para las conclusiones.
-
-\subsection{Escalamiento Relativista frente a la Repulsión Coulombiana}
-
-La extracción del parámetro $\zeta_{np}$, gobernado por el momento $\langle r^{-3} \rangle$ según la Ecuación \eqref{eq:zeta_spin_orbit}, junto con la repulsión coulombiana $F^2(np,np)$ definida en la Sección \ref{sec:slater_integrals}, permite localizar el punto en que se rompe el acoplamiento $LS$ discutido en la Sección \ref{sec:acoplamiento_ls}. La comparación entre ambas cantidades es directa porque tienen las mismas unidades de energía y compiten por determinar la misma estructura: $F^2$ separa los términos $^3P$, $^1D$ y $^1S$ entre sí, mientras que $\zeta_{np}$ desdobla cada término en sus componentes de momento angular total $J$. El esquema $LS$ es una buena descripción mientras la primera domine a la segunda por varios órdenes de magnitud, y deja de serlo cuando ambas se vuelven comparables.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/scaling_law.pdf}
-    \caption{Competencia energética entre el acoplamiento espín-órbita $\zeta_{np}$ y la repulsión electrostática $F^2$ a lo largo de la secuencia $np^2$, en escala doblemente logarítmica. Se incluye la $\zeta$ que reproduciría los niveles del NIST, definida en el Cuadro \ref{tab:zeta}.}
+    \caption{Parámetro de espín-órbita calculado y el que reproduce los niveles del NIST (Tabla \ref{tab:zeta}), frente a la separación electrostática $\frac{6}{25}F^2$ de Hartree-Fock, en escala doblemente logarítmica.}
     \label{fig:scaling_law}
 \end{figure}
 
-La Figura \ref{fig:scaling_law} muestra este comportamiento en los datos de nuestro motor SCF. La repulsión electrostática $F^2$, convertida a $\text{cm}^{-1}$, decae del carbono al silicio y se estabiliza en torno a $\num{35000} \ \text{cm}^{-1}$ para el resto de la secuencia; un ajuste de ley de potencias sobre los cuatro elementos le asigna un exponente de $-0.22$, es decir, una dependencia prácticamente plana con la carga nuclear. Esto es el reflejo del apantallamiento, que mantiene a los orbitales de valencia en un radio medio comparable a lo largo de todo el grupo pese a que $Z$ se multiplica por más de ocho. La interacción magnética $\zeta_{np}$, en cambio, crece de forma sostenida.
+La separación electrostática cae del carbono al silicio y permanece casi constante en el resto de la secuencia, mientras que $\zeta_{np}$ crece de manera sostenida (Figura \ref{fig:scaling_law}). La razón $\zeta_{np}/\frac{6}{25}F^2$ vale $0.0033$ en el carbono, donde las dos escalas están separadas por más de dos órdenes de magnitud, y llega a $0.24$ en el estaño, donde ya son comparables. El estaño se encuentra así de lleno en el régimen intermedio, y el germanio, con una razón de $0.096$, en el tramo inicial del tránsito.
 
-Conviene precisar el sentido de esa afirmación, porque la lectura de una recta en escala logarítmica admite dos interpretaciones distintas. En un diagrama doblemente logarítmico una dependencia $\zeta \propto Z^{p}$ aparece como una recta de pendiente $p$, mientras que un crecimiento exponencial $\zeta \propto e^{cZ}$ produciría una recta únicamente en escala semilogarítmica. La recta de la Figura \ref{fig:scaling_law} confirma, por tanto, un comportamiento polinomial y no exponencial, que es la conclusión cualitativa que interesa para el régimen de acoplamiento.
+El crecimiento de $\zeta_{np}$ es, sin embargo, mucho más lento que la ley hidrogenoide $Z^4/n^3$ de la Sección \ref{sec:spin_orbita}. Un ajuste de ley de potencias sobre los cuatro elementos le asigna un exponente de $1.82$ frente a la carga nuclear, y el mismo ajuste da $0.69$ para $\langle r^{-3}\rangle$ y $1.69$ para la cota de núcleo desnudo $(\alpha^2/2)\,Z\,\langle r^{-3}\rangle$. La diferencia de una unidad entre estos dos últimos es el factor $Z$ explícito de la cota: el crecimiento procede casi por completo de la carga nuclear que el electrón percibe al penetrar el core, y poco del momento inverso, que el apantallamiento y el aumento de $n$ hacen crecer mucho más despacio que $Z$.
 
-El exponente concreto, sin embargo, merece una lectura cuidadosa. Ajustando por mínimos cuadrados $\zeta_{np} = A Z^{p}$ sobre los cuatro elementos se obtiene $p = 1.82$ frente a la carga nuclear, con exponentes locales de $1.42$, $2.14$ y $1.86$ entre elementos consecutivos, y no el valor $p \approx 4$ que podría esperarse de una lectura apresurada del resultado de la Sección \ref{sec:spin_orbita}. No hay contradicción entre ambos, porque se refieren a variables distintas. La ley $\zeta_{nl} \sim Z_{\text{eff}}^4$ se deduce para un orbital hidrogenoide de $n$ fijo y describe la dependencia con la carga \textit{efectiva} que el electrón de valencia percibe; lo que la Figura \ref{fig:scaling_law} grafica es la dependencia con la carga \textit{nuclear}. Dos mecanismos separan una de otra a lo largo de esta secuencia: el apantallamiento del core, que hace crecer a $Z_{\text{eff}}$ mucho más despacio que a $Z$, y el aumento del número cuántico principal de $2p$ a $5p$, que introduce el factor $n^{-3}$ de la fórmula hidrogenoide y suprime todavía más el crecimiento.
+La razón de intervalos distingue dos desviaciones de la regla de Landé de origen distinto. En el carbono el modelo entrega $R = 1.983$, prácticamente el valor de Landé, como debe hacerlo un modelo cuyo único operador de estructura fina es de un cuerpo y cuyos estados son $LS$ casi puros. El experimento da $1.644$: es el átomo el que se aparta de la regla, en un $18\%$, y el modelo no puede reproducir esa desviación. Como $R$ es una razón entre intervalos, es insensible a la escala de $\zeta$, y ningún error en $\langle r^{-3}\rangle$, en la malla o en el campo medio puede explicarla; lo que la explica son los términos de dos cuerpos del Hamiltoniano de Breit-Pauli, en particular la interacción espín-espín, cuyo peso relativo es máximo donde el acoplamiento espín-órbita es más débil.
 
-La consistencia interna del ajuste respalda esta lectura. El mismo procedimiento aplicado al momento $\langle r^{-3} \rangle$ devuelve un exponente de $0.69$, y aplicado a la $\zeta$ que produciría un núcleo desnudo sobre esos mismos orbitales, $\zeta_{\text{desnudo}} = (\alpha^2/2)\,Z\,\langle r^{-3} \rangle$, devuelve $1.69$. La diferencia de exactamente una unidad entre ambos reproduce el factor $Z$ explícito de la definición, lo que confirma que el crecimiento observado procede casi por completo del factor nuclear y apenas del momento inverso, cuya dependencia con $Z$ es débil precisamente por el apantallamiento.
+En el silicio el modelo y el experimento coinciden ($1.911$ frente a $1.894$), y el elemento sirve de control de que las elecciones metodológicas no condicionan las conclusiones. La más relevante es la convención de orbitales, porque el campo medio puede optimizarse sobre el término $^3P$ o sobre el promedio de la configuración (Sección \ref{sec:rohf}). Al pasar de la primera a la segunda los intervalos del tripleto descienden entre un $1.5\%$ y un $1.8\%$ en los cuatro elementos, siguiendo la razón entre los dos valores de $\zeta_{np}$, y los singletes se mueven menos de un $0.6\%$, de modo que ninguna conclusión de este capítulo cambia al conmutar la convención.
 
-La magnitud de la separación entre ambas escalas es lo que define el régimen de acoplamiento. En el carbono, $\zeta_{2p}$ apenas alcanza los $42 \ \text{cm}^{-1}$ frente a los $\num{53399} \ \text{cm}^{-1}$ de $F^2$, de modo que el efecto magnético queda relegado a una corrección menor sobre un ordenamiento fijado por la electrostática. Al llegar al estaño, $\zeta_{5p}$ ha crecido hasta $\num{1886} \ \text{cm}^{-1}$ frente a $\num{32314} \ \text{cm}^{-1}$, y la separación se ha reducido de tres órdenes de magnitud a poco más de uno. Esta diferencia entre las velocidades con que crece cada término es la razón por la cual los átomos pesados del grupo son empujados al régimen de acoplamiento intermedio descrito en la Sección \ref{sec:acoplamiento_ls}.
+En el germanio y el estaño la razón medida cae a $1.531$ y $1.026$, y en el estaño los dos intervalos del tripleto son prácticamente iguales. El mecanismo es el acoplamiento intermedio: los elementos fuera de la diagonal de las matrices de Breit-Pauli conectan el $^3P_2$ con el $^1D_2$ y el $^3P_0$ con el $^1S_0$, mientras que el $^3P_1$ queda aislado por no tener compañero con su $J$ (Sección \ref{sec:matrices_bp}), de modo que los dos niveles acoplados se desplazan y el intermedio no. El modelo sigue esa caída, con $R = 1.563$ y $1.137$, pero en ambos casos se queda por encima del valor medido, lo que indica que mezcla de menos.
 
-\subsection{Diagnóstico del Parámetro de Espín-Órbita}
-\label{sec:zeta_diagnostico}
-
-El parámetro $\zeta_{np}$ es el único ingrediente del modelo que fija los intervalos del término fundamental, de manera que conviene confrontarlo directamente con el que exigirían los niveles medidos antes de examinar el espectro completo. Para ello definimos $\zeta_{\text{NIST}}$ como el valor único que, introducido en el Hamiltoniano de Breit-Pauli de una configuración $p^2$ sin correlación, reproduce los niveles $^3P_2$, $^1D_2$ y $^1S_0$ de la base ASD. El Cuadro \ref{tab:zeta} recoge la comparación junto con la cota que impondría un núcleo sin apantallar.
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/zeta}
-    \caption{Diagnóstico del parámetro de espín-órbita, en $\text{cm}^{-1}$. $\zeta_{\text{desnudo}} = (\alpha^2/2) Z \langle r^{-3}\rangle$ es el valor que daría el campo nuclear sin apantallar sobre el orbital calculado; $\zeta_{\text{NIST}}$ es la $\zeta$ única que reproduce los niveles medidos. La razón $R = (^3P_2 - {}^3P_1)/(^3P_1 - {}^3P_0)$ vale exactamente $2$ para una $\zeta$ de un cuerpo en acoplamiento $LS$ puro, por la regla de intervalos de Landé.}
-    \label{tab:zeta}
-\end{table}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/zeta_razon.pdf}
-    \caption{Razón entre la $\zeta$ calculada y la que exigen los niveles del NIST, junto con la misma razón para $\zeta_{\text{desnudo}}$. El cruce por la unidad separa el régimen en que el modelo sobrestima el acoplamiento del régimen en que lo subestima.}
-    \label{fig:zeta_razon}
-\end{figure}
-
-La columna de razones del Cuadro \ref{tab:zeta} decrece de manera monótona a lo largo de la secuencia y cambia de lado entre el carbono y el silicio, como se aprecia en la Figura \ref{fig:zeta_razon}. En el carbono el modelo entrega una $\zeta$ un $46\%$ mayor que la requerida, mientras que en el silicio, el germanio y el estaño se queda corto por $5\%$, $10\%$ y $16\%$ respectivamente. Se trata, por tanto, de dos fallas de signo opuesto y de origen distinto, y no de un error sistemático único que pudiera absorberse con un factor de escala.
-
-El déficit de los elementos pesados admite una acotación limpia. En el germanio y el estaño, la $\zeta$ que piden los niveles medidos supera incluso a $\zeta_{\text{desnudo}}$, que es el valor que se obtendría suprimiendo por completo el apantallamiento del core sobre el orbital calculado. Ninguna redistribución del potencial de campo medio puede entonces cerrar la brecha manteniendo fijo el orbital: lo que falta es una contracción del propio orbital de valencia hacia el núcleo, por efectos relativistas, por polarización del core o por ambos. Esta observación es la que motiva la corrección $V_{\text{pol}}$ de la Sección \ref{sec:vpol_resultados}, y también la que anticipa que dicha corrección deberá aumentar $\zeta$ y no reducirla.
-
-El exceso del carbono tiene otra lectura, que las dos últimas columnas del cuadro permiten aislar. Una $\zeta$ de un solo cuerpo en acoplamiento $LS$ puro obliga a que los intervalos del triplete guarden la razón $R = 2$ de la regla de Landé, y eso es esencialmente lo que produce nuestro modelo en el carbono, con $R_{\text{modelo}} = 1.983$. El experimento, en cambio, da $R_{\text{NIST}} = 1.644$, una desviación que no puede originarse en el valor de $\zeta$ porque $R$ es independiente de su escala. Su causa son los términos de dos cuerpos del Hamiltoniano de Breit-Pauli, en particular la interacción espín-espín, que nuestro tratamiento omite y cuyo peso relativo es máximo justamente donde el acoplamiento espín-órbita es más débil. En el silicio el modelo y el experimento ya coinciden razonablemente ($1.911$ frente a $1.894$), y en el germanio y el estaño la caída de $R$ por debajo de $2$ es un efecto de acoplamiento intermedio que el modelo sí reproduce, aunque de manera incompleta.
-
-\subsection{Teorema de Koopmans y Energías de Ionización}
-
-Los eigenvalores $\epsilon_{nl}$ que arroja el problema generalizado de Roothaan-Hall son, en principio, multiplicadores de Lagrange sin significado observable directo. El Teorema de Koopmans, enunciado formalmente en la Sección \ref{sec:koopmans_theorem}, les asigna uno: bajo la aproximación de orbitales congelados, el potencial de ionización del sistema queda dado por $I \approx -\epsilon_{np}$. Aunque nuestra secuencia $np^2$ es de capa abierta y el teorema se formula para capa cerrada, sigue proporcionando una estimación de primer orden útil, en el sentido perturbativo preciso que se detalla en esa sección: el error que se comete es el de la relajación de los orbitales restantes tras la remoción del electrón, contribución que aparece a segundo orden en la perturbación.
-
-Vale la pena precisar por qué ese error no incluye una contribución de correlación de primer orden. Por el Teorema de Brillouin \cite{Szabo1989}, los elementos de matriz entre el determinante de referencia Hartree-Fock y las excitaciones simples se anulan de manera exacta, de modo que las correcciones dominantes a $-\epsilon_{np}$ provienen de la relajación orbital y de la correlación de pares, ambas de orden superior. Comparamos entonces los eigenvalores de nuestro motor SCF contra los potenciales empíricos de la base ASD del NIST, descrita en la Sección \ref{sec:nist_asd}, empleando la conversión a electrón-voltios del Apéndice \ref{ap:unidades-atomicas}. El Cuadro \ref{tab:koopmans} recoge la comparación.
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/koopmans}
-    \caption{Energías de ionización obtenidas mediante el Teorema de Koopmans ($-\epsilon_{np}$) y mediante la diferencia de energías del cálculo CI ($\Delta E = -\epsilon_{np} - E_{\text{corr}}$), contrastadas con los valores empíricos del NIST ASD. La última columna reporta el error relativo del resultado CI. Dado que el ión $np^1$ carece de correlación de pares en la capa de valencia, la corrección CI actúa solo sobre el átomo neutro $np^2$ y por tanto aumenta el potencial de ionización predicho.}
-    \label{tab:koopmans}
-\end{table}
-
-El Cuadro \ref{tab:koopmans} desmiente la expectativa de que el error crezca con el número de electrones. Los eigenvalores reproducen el potencial de ionización con desviaciones de $+4.7\%$ en el carbono, $-0.8\%$ en el silicio, $-1.0\%$ en el germanio y $-1.8\%$ en el estaño: el caso peor es el átomo más ligero, y en los tres restantes el error de Koopmans se mantiene por debajo del $2\%$. La tendencia es en realidad la contraria a la esperada, y su explicación está en la compensación entre los dos errores que el teorema comete. La relajación orbital, que el modelo de orbitales congelados ignora, siempre reduce el potencial de ionización real, mientras que la correlación de valencia ausente lo aumenta; en los sistemas pesados ambas contribuciones son mayores y se cancelan de manera más completa.
-
-La corrección CI de valencia confirma esa lectura al romper el equilibrio. Su magnitud es de unos $0.2$ eV en los cuatro elementos y su signo es siempre el mismo, ya que el ión $np^1$ no tiene pareja de valencia que correlacionar y toda la energía recuperada estabiliza al átomo neutro. El resultado es que la predicción se desplaza hacia arriba y sobrepasa el valor medido en el carbono, el silicio y el germanio, donde el error pasa a $+7.1\%$, $+2.0\%$ y $+1.4\%$; solo en el estaño, donde el eigenvalor se quedaba corto por $1.8\%$, la corrección acerca el resultado hasta un $0.5\%$. Añadir correlación de pares sin añadir simultáneamente la relajación orbital que la acompaña deteriora, por tanto, una cancelación que era fortuita pero efectiva.
-
-\section{Validación Experimental del Espectro Multiplete}
-
-Los términos espectroscópicos que resultan de la configuración $np^2$ ($^3P_J$, $^1D_2$ y $^1S_0$) determinan las transiciones radiativas permitidas de cada elemento y funcionan como firmas de identificación en absorción y emisión. Conocer sus energías con precisión es lo que da utilidad práctica al cálculo: en astrofísica observacional y en física de plasmas, las líneas de los átomos neutros e ionizados constituyen el diagnóstico primario de temperatura, densidad y abundancia química del medio emisor \cite{Cowan1981}. Este es, en última instancia, el motivo que justifica el trabajo, ya que el espectro es el único punto de contacto directo entre la estructura electrónica calculada y la observación.
-
-Para contrastar los desdoblamientos predichos en acoplamiento intermedio, extrajimos los niveles experimentales de la base ASD del NIST, descrita en la Sección \ref{sec:nist_asd}, para las especies neutras de la secuencia; en notación espectroscópica, C I, Si I, Ge I y Sn I, donde el numeral romano indica el grado de ionización. Los autoestados teóricos se obtuvieron diagonalizando el Hamiltoniano de Breit-Pauli en la base de determinantes de valencia, siguiendo el procedimiento de la Sección \ref{sec:ci_method}. Las energías resultantes, expresadas en $\text{cm}^{-1}$ y referidas al nivel $^3P_0$, se presentan en los Cuadros \ref{tab:niveles_energia_ligeros} y \ref{tab:niveles_energia_pesados}.
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/niveles_ligeros}
-    \caption{Niveles de estructura fina ($\text{cm}^{-1}$) de los elementos ligeros de la secuencia, referidos al nivel $^3P_0$. Se contrasta el modelo estricto de correlación de valencia (HF+CI) contra los valores experimentales del NIST; la columna $\Delta$ es el error relativo frente a estos últimos. El nivel $^3P_0$ define el origen de la escala y no admite error relativo.}
-    \label{tab:niveles_energia_ligeros}
-\end{table}
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/niveles_pesados}
-    \caption{Niveles de estructura fina ($\text{cm}^{-1}$) de los átomos pesados de la secuencia, referidos al nivel $^3P_0$. La columna CI+$V_{\text{pol}}$ incorpora el potencial de polarización del core con el $\alpha_d$ calibrado en la Sección \ref{sec:vpol_resultados} ($0.75$ para el germanio y $3.0$ para el estaño) y $r_c = 1.0\,a_0$. Cada columna $\Delta$ es el error relativo del modelo que la precede frente al NIST, lo que permite leer en un solo renglón el efecto de la corrección sobre cada término.}
-    \label{tab:niveles_energia_pesados}
-\end{table}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=1.0\textwidth]{figures/np2_energy_levels.pdf}
-    \caption{Espectro de energía de los términos de la capa $np^2$ a lo largo de la secuencia. En el germanio y el estaño se muestran las tres columnas del Cuadro \ref{tab:niveles_energia_pesados}: HF+CI, CI+$V_{\text{pol}}$ y NIST.}
-    \label{fig:np2_levels}
-\end{figure}
-
-Los dos cuadros muestran que el modelo reproduce el ordenamiento jerárquico correcto de los cinco niveles en los cuatro elementos, y que el error de los intervalos del término fundamental cambia de signo a lo largo de la secuencia. En el carbono el modelo abre el tripleto de más, con desviaciones de $+28.8\%$ y $+45.3\%$ sobre unos intervalos que apenas alcanzan las decenas de $\text{cm}^{-1}$. En los otros tres lo abre de menos, y el déficit se agrava al descender en el grupo, de un $-6\%$ en el silicio a un $-19.2\%$ y $-14.8\%$ en el estaño. Este patrón es exactamente el que anticipa la columna de razones del Cuadro \ref{tab:zeta}, lo que confirma que el error de los $^3P_J$ se hereda por completo del parámetro $\zeta_{np}$ y no del tratamiento angular.
-
-Las columnas $\Delta$ del Cuadro \ref{tab:niveles_energia_pesados} permiten además anticipar el balance de la corrección de polarización que se analiza en la Sección \ref{sec:vpol_resultados}. Los dos intervalos del tripleto pasan de errores de entre el $11\%$ y el $19\%$ a quedar por debajo del $2\%$ en ambos elementos, y el término $^1S_0$ también mejora. El $^1D_2$, en cambio, es el único que se deteriora, y pasa de $+10.2\%$ a $+15.3\%$ en el germanio y de $+1.1\%$ a $+12.3\%$ en el estaño.
-
-Conviene detenerse en cómo se rompe la degeneración a lo largo de la secuencia, porque el mecanismo no cambia pero su magnitud sí. Un Hamiltoniano no relativista, sea el de Schrödinger para el hidrógeno o el de Hartree-Fock restringido para un átomo multielectrónico, conmuta por separado con $\mathbf{L}^2$ y $\mathbf{S}^2$ y no contiene ningún operador capaz de distinguir entre valores de $J$. En consecuencia, los niveles $^3P_0$, $^3P_1$ y $^3P_2$ emergen exactamente degenerados del ciclo SCF, y esto vale por igual para el carbono y para el estaño. La degeneración no se rompe por refinar la malla ni por ampliar la base: se rompe únicamente al añadir el término $\hat{H}_{SO}$ del Hamiltoniano de Breit-Pauli, cuyo valor esperado depende de $\mathbf{l}\cdot\mathbf{s}$ y por tanto de $J$. Lo que sí cambia al bajar en el grupo es la magnitud del efecto: en el carbono el desdoblamiento es de decenas de $\text{cm}^{-1}$ y $\hat{H}_{SO}$ admite un tratamiento perturbativo sobre estados $LS$ puros, mientras que en el estaño alcanza los miles de $\text{cm}^{-1}$ y obliga a la diagonalización completa descrita en la Sección \ref{sec:acoplamiento_ls}.
-
-El comportamiento de los singletes es distinto y merece tratamiento aparte. El término $^1D_2$ queda sistemáticamente alto en los cuatro elementos, mientras que el $^1S_0$ queda alto en el carbono y bajo en los otros tres. Como ambos están gobernados por la repulsión electrostática $F^2$, cuyo acuerdo con la referencia establecimos en el Cuadro \ref{tab:integrales_slater}, la explicación no puede estar en la parte radial del campo medio. Antes de atribuirla a la física que el modelo omite es necesario descartar que se trate de un artefacto del tamaño del espacio de configuraciones, y a eso se dedica la sección siguiente.
-
-\section{Convergencia del Espacio de Configuraciones}
-\label{sec:convergencia_ci}
-
-El espacio activo del cálculo CI queda definido por el número $m$ de orbitales virtuales que se retienen por cada canal de momento angular, hasta $l_{\max} = 3$. Dado que el modelo correlaciona únicamente la pareja de valencia sobre un core congelado, el tamaño de la base de configuraciones crece como $m^2$, y con él el número de integrales de Slater $R^k$ que hay que evaluar y almacenar. Establecer que los resultados del capítulo no dependen de ese truncamiento es un requisito previo a cualquier lectura física de los errores.
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/convergencia_ci}
-    \caption{Energía de correlación de valencia $E_{\text{corr}}$ en función del número $m$ de orbitales virtuales por canal, con $l_{\max}=3$. Las columnas de orbitales y de configuraciones son comunes a los cuatro elementos por depender solo de $m$.}
-    \label{tab:convergencia_ci}
-\end{table}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/convergencia_ci.pdf}
-    \caption{Energía de correlación de valencia frente al tamaño del espacio activo para los cuatro elementos de la secuencia.}
-    \label{fig:convergencia_ci}
-\end{figure}
-
-El Cuadro \ref{tab:convergencia_ci} muestra que la energía de correlación converge de manera desigual entre elementos. El silicio, el germanio y el estaño alcanzan su valor asintótico de forma rápida: entre $m=16$ y $m=20$ sus energías cambian en menos de $0.1$ milihartree, lo que justifica adoptar $m=20$ como tamaño de producción. El carbono es la excepción, y su curva revela por qué el tamaño usual resulta insuficiente. Entre $m=16$ y $m=20$ todavía gana casi un milihartree, y sus incrementos sucesivos no bajan de $0.1$ milihartree hasta $m=36$; el último tramo de la curva, hasta las dos mil cuatrocientas sesenta configuraciones de $m=40$, aporta todavía $0.06$ milihartree. Su orbital $2p$ es el más compacto de la secuencia y el que menos se solapa con los virtuales de baja energía, de modo que la correlación se reparte entre un número mayor de excitaciones. El costo computacional de estas curvas, dominado por la caché de integrales $R^k$, se documenta en la Sección \ref{sec:costo_ci} del Apéndice \ref{ap:metodos-auxiliares}.
-
-La estabilidad de los intervalos del término fundamental es el resultado más nítido de este análisis. A lo largo de toda la curva del carbono, entre $m=4$ y $m=40$, el intervalo $^3P_2$ se mueve $0.13 \ \text{cm}^{-1}$ y el $^3P_1$ apenas $0.03$; en el silicio ambos se mantienen dentro de $0.2 \ \text{cm}^{-1}$. En el germanio y el estaño el movimiento es mayor en términos absolutos, de $8.9$ y $40.8 \ \text{cm}^{-1}$ en el $^3P_1$, pero sigue siendo un orden de magnitud menor que la discrepancia con el experimento, que en el estaño supera los $300 \ \text{cm}^{-1}$. Los errores del tripleto documentados en la sección anterior no proceden, por tanto, del truncamiento del espacio activo.
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/convergencia_singletes}
-    \caption{Términos singlete ($\text{cm}^{-1}$, referidos al $^3P_0$) frente al tamaño del espacio activo. La última fila reproduce los valores del NIST para facilitar la comparación.}
-    \label{tab:convergencia_singletes}
-\end{table}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/convergencia_singletes.pdf}
-    \caption{Convergencia de los términos $^1D_2$ y $^1S_0$ con el tamaño del espacio activo, contrastada con el valor experimental de cada elemento.}
-    \label{fig:convergencia_singletes}
-\end{figure}
-
-Los singletes sí dependen apreciablemente del tamaño del espacio, y el Cuadro \ref{tab:convergencia_singletes} permite cuantificar cuánto les falta. Ambos descienden de manera monótona al ampliar la base, y en el carbono el descenso es considerable: el $^1S_0$ baja de $\num{28259}$ a $\num{23894} \ \text{cm}^{-1}$ entre $m=4$ y $m=40$. Para estimar la cola restante extrapolamos los tres últimos tamaños de cada curva de dos maneras, suponiendo que los incrementos decrecen en razón geométrica constante y ajustando la forma $E(m) = E_\infty + A\,m^{-p}$. En el carbono, en el germanio, en el $^1D_2$ del silicio y en el $^1S_0$ del estaño las dos estimaciones coinciden y desplazan el error relativo frente al NIST en un punto porcentual o menos. El $^1S_0$ del silicio converge más despacio, ya que extrapola a un error de entre $-5.3\%$ y $-6.2\%$ según el método, frente al $-4.7\%$ de $m=20$, aunque el signo de la discrepancia no cambia. El caso difícil es el $^1D_2$ del estaño, que desciende con incrementos casi constantes entre $m=12$ y $m=20$ (razón $0.93$), de modo que no admite una extrapolación fiable: la geométrica lo situaría un $2.6\%$ por debajo del valor medido, cuando en $m=20$ queda un $1.1\%$ por encima, y el signo de su error queda indeterminado con el espacio de producción.
-
-Esas estimaciones bastan para el argumento principal, que se apoya en el carbono. Allí el $^1S_0$ extrapolado se queda un $10\%$ por encima del valor medido y el $^1D_2$ entre un $5.5\%$ y un $5.7\%$, es decir, unos dos mil doscientos y unos seiscientos $\text{cm}^{-1}$ respectivamente, frente a una cola de convergencia de unas decenas. La discrepancia de los singletes del carbono no es un artefacto del truncamiento sino una carencia del modelo, y su firma apunta a un mecanismo concreto: que el error relativo del $^1S_0$ sea aproximadamente el doble que el del $^1D_2$ es el patrón que produce la casi degeneración entre las configuraciones $ns^2np^2$ y $np^4$, que deprime específicamente al término $^1S$ y que un CI de pareja con el core congelado no puede contener por construcción. En los otros tres elementos el patrón es distinto, porque su $^1S_0$ queda por debajo del valor medido y la casi degeneración lo bajaría todavía más. El Capítulo \ref{ch:discusion} examina esa asimetría.
-
-\section{Polarización del Core}
-\label{sec:vpol_resultados}
-
-El diagnóstico de la Sección \ref{sec:zeta_diagnostico} dejó establecido que en el germanio y el estaño el parámetro $\zeta_{np}$ del campo medio se queda por debajo del que exigen los niveles medidos, y que el déficit supera lo que podría recuperarse eliminando el apantallamiento. Lo que falta es una contracción del orbital de valencia, y el mecanismo físico disponible para producirla es la respuesta del core al campo del electrón de valencia. El potencial de polarización $V_{\text{pol}}$, derivado en la Sección \ref{sec:core_polarization} e implementado según la Sección \ref{sec:impl_polarizacion}, modela esa respuesta mediante la forma $-\alpha_d W_6(r/r_c)/2r^4$ de la Ecuación \eqref{eq:vpol_cutoff}, con la polarizabilidad dipolar $\alpha_d$ y el radio de corte $r_c$ como parámetros.
-
-Conviene anticipar el sentido en que actúa esta corrección, porque es el opuesto al que sugiere una lectura superficial. $V_{\text{pol}}$ es un término atractivo adicional concentrado en la región intermedia, de modo que liga con más fuerza al electrón de valencia y lo atrae hacia el núcleo. El orbital se contrae, su densidad cerca del origen aumenta, y con ella crecen el momento $\langle r^{-3} \rangle$ y el parámetro $\zeta_{np}$ que de él depende. La corrección abre el tripleto en lugar de cerrarlo, que es precisamente lo que el déficit del Cuadro \ref{tab:zeta} reclama.
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/barrido_vpol_Ge}
-    \caption{Barrido de la polarizabilidad dipolar del core para el germanio, con $r_c = 1.0\,a_0$. El asterisco marca el valor adoptado, el que minimiza el error cuadrático medio de los dos intervalos del tripleto frente al NIST.}
-    \label{tab:barrido_vpol_Ge}
-\end{table}
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/barrido_vpol_Sn}
-    \caption{Barrido de la polarizabilidad dipolar del core para el estaño, con $r_c = 1.0\,a_0$. El asterisco marca el valor adoptado bajo el mismo criterio que en el germanio.}
-    \label{tab:barrido_vpol_Sn}
-\end{table}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{figures/barrido_vpol.pdf}
-    \caption{Intervalos del término $^3P$ del germanio y del estaño en función de la polarizabilidad dipolar del core, contrastados con los niveles del NIST.}
-    \label{fig:barrido_vpol}
-\end{figure}
-
-Los Cuadros \ref{tab:barrido_vpol_Ge} y \ref{tab:barrido_vpol_Sn} recorren el parámetro y confirman el sentido del efecto: la columna de $\zeta_{np}$ crece de manera monótona con $\alpha_d$ en ambos elementos, y con ella los dos intervalos. La calibración es inequívoca en el germanio, donde los valores de $\alpha_d$ que igualan al NIST el $^3P_1$ y el $^3P_2$ son $0.67$ y $0.66$, prácticamente el mismo; con el valor adoptado de $0.75$ los dos niveles quedan a $+1.6\%$ y $+1.5\%$ del experimento. El valor adoptado no coincide con los cruces porque el criterio elige el mejor punto de la rejilla del barrido, sin interpolar entre ellos. En el estaño los cruces son $3.22$ y $2.87$, y el valor adoptado de $3.0$ deja el $^3P_1$ a $-1.9\%$ y el $^3P_2$ a $+0.8\%$. La tensión entre ambos intervalos existe, por tanto, pero es pequeña, y un solo parámetro reproduce el tripleto del estaño con un error inferior al $2\%$.
-
-Que la corrección resulte necesaria en los pesados y no en los ligeros tiene una explicación estructural. El core del germanio contiene una subcapa $3d^{10}$ llena, espacialmente difusa y fácilmente polarizable, y el del estaño una $4d^{10}$; los cores del carbono ($1s^2$) y del silicio ($[\mathrm{Ne}]$) son compactos y rígidos, con polarizabilidades dipolares mucho menores. En el carbono, además, el Cuadro \ref{tab:zeta} muestra que $\zeta$ ya sobra en un $46\%$, de modo que una corrección que lo aumenta agravaría el error en lugar de corregirlo. Aplicar el mismo tratamiento fenomenológico en la parte alta del grupo introduciría un parámetro libre sin contenido físico.
-
-El efecto sobre los singletes no es despreciable, en contra de lo que podría suponerse de un potencial que actúa sobre la región interna. El Cuadro \ref{tab:niveles_energia_pesados} muestra que el $^1D_2$ del germanio sube de $7851.6$ a $8215.3 \ \text{cm}^{-1}$ y el del estaño de $8710.1$ a $9675.4$, con desplazamientos del mismo orden en el $^1S_0$. Parte del corrimiento es aparente, ya que la referencia $^3P_0$ se desplaza al crecer $\zeta$, pero la separación $LS$ entre los términos también crece. El balance es mixto, y las columnas $\Delta$ del Cuadro \ref{tab:niveles_energia_pesados} lo hacen explícito: el $^1S_0$ mejora en ambos elementos, hasta $+0.6\%$ en el germanio, mientras que el $^1D_2$ empeora y queda en $+15.3\%$. Un $\alpha_d$ ajustado contra el tripleto no tiene por qué mejorar la separación electrostática, y de hecho no lo hace.
-
-\subsection{Efecto Cruzado sobre el Potencial de Ionización}
-
-Un parámetro calibrado contra una sola propiedad exige comprobarse contra otra distinta, y el potencial de ionización ofrece la prueba más limpia, porque depende de la densidad en todo el dominio y no de su comportamiento cerca del origen. Los Cuadros \ref{tab:germanio_ionizacion} y \ref{tab:estanio_ionizacion} recogen el efecto de las correcciones sucesivas en los dos elementos pesados.
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/ionizacion_Ge}
-    \caption{Efecto de las correcciones sucesivas sobre el potencial de ionización del germanio.}
-    \label{tab:germanio_ionizacion}
-\end{table}
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/ionizacion_Sn}
-    \caption{Efecto de las correcciones sucesivas sobre el potencial de ionización del estaño.}
-    \label{tab:estanio_ionizacion}
-\end{table}
-
-El resultado es desfavorable y conviene declararlo sin atenuantes. En el germanio el error crece del $1.4\%$ al $4.8\%$ al incorporar $V_{\text{pol}}$, y en el estaño del $0.5\%$ al $8.4\%$: la corrección que lleva el tripleto a menos del $2\%$ deteriora el potencial de ionización por un factor cercano a tres en un caso y superior a quince en el otro. El signo del deterioro es informativo, ya que en ambos casos el átomo queda sobreligado, lo que indica que el potencial adicional es demasiado atractivo en la región donde se acumula el grueso de la densidad de valencia.
-
-La conclusión metodológica es que el $\alpha_d$ obtenido por ajuste espectroscópico no debe interpretarse como la polarizabilidad dipolar del core. Es un parámetro efectivo que absorbe, además de la polarización, cualquier otra carencia del modelo que se manifieste como un déficit de $\zeta$, y entre ellas están los efectos relativistas escalares que contraen los orbitales internos y que un tratamiento de Breit-Pauli a primer orden sobre orbitales no relativistas no incorpora. Que el valor ajustado reproduzca el tripleto y empeore la energía es la firma de un parámetro que corrige el síntoma correcto por el mecanismo equivocado, y así debe leerse en el Capítulo \ref{ch:discusion}.
-
-\section{Factores de Landé y Grado de Mezcla}
+\subsection{Factor de Landé y grado de mezcla}
 \label{sec:lande}
 
-El acoplamiento intermedio se manifiesta de forma directa en el factor $g$ del nivel $^3P_2$, que se aparta de su valor $LS$ puro en la medida en que el estado incorpora carácter $^1D_2$. Esta magnitud ofrece una prueba independiente del modelo, porque no depende de la escala de $\zeta$ sino de la razón entre el acoplamiento espín-órbita y la separación electrostática que los intervalos anteriores no aíslan. El Cuadro \ref{tab:lande} compara los factores calculados con los medidos y traduce ambos a un porcentaje de mezcla.
+El factor $g$ del nivel $^3P_2$ somete esa afirmación a una prueba independiente, porque no depende de la escala de las energías sino de la composición del autoestado (Sección \ref{sec:lande_teoria}). La Tabla \ref{tab:lande} compara los factores calculados con los medidos y traduce ambos a un peso del carácter $^1D_2$ mediante la Ecuación \eqref{eq:g_efectivo}. El germanio y el estaño aparecen también con la corrección de polarización del core, que se discute en la Sección \ref{sec:vpol_resultados}.
 
 \begin{table}[htbp]
     \centering
     \input{tablas/lande}
-    \caption{Factores de Landé del nivel $^3P_2$ y peso del carácter $^1D_2$ que implican. Los valores calculados emplean el $g_s$ real del electrón, de modo que el $^3P_2$ puro vale $1.50116$ y no $3/2$. El silicio no tiene factor $g$ tabulado en el ASD.}
+    \caption{Factor $g$ del nivel $^3P_2$ y peso de $^1D_2$ que implica (Ecuación \eqref{eq:g_efectivo}). Los valores calculados usan el $g_s$ real del electrón, de modo que el $^3P_2$ puro vale $1.50116$. El silicio no tiene factor $g$ tabulado en el ASD.}
     \label{tab:lande}
 \end{table}
 
-El cuadro confirma el régimen de acoplamiento que el capítulo viene describiendo. En el carbono y el silicio el factor calculado coincide con el valor $LS$ puro hasta la quinta cifra y la mezcla es inferior al $0.02\%$, de modo que la descripción de Russell-Saunders es exacta a efectos prácticos. En el germanio la mezcla ya es apreciable y en el estaño es sustancial, con un peso medido del $9.81\%$ de carácter $^1D_2$ en el nivel nominalmente $^3P_2$.
+En el carbono y el silicio la mezcla calculada no supera el $0.02\%$. En el carbono la medida se aparta del valor puro en una cantidad del orden de las correcciones de orden $\alpha^2$ al propio factor $g$, que este cálculo no incluye, y la estimación perturbativa con los niveles medidos da una mezcla despreciable, de modo que esa diferencia no puede leerse como mezcla. En el germanio, en cambio, el ASD implica un $1.31\%$ de carácter $^1D_2$ y el modelo un $0.77\%$, y en el estaño un $9.81\%$ frente a un $5.47\%$. El germanio conserva etiquetas $LS$ razonables, mientras que en el estaño, con cerca de un diez por ciento de mezcla, las etiquetas sobreviven como convención más que como descripción.
 
-La comparación cuantitativa con el experimento revela, sin embargo, un déficit sistemático en los dos elementos pesados. El germanio mezcla un $1.31\%$ según el ASD y el modelo produce $0.77\%$; el estaño mezcla un $9.81\%$ y el modelo $5.47\%$. En ambos casos el cálculo se queda aproximadamente en la mitad, y añadir $V_{\text{pol}}$ solo cierra una fracción de la brecha, hasta $0.94\%$ y $6.69\%$. Esta subestimación es coherente con los dos errores ya documentados: la mezcla crece con el cociente entre $\zeta$ y la separación $^1D-{}^3P$, y el modelo produce un $\zeta$ demasiado pequeño en el numerador y un $^1D_2$ demasiado alto en el denominador. Los dos sesgos empujan en la misma dirección, y su efecto combinado explica el factor cercano a dos que separa la mezcla calculada de la observada.
+El déficit de mezcla de los elementos pesados admite una explicación cuantitativa. A primer orden en el bloque $J=2$ de Breit-Pauli, el peso de $^1D_2$ en el nivel $^3P_2$ es $\zeta_{np}^2/2\Delta_{J=2}^2$, con $\Delta_{J=2}$ la separación entre los dos niveles de $J=2$ (Ecuación \eqref{eq:mezcla_perturbativa}). Con el $\zeta$ calculado y los niveles del modelo esa estimación da $0.78\%$ en el germanio y $5.31\%$ en el estaño, prácticamente los pesos de la diagonalización; con el $\zeta_{\text{NIST}}$ de la Tabla \ref{tab:zeta} y los niveles medidos da $1.30\%$ y $9.34\%$, cerca de lo que implica el factor $g$ medido. La mezcla observada queda así fijada por dos cantidades, y el déficit del modelo por el sesgo de ambas: $\zeta_{np}$ se queda corto en un $10\%$ y un $16\%$, y $\Delta_{J=2}$ es demasiado grande porque el $^3P_2$ queda bajo por ese mismo déficit y, en el germanio, porque el $^1D_2$ queda además un $10.2\%$ por encima del valor medido.
 
-\section{Conclusión del Estudio $np^2$}
+Un espacio de configuraciones mayor no cambiaría este cuadro. El numerador depende solo de $\zeta$, que no depende del espacio, y la Sección \ref{sec:convergencia_ci} mostró que el tripleto tampoco lo hace. En el estaño, cuyo $^1D_2$ todavía desciende en $m=20$, un espacio mayor acercaría los dos niveles de $J=2$ y aumentaría algo la mezcla, pero no puede compensar el déficit de $\zeta$, que es el objeto de la sección siguiente.
 
-El estudio de la secuencia $np^2$ permite cerrar con una lectura de conjunto. El motor numérico reproduce el límite Hartree-Fock no relativista en los cuatro elementos sin requerir ninguna modificación de la arquitectura de B-splines: basta ajustar la densidad de nodos y el parámetro de la malla exponencial para acomodar el rango radial creciente, y la aceleración C-DIIS de la Sección \ref{sec:cdiis_resultados} hace tratables los sistemas pesados sin desplazar el punto fijo. Las energías totales coinciden con la referencia dentro de $3.3\times10^{-5}$ Hartree y las integrales de Slater dentro de $1.8\times10^{-5}$, lo que sitúa cualquier discrepancia espectroscópica fuera de la parte electrostática del campo medio.
+\section{El Parámetro de Espín-Órbita y la Polarización del Core}
+\label{sec:zeta_diagnostico}
 
-El hilo que recorre el capítulo es el desplazamiento progresivo del régimen de acoplamiento, y el parámetro $\zeta_{np}$ es el que lo gobierna. En el carbono la repulsión electrostática domina al acoplamiento magnético por tres órdenes de magnitud y el esquema $LS$ es prácticamente exacto; en el estaño la separación se ha reducido a poco más de un orden y el nivel $^3P_2$ incorpora casi un diez por ciento de carácter $^1D_2$. El motor captura esa transición y la reproduce de manera cuantitativa una vez calibrada la polarización del core, con los intervalos del tripleto del germanio y del estaño dentro del $2\%$.
+El parámetro $\zeta_{np}$ es el único ingrediente del modelo que fija los intervalos del tripleto, así que el paso natural es confrontarlo con el que exigirían los niveles medidos. Definimos $\zeta_{\text{NIST}}$ como el valor que, introducido en el Hamiltoniano de Breit-Pauli de una configuración $p^2$ sin correlación y con las energías de los términos como parámetros libres, reproduce los niveles $^3P_2$, $^1D_2$ y $^1S_0$ del ASD. La Tabla \ref{tab:zeta} lo compara con el valor calculado y con la cota de núcleo desnudo $\zeta_{\text{desnudo}} = (\alpha^2/2)\,Z\,\langle r^{-3}\rangle$ de la Sección \ref{sec:spin_orbita}.
 
-Los errores que subsisten están localizados y tienen origen identificado, lo que importa más que su magnitud. Los intervalos del tripleto fallan por el valor de $\zeta$, por exceso en el carbono y por defecto en los pesados, y la Sección \ref{sec:zeta_diagnostico} muestra que las dos fallas tienen causas distintas: los términos de dos cuerpos de Breit-Pauli en un caso, la contracción del orbital en el otro. Los singletes fallan por una carencia del espacio de configuraciones que la Sección \ref{sec:convergencia_ci} descarta que sea de truncamiento y atribuye al core congelado. Y la corrección $V_{\text{pol}}$, que resuelve el primero de esos problemas, deteriora el potencial de ionización y deja claro que su parámetro absorbe más física de la que su nombre sugiere. El Capítulo \ref{ch:discusion} retoma estas tres limitaciones para situarlas frente al modelo del que proceden.
+\begin{table}[htbp]
+    \centering
+    \input{tablas/zeta}
+    \caption{Diagnóstico del parámetro de espín-órbita, en cm$^{-1}$. $\zeta_{\text{desnudo}}$ es el valor que daría el campo nuclear sin apantallar sobre el orbital calculado y $\zeta_{\text{NIST}}$ el que reproduce los niveles medidos. $(\alpha Z)^2$ es la escala de las correcciones relativistas cerca del núcleo.}
+    \label{tab:zeta}
+\end{table}
+
+La razón $\zeta_{\text{calc}}/\zeta_{\text{NIST}}$ decrece de manera monótona a lo largo de la secuencia y cruza la unidad entre el carbono y el silicio. En el carbono el modelo entrega una $\zeta$ un $46\%$ mayor que la requerida, un exceso coherente con la ausencia de los términos de dos cuerpos que ya reveló la razón $R$, porque esos términos reducen el acoplamiento efectivo. En el silicio, el germanio y el estaño el modelo se queda corto por un $5\%$, un $10\%$ y un $16\%$. Son dos fallas de signo opuesto y de origen distinto, que ningún factor de escala único podría absorber.
+
+El déficit de los elementos pesados admite una acotación limpia. En el germanio y el estaño la $\zeta$ que piden los niveles medidos supera incluso a $\zeta_{\text{desnudo}}$, el valor que se obtendría suprimiendo por completo el apantallamiento sobre el orbital calculado, y ninguna redistribución del campo medio puede entonces cerrar la brecha con el orbital fijo: lo que falta es una contracción del propio orbital de valencia hacia el núcleo. Hay dos mecanismos que la producen, y el cálculo no relativista no incluye ninguno. El primero es relativista, y su escala cerca del núcleo, donde se acumula el integrando de $\zeta$, es $(\alpha Z)^2$, que alcanza el $5\%$ en el germanio y el $13\%$ en el estaño, el mismo orden que el déficit. El segundo es la polarización del core, que el modelo puede incorporar mediante el potencial $V_{\text{pol}}$.
+
+\subsection{La corrección de polarización del core}
+\label{sec:vpol_resultados}
+
+El potencial $V_{\text{pol}}$ de la Ecuación \eqref{eq:vpol_cutoff}, implementado según la Sección \ref{sec:impl_polarizacion}, es un término atractivo que actúa fuera del radio de corte $r_c$, de modo que liga con más fuerza al electrón de valencia y lo contrae. Con la contracción crecen $\langle r^{-3}\rangle$ y $\zeta_{np}$, y la corrección abre el tripleto, que es lo que el déficit de la Tabla \ref{tab:zeta} reclama. Con $r_c = 1.0\,a_0$ fijo, la polarizabilidad $\alpha_d$ se calibró contra los dos intervalos del tripleto, y la Tabla \ref{tab:barrido_vpol} y la Figura \ref{fig:barrido_vpol} recorren el parámetro.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/barrido_vpol}
+    \caption{Barrido de la polarizabilidad dipolar del core con $r_c = 1.0\,a_0$, con $\zeta_{np}$ y los intervalos en cm$^{-1}$. El asterisco marca el valor adoptado, el que minimiza el error cuadrático medio de los dos intervalos frente al NIST.}
+    \label{tab:barrido_vpol}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/barrido_vpol.pdf}
+    \caption{Error de los intervalos del término $^3P$ del germanio y del estaño frente al NIST en función de la polarizabilidad dipolar del core.}
+    \label{fig:barrido_vpol}
+\end{figure}
+
+La columna de $\zeta_{np}$ crece de manera monótona con $\alpha_d$ en ambos elementos, y con ella los dos intervalos. En el germanio los valores de $\alpha_d$ que igualan al NIST el $^3P_1$ y el $^3P_2$ son $0.67$ y $0.66$, prácticamente el mismo; el valor adoptado, $0.75$, deja los dos niveles a $+1.6\%$ y $+1.5\%$ del experimento, y no coincide con los cruces porque el criterio elige el mejor punto de la rejilla del barrido, sin interpolar. En el estaño los cruces son $3.22$ y $2.87$, y el valor adoptado de $3.0$ deja el $^3P_1$ a $-1.9\%$ y el $^3P_2$ a $+0.8\%$, de modo que la tensión entre ambos intervalos existe pero es pequeña. Con el $\alpha_d$ adoptado, el $\zeta_{np}$ del germanio y del estaño queda a menos de un $2\%$ del $\zeta_{\text{NIST}}$ de la Tabla \ref{tab:zeta}.
+
+Que la corrección resulte necesaria en los pesados y no en los ligeros tiene una explicación estructural. El core del germanio contiene una subcapa $3d^{10}$ llena, extensa y fácilmente polarizable, y el del estaño una $4d^{10}$, mientras que los cores del carbono ($1s^2$) y del silicio ($[\mathrm{Ne}]$) son compactos y mucho menos polarizables. En el carbono, además, $\zeta$ ya sobra en un $46\%$, y una corrección que lo aumenta agravaría el error en lugar de corregirlo.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/niveles_vpol}
+    \caption{Niveles (cm$^{-1}$) del germanio y del estaño sin y con la corrección de polarización del core, con el $\alpha_d$ adoptado ($0.75$ y $3.0$) y $r_c = 1.0\,a_0$, frente al NIST.}
+    \label{tab:niveles_vpol}
+\end{table}
+
+La corrección no se limita al tripleto (Tabla \ref{tab:niveles_vpol}). El $^1S_0$ mejora en ambos elementos, hasta un $+0.6\%$ en el germanio, pero el $^1D_2$ empeora: pasa de $+10.2\%$ a $+15.3\%$ en el germanio y de $+1.1\%$ a $+12.3\%$ en el estaño. La mezcla del $^3P_2$ se mueve en la dirección correcta, hasta un $0.94\%$ y un $6.69\%$ (Tabla \ref{tab:lande}), pero no cierra la brecha, porque con $\zeta$ ya corregido lo que sigue faltando procede de la separación $\Delta_{J=2}$, que el $^1D_2$ alto agranda. Un $\alpha_d$ ajustado contra el tripleto no tiene por qué mejorar la separación electrostática, y de hecho no lo hace.
+
+\subsection{Prueba cruzada: la energía de ionización}
+
+Un parámetro calibrado contra una propiedad debe comprobarse contra otra, y la energía de ionización es la prueba natural, porque depende del orbital de valencia en todo el dominio y no solo cerca del núcleo. La Tabla \ref{tab:ionizacion} la sigue a través de las tres etapas del modelo. La primera columna es el teorema de Koopmans de la Sección \ref{sec:koopmans_theorem}, $I \approx -\epsilon_{np}$; la segunda le suma la energía de correlación de la pareja de valencia, que estabiliza solo al átomo neutro porque el ion $np^1$ no tiene pareja que correlacionar; la tercera incorpora $V_{\text{pol}}$.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/ionizacion}
+    \caption{Energía de ionización (eV) en las tres etapas del modelo, con el error relativo frente al NIST entre paréntesis. HF+CI es $-\epsilon_{np} - E_{\text{corr}}$; CI+$V_{\text{pol}}$ usa el $\alpha_d$ adoptado.}
+    \label{tab:ionizacion}
+\end{table}
+
+Los eigenvalores reproducen el potencial de ionización con un error de $+4.7\%$ en el carbono y de entre $-0.8\%$ y $-1.8\%$ en el resto, de modo que el caso peor es el átomo más ligero. La razón es la compensación entre los dos errores del teorema: la relajación orbital, que el modelo de orbitales congelados ignora, reduce el potencial de ionización real, la correlación ausente lo aumenta, y en los sistemas pesados ambas contribuciones son mayores y se cancelan mejor. La corrección de correlación rompe ese equilibrio, porque su signo es siempre el mismo. Lleva la predicción por encima del valor medido en el carbono, el silicio y el germanio ($+7.1\%$, $+2.0\%$ y $+1.4\%$), y solo en el estaño, donde el eigenvalor se quedaba corto, la acerca hasta un $+0.5\%$.
+
+El resultado con $V_{\text{pol}}$ es desfavorable. En el germanio el error crece del $+1.4\%$ al $+4.8\%$ y en el estaño del $+0.5\%$ al $+8.4\%$, de modo que la corrección que lleva el tripleto a menos del $2\%$ sobreliga al átomo. El $\alpha_d$ obtenido por ajuste espectroscópico no debe interpretarse, por tanto, como la polarizabilidad dipolar del core, sino como un parámetro efectivo que absorbe cualquier carencia del modelo que se manifieste como un déficit de $\zeta$, entre ellas la contracción relativista que la Tabla \ref{tab:zeta} hace plausible. Que el valor ajustado reproduzca el tripleto y empeore la energía es la firma de un parámetro que corrige el síntoma correcto por un mecanismo que no es solo el suyo.
+
+\section{Limitaciones del Modelo}
+\label{sec:limitaciones}
+
+Las discrepancias de este capítulo se reducen a un conjunto acotado de aproximaciones. El orden que sigue va de las que afectan a los observables a las que solo afectan a su precisión numérica. Ninguna se resuelve refinando la implementación existente, y cada una define una extensión del motor que el Capítulo \ref{ch:conclusiones} recoge como trabajo futuro.
+
+\subsection{El parámetro de espín-órbita de un cuerpo}
+
+El modelo representa toda la estructura fina mediante un único parámetro $\zeta_{np}$ de un cuerpo, y esa elección falla en los dos extremos de la secuencia por razones opuestas. En los elementos ligeros faltan los términos de dos cuerpos del Hamiltoniano de Breit-Pauli, cuya ausencia se manifiesta en la razón $R$ del carbono y no puede corregirse ajustando ningún parámetro radial (Sección \ref{sec:regimen_acoplamiento}). En los pesados el problema es de magnitud: el $\zeta$ que exigen los niveles medidos supera la cota de núcleo desnudo (Sección \ref{sec:zeta_diagnostico}), de modo que la carencia está en la propia función de onda, que debería estar más contraída de lo que el cálculo no relativista la produce.
+
+\subsection{La casi degeneración \texorpdfstring{$ns^2np^2 \leftrightarrow np^4$}{ns2np2 <-> np4}}
+\label{sec:casi_degeneracion}
+
+El error de los términos singlete tiene un origen distinto, que el diagnóstico de esta sección caracteriza bien en el carbono y solo en parte en el resto de la secuencia. El modelo correlaciona únicamente la pareja de valencia sobre un core congelado, lo que excluye por construcción la mezcla entre las configuraciones $ns^2np^2$ y $np^4$, próximas en energía porque la promoción de los dos electrones $ns$ a la subcapa $np$ cuesta poco cuando ambas pertenecen a la misma capa principal. Un cálculo de dos configuraciones por término, con los orbitales del campo medio congelados, permite estimar el tamaño del efecto sin construir el motor que lo trataría de forma consistente.
+
+El resultado es que el efecto es grande y actúa casi exclusivamente sobre el término $^1S$. En el carbono el peso de la configuración $np^4$ es del $7.40\%$ en el $^1S$ frente a un $2.21\%$ en el $^3P$, y esa asimetría deprime la separación $^1S - {}^3P$ en $\num{10444}\ \text{cm}^{-1}$; en el resto de la secuencia el descenso se sitúa entre $\num{5277}$ y $\num{6315}\ \text{cm}^{-1}$. El término $^1D$ no se ve afectado en este modelo, porque el acoplamiento y la separación entre configuraciones son idénticos para él y para el $^3P$, y la firma coincide con la del carbono en la Sección \ref{sec:convergencia_ci}, donde el error relativo del $^1S_0$ es aproximadamente el doble que el del $^1D_2$.
+
+Lo que impide incorporar la corrección sin más es que los dos mecanismos no son aditivos. Si la bajada estimada se sumara al resultado del CI de pareja, el $^1S_0$ del carbono quedaría $\num{8198}\ \text{cm}^{-1}$ por debajo del valor medido, sobrecorrigiendo por un factor cercano a cuatro, y los otros tres elementos caerían entre $\num{6154}$ y $\num{7035}\ \text{cm}^{-1}$ por debajo. Aplicada en solitario sobre el campo medio, en cambio, la casi degeneración reproduce la separación $^1S - {}^3P$ del carbono, ya que $0.6F^2$ menos la bajada calculada da $\num{21595}\ \text{cm}^{-1}$ frente a los $\num{21648}$ medidos, pero deja el $^1D - {}^3P$ en su valor de Hartree-Fock, $0.24F^2$, que excede al experimento en un veintiséis por ciento. El CI de pareja, con orbitales que no son los óptimos para cada configuración, ya describe con sus propios medios parte de la física que la casi degeneración representa, y tratar ambos mecanismos a la vez exige un cálculo de interacción de configuraciones de cuatro electrones con las subcapas $ns$ y $np$ activas, es decir, un motor multirreferencial y no una corrección añadida al actual.
+
+En el silicio, el germanio y el estaño la situación es la inversa de la del carbono. Su $^1S_0$ queda ya por debajo del valor medido con el CI de pareja, entre un $3.6\%$ y un $6.5\%$, y la casi degeneración lo bajaría todavía más. En estos elementos el CI de pareja con el core congelado desciende el $^1S$ de más, lo que confirma que contiene parte de la física de la casi degeneración, en una proporción que cambia a lo largo de la secuencia. El diagnóstico de dos configuraciones explica así el signo del error del $^1S_0$ en el carbono, pero no en los tres elementos más pesados, donde el reparto de la correlación entre la pareja de valencia y la subcapa $ns$ solo puede establecerse con el cálculo de cuatro electrones.
+
+El $^1D_2$ plantea un problema distinto. Queda por encima del valor medido en el carbono, el silicio y el germanio, con el error mayor en el silicio ($+15.7\%$), y en el estaño el signo de su error queda indeterminado porque no ha convergido en $m=20$ (Sección \ref{sec:convergencia_ci}). La casi degeneración no lo afecta en este modelo, de modo que ninguno de los mecanismos examinados lo corrige. Es plausible que requiera la misma correlación entre la subcapa $ns$ y la pareja $np^2$ que el cálculo de cuatro electrones incorporaría, pero este trabajo no lo verifica.
+
+\subsection{La polarizabilidad efectiva}
+
+El parámetro $\alpha_d$ se determinó por ajuste contra los intervalos del tripleto, y la prueba cruzada de la energía de ionización mostró que absorbe más física que la respuesta dipolar del core; el candidato más probable son los efectos relativistas que contraen los orbitales y que un tratamiento de Breit-Pauli a primer orden sobre orbitales no relativistas no incorpora. La comparación de los valores ajustados con polarizabilidades de referencia habría permitido acotar esa contaminación, pero no dispusimos de valores primarios verificables para los cores del germanio y el estaño. A esa ambigüedad se suma una aproximación de la implementación: el potencial actúa también sobre los orbitales del propio core, y no solo sobre los de valencia como en el modelo de Müller (Sección \ref{sec:impl_polarizacion}), y el efecto de esa elección sobre los observables no se cuantificó.
+
+\subsection{Precisión numérica}
+
+Dos decisiones de implementación afectan a la precisión sin alterar ninguna conclusión física. La primera es la ortogonalización por Gram-Schmidt en lugar de multiplicadores de Lagrange (Sección \ref{sec:parametros_fina}), que deja la solución fuera del punto estacionario exacto y explica una desviación de entre el $0.2\%$ y el $0.3\%$ en el momento $\langle r^{-3}\rangle$ de los elementos con core $p$, uno o dos órdenes de magnitud menor que los errores físicos del modelo. La segunda es que la energía total se extrae de los autovalores del problema generalizado y no del cociente de Rayleigh sobre los orbitales convergidos; como el orbital de valencia pasa por Gram-Schmidt después de la diagonalización, deja de ser autovector de su propia matriz de Fock y las dos expresiones dejan de coincidir. La diferencia es de $-1.7\times10^{-6}$ Hartree en el silicio y menor que $6\times10^{-7}$ en el germanio y el estaño, por debajo de la precisión con que la referencia tabula la energía.
+
+Una tercera aproximación, el truncamiento angular del espacio de configuraciones en $l_{\max}=3$, no se estudió. Las extrapolaciones de la Sección \ref{sec:convergencia_ci} acotan el efecto del número de orbitales por canal, no el de los canales omitidos. Su efecto queda, por tanto, sin cuantificar, igual que el de aplicar $V_{\text{pol}}$ también a los orbitales del core.
 
 %%% Local Variables:
 %%% mode: LaTeX

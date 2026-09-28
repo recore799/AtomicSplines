@@ -81,7 +81,7 @@ El \textbf{Acoplamiento de Russell-Saunders} (o acoplamiento $LS$) es el paradig
 
 Físicamente, esto significa que los momentos orbitales individuales $\mathbf{l}_i$ se acoplan fuertemente entre sí para formar un momento orbital total $\mathbf{L}$, y los espines $\mathbf{s}_i$ se acoplan para formar un espín total $\mathbf{S}$. Las integrales de Slater, en particular $F^2(np, np)$ para nuestra secuencia $np^2$, miden exactamente la magnitud de esta repulsión anisótropa, siendo el principal actor que rompe la degeneración de la configuración base y separa energéticamente los grandes bloques (los multipletes $^3P$, $^1D$, y $^1S$). A esta brecha de energía generada por la interacción de Coulomb se le conoce como la \textbf{separación LS}.
 
-Bajo este régimen de campo débil, el momento total $\mathbf{J} = \mathbf{L} + \mathbf{S}$ se forma como un acoplamiento secundario, y el operador espín-órbita actúa como una pequeña perturbación. El carbono es el ejemplo de la secuencia: allí la separación electrostática entre sus términos supera al acoplamiento espín-órbita en más de dos órdenes de magnitud (Sección \ref{sec:parametros_fina}), y el acoplamiento $LS$ es una aproximación casi perfecta.
+Bajo este régimen de campo débil, el momento total $\mathbf{J} = \mathbf{L} + \mathbf{S}$ se forma como un acoplamiento secundario, y el operador espín-órbita actúa como una pequeña perturbación. El carbono es el ejemplo de la secuencia: allí la separación electrostática entre sus términos supera al acoplamiento espín-órbita en más de dos órdenes de magnitud (Sección \ref{sec:regimen_acoplamiento}), y el acoplamiento $LS$ es una aproximación casi perfecta.
 
 A medida que descendemos por el grupo 14 hacia el germanio ($Z=32$) y el estaño ($Z=50$), $\zeta_{np}$ crece mientras la separación electrostática entre términos permanece casi constante a partir del silicio, y las dos escalas se vuelven comparables. $\mathbf{L}$ y $\mathbf{S}$ dejan entonces de ser constantes de movimiento estrictas, porque el espín de cada electrón tiende a acoplarse directamente con su propio momento orbital, $\mathbf{j}_i = \mathbf{l}_i + \mathbf{s}_i$, antes que con el espín del otro electrón.
 
@@ -123,7 +123,33 @@ Los elementos diagonales de los tres bloques reproducen la regla del intervalo d
 
 Estas matrices interpolan de manera continua entre los dos regímenes de acoplamiento, y ese hecho ofrece una verificación analítica que conviene realizar. En el límite $jj$, donde $\zeta_{np}$ domina y la separación electrostática se vuelve despreciable, los tres términos $LS$ se degeneran en una misma energía que podemos tomar como cero. Con $E(^3P) = E(^1D) = E(^1S) = 0$, los eigenvalores de \eqref{eq:bp_j0} resultan $-2\zeta_{np}$ y $+\zeta_{np}$, y los de \eqref{eq:bp_j2} resultan $-\tfrac{1}{2}\zeta_{np}$ y $+\zeta_{np}$. Son exactamente las energías que predice el acoplamiento $jj$ puro: dos electrones en $p_{1/2}$ aportan $2\times(-\zeta_{np}) = -2\zeta_{np}$ y solo admiten $J=0$; la pareja $p_{1/2}p_{3/2}$ aporta $-\zeta_{np}+\tfrac{1}{2}\zeta_{np} = -\tfrac{1}{2}\zeta_{np}$ con $J=1,2$; y dos electrones en $p_{3/2}$ aportan $+\zeta_{np}$ con $J=0,2$. Que las matrices construidas en la base $LS$ reproduzcan el espectro $jj$ en el límite adecuado confirma que el tratamiento es no perturbativo y válido en todo el rango intermedio, que es precisamente donde caen el germanio y el estaño.
 
-\section{Interacción de Configuraciones y Correlación Electrónica}
+\subsection{El factor \texorpdfstring{$g$}{g} de Landé como medida de la mezcla}
+\label{sec:lande_teoria}
+
+Los elementos fuera de la diagonal de estas matrices mezclan términos con el mismo $J$, y el efecto Zeeman ofrece una medida directa de esa mezcla \cite{CohenTannoudji1977}. En un campo magnético débil $\mathbf{B}$ la degeneración en $M_J$ se rompe por el Hamiltoniano
+\begin{equation}
+    \hat{H}_Z = \frac{\mu_B}{\hbar}\,(\mathbf{L} + g_s\mathbf{S})\cdot\mathbf{B},
+\end{equation}
+donde $\mu_B$ es el magnetón de Bohr y $g_s$ el factor giromagnético del espín. Para un estado $LS$ puro, la proyección de $\mathbf{L} + g_s\mathbf{S}$ sobre $\mathbf{J}$ mediante el teorema de Wigner-Eckart da un desdoblamiento lineal en $M_J$,
+\begin{equation}
+    \label{eq:lande_g}
+    \Delta E = g_{LS}\, \mu_B B M_J, \qquad g_{LS} = 1 + (g_s - 1)\,\frac{J(J+1) - L(L+1) + S(S+1)}{2J(J+1)}.
+\end{equation}
+Con $g_s = 2$ el nivel $^3P_2$ tiene $g = 3/2$, pero el electrón real tiene $g_s = 2.00232$ y el $^3P_2$ puro vale $1.50116$. Los factores medidos llevan el $g_s$ verdadero, de modo que es contra $1.50116$, y no contra $3/2$, que debe leerse cualquier desviación. El $^1D_2$, con $S=0$, vale $g = 1$ en cualquiera de las dos convenciones.
+
+En acoplamiento intermedio el nivel de $J=2$ que corresponde al $^3P_2$ es una superposición $c_1\ket{^3P_2} + c_2\ket{^1D_2}$. Como la perturbación de Zeeman es diagonal en $J$ a primer orden, su factor $g$ es el promedio de los factores puros ponderado por los pesos,
+\begin{equation}
+    \label{eq:g_efectivo}
+    g_{\text{eff}} = |c_1|^2\, g(^3P_2) + |c_2|^2\, g(^1D_2),
+\end{equation}
+y al invertir esta relación cualquier factor $g$, calculado o medido, se traduce en un peso del carácter $^1D_2$. A primer orden en el bloque \eqref{eq:bp_j2}, cuyo elemento fuera de la diagonal es $-\zeta_{np}/\sqrt{2}$, ese peso es
+\begin{equation}
+    \label{eq:mezcla_perturbativa}
+    |c_2|^2 \simeq \frac{\zeta_{np}^2}{2\,\Delta_{J=2}^2}, \qquad \Delta_{J=2} = E(^1D_2) - E(^3P_2),
+\end{equation}
+de modo que la mezcla queda fijada por dos cantidades: el parámetro de espín-órbita y la separación entre los dos niveles de $J=2$.
+
+\section[Interacción de Configuraciones y Correlación Electrónica]{Interacción de Configuraciones y\\ Correlación Electrónica}
 
 A pesar de su formidable éxito predictivo, el método de Hartree-Fock adolece de un límite físico insuperable: asume que la función de onda total del sistema puede ser descrita por un único determinante de Slater $\Phi_0$. Al hacer esto, cada electrón experimenta solo el campo electromagnético estático y promediado de los demás, ignorando la \textit{correlación electrónica dinámica}—es decir, la capacidad instantánea de los electrones para repelerse espacialmente y evitarse mutuamente en tiempo real. Formalmente, definimos la energía de correlación como la diferencia exacta entre la energía verdadera no relativista y la energía del límite de Hartree-Fock:
 

@@ -82,6 +82,15 @@ Con los tres ultimos tamanos de cada curva: extrapolacion geometrica (incremento
 - Estaño 1D_2: m = 12, 16, 20 -> 8764.2, 8736.1, 8710.1 cm^-1 | geometrica 8388.8 (-2.6%, razon 0.93) | potencia no aplica | NIST 8613.0
 - Estaño 1S_0: m = 12, 16, 20 -> 16181.5, 16090.6, 16045.3 cm^-1 | geometrica 16000.4 (-6.8%, razon 0.50) | potencia 15948.6 (-7.1%, p = 1.7) | NIST 17162.5
 
+## Peso perturbativo de 1D_2 en el nivel 3P_2: w = zeta^2 / (2 Delta^2)
+
+Primer orden en el bloque J = 2 de Breit-Pauli, cuyo elemento fuera de la diagonal es -zeta/sqrt(2); Delta = E(1D_2) - E(3P_2) entre los dos niveles de J = 2. Modelo: zeta calculado y niveles del CI; NIST: zeta_NIST y niveles del ASD. 'diagonalizado' y 'del factor g' son los pesos de la tabla de Lande, para comparar.
+
+- Carbono: modelo w = 0.00% (diagonalizado 0.00%); NIST w = 0.00% (del factor g 0.02%)
+- Silicio: modelo w = 0.02% (diagonalizado 0.02%); NIST w = 0.03% (del factor g sin dato)
+- Germanio: modelo w = 0.78% (diagonalizado 0.77%); NIST w = 1.30% (del factor g 1.31%); con V_pol (alpha_d = 0.75) w = 0.95% (diagonalizado 0.94%)
+- Estaño: modelo w = 5.31% (diagonalizado 5.47%); NIST w = 9.34% (del factor g 9.81%); con V_pol (alpha_d = 3.00) w = 6.41% (diagonalizado 6.69%)
+
 ## Barridos de V_pol: error frente al NIST
 
 - Germanio alpha_d = 0.25: 3P_1 -7.7%, 3P_2 -6.9%, 1D_2 = 7967.9, 1S_0 = 15999.0

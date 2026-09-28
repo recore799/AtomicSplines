@@ -111,19 +111,60 @@ Los términos cruzados, con $i \neq j$, sobreviven en cambio como un operador de
 
 Este término tiene una interpretación física propia y no es un residuo despreciable: describe el apantallamiento dieléctrico que el core interpone entre los dos electrones de valencia, ya que el dipolo inducido por uno de ellos es sentido por el otro. Se suma al operador de repulsión $1/r_{12}$ y, al depender del ángulo entre ambos radios vectores, contribuye a la parte anisótropa de la interacción, reduciendo la separación entre los términos del multiplete. Su omisión en un tratamiento que retenga únicamente \eqref{eq:cpp_un_cuerpo} constituye, por tanto, una aproximación que conviene tener presente al interpretar los desdoblamientos calculados.
 
-\section{Costo Computacional del Cálculo CI}
-\label{sec:costo_ci}
+\section{Aceleración con C-DIIS}
+\label{sec:cdiis_resultados}
 
-Las curvas de convergencia de la Sección \ref{sec:convergencia_ci} exigen repetir el cálculo de interacción de configuraciones para tamaños crecientes del espacio activo, y conviene documentar qué recurso limita ese barrido. El costo no lo domina la diagonalización, cuyo espacio es de unas pocas miles de configuraciones, sino el ensamblado previo de las integrales de Slater $R^k$ entre orbitales virtuales. Su número crece como la cuarta potencia del tamaño de la base de virtuales, de modo que es este ensamblado el que fija tanto el tiempo de pared como la huella de memoria.
+Esta sección documenta el efecto de la extrapolación C-DIIS de la Sección \ref{sec:cdiis_metodo} sobre el ciclo autoconsistente. Las corridas comparadas parten del mismo punto inicial, en el estado $^3P$, y se detienen cuando el cambio de energía entre iteraciones cae por debajo de $10^{-10}$ Hartree. Sin C-DIIS, el germanio y el estaño mantienen el desplazamiento de nivel de $3$ Hartree durante todo el ciclo; con C-DIIS, el desplazamiento opera solo mientras el residuo permanece por encima del umbral de activación.
 
 \begin{table}[htbp]
     \centering
+    \input{tablas/cdiis}
+    \caption{Iteraciones necesarias para alcanzar $|\Delta E| < 10^{-10}$ Hartree con y sin C-DIIS, desde el mismo punto inicial y en el estado $^3P$. La última columna es la diferencia entre las dos energías convergidas.}
+    \label{tab:cdiis}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/cdiis_convergencia.pdf}
+    \caption{Historia de convergencia del ciclo con y sin C-DIIS. La escala logarítmica hace visible el cambio de régimen cuando la extrapolación se activa.}
+    \label{fig:cdiis}
+\end{figure}
+
+La Tabla \ref{tab:cdiis} muestra que el efecto depende del elemento. En el germanio y el estaño, los dos elementos que necesitan el desplazamiento de nivel, la aceleración reduce el número de iteraciones por factores de $2.8$ y $4.8$, de doscientas cuarenta y doscientas cincuenta a ochenta y cinco y cincuenta y dos. En el carbono, que converge sin desplazamiento, el factor es de $2.2$, y en el silicio el método no aporta ganancia: el ciclo simple converge en veintisiete iteraciones y la extrapolación necesita veintiocho. La ganancia grande procede, por tanto, de soltar el desplazamiento de nivel en cuanto el ciclo entra en la cuenca de atracción (Figura \ref{fig:cdiis}), y no de una lentitud genérica del punto fijo.
+
+El dato decisivo es la última columna. Las energías obtenidas con y sin aceleración coinciden dentro de $4\times10^{-12}$ Hartree en el carbono y por debajo de $10^{-8}$ Hartree en el germanio y el estaño, muy por debajo de cualquier escala física del problema. C-DIIS actúa, por tanto, sobre la trayectoria del ciclo y no sobre su punto fijo, y los resultados del Capítulo \ref{ch:resultados} describen la misma solución Hartree-Fock que produciría el ciclo sin acelerar.
+
+\section{Convergencia y Costo del Cálculo CI}
+\label{sec:costo_ci}
+
+Las Tablas \ref{tab:convergencia_ci} y \ref{tab:convergencia_singletes} recogen las curvas de convergencia que discute la Sección \ref{sec:convergencia_ci}: la energía de correlación de valencia y los términos singlete en función del número $m$ de orbitales por canal, con $l_{\max}=3$. El número de orbitales es $4m$, y el de configuraciones es común a los cuatro elementos por depender solo de $m$. Las extrapolaciones que cita el texto se hacen sobre los tres últimos tamaños de cada curva.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/convergencia_ci}
+    \caption{Energía de correlación de valencia en función del número $m$ de orbitales por canal, con $l_{\max}=3$, y número de configuraciones del término $^3P$.}
+    \label{tab:convergencia_ci}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \input{tablas/convergencia_singletes}
+    \caption{Términos singlete (cm$^{-1}$, referidos al $^3P_0$) en función del número $m$ de orbitales por canal. La última fila reproduce los valores del NIST.}
+    \label{tab:convergencia_singletes}
+\end{table}
+
+Estas curvas exigen repetir el cálculo de interacción de configuraciones para tamaños crecientes del espacio activo, y el resto de esta sección documenta qué recurso limita ese barrido. El costo no lo domina la diagonalización, cuyo espacio es de unas pocas miles de configuraciones, sino el ensamblado previo de las integrales de Slater $R^k$ entre orbitales virtuales. Su número crece como la cuarta potencia del tamaño de la base de virtuales, de modo que es este ensamblado el que fija tanto el tiempo de pared como la huella de memoria.
+
+\begin{table}[htbp]
+    \centering
+    \small
     \input{tablas/convergencia_ci_costo}
     \caption{Número de integrales $R^k$ almacenadas en caché y tiempo de pared por tamaño del espacio activo, para los cuatro elementos de la secuencia. Los tiempos son incrementales: cada tamaño reutiliza las integrales calculadas para el anterior, salvo en el primer punto de cada curva y en las corridas reanudadas.}
     \label{tab:convergencia_ci_costo}
 \end{table}
 
-El Cuadro \ref{tab:convergencia_ci_costo} cuantifica ambos recursos. El conteo de integrales es prácticamente el mismo para los cuatro elementos, ya que depende del tamaño de la base y no de la carga nuclear, y pasa de unos cuatro mil quinientos valores en $m=4$ a treinta y ocho millones en $m=40$. Con un ocupamiento medido de unos diecisiete bytes por casilla, el caso extremo del carbono requiere del orden de $1.1$ gigabytes de memoria residente, que llegan a $1.7$ durante los redimensionamientos de la tabla asociativa. El tiempo de pared del mismo punto es de unos quince minutos, y la curva completa del carbono hasta $m=40$ tomó cerca de treinta y nueve minutos.
+La Tabla \ref{tab:convergencia_ci_costo} cuantifica ambos recursos. El conteo de integrales es prácticamente el mismo para los cuatro elementos, ya que depende del tamaño de la base y no de la carga nuclear, y pasa de unos cuatro mil quinientos valores en $m=4$ a treinta y ocho millones en $m=40$. Con un ocupamiento medido de unos diecisiete bytes por casilla, el caso extremo del carbono requiere del orden de $1.1$ gigabytes de memoria residente, que llegan a $1.7$ durante los redimensionamientos de la tabla asociativa. El tiempo de pared del mismo punto es de unos quince minutos, y la curva completa del carbono hasta $m=40$ tomó cerca de treinta y nueve minutos.
 
 La comparación entre elementos muestra que el tiempo sí depende de $Z$, aunque el número de integrales no. A $m=20$ el silicio emplea sesenta y ocho segundos y el estaño quinientos noventa y ocho, casi nueve veces más, pese a evaluar una cantidad de integrales que difiere en menos del uno por ciento. La razón es el número de puntos de la malla radial, que debe crecer con $Z$ para resolver la contracción de las capas internas: cada integral $R^k$ se evalúa sobre esa malla, de modo que el costo por integral escala con la discretización y no con el espacio activo. Esta separación entre los dos factores es la que permite reutilizar la caché entre tamaños consecutivos y hace viable el barrido completo.
 

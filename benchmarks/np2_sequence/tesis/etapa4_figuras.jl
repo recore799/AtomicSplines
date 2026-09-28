@@ -135,13 +135,15 @@ function figuras_zeta(HFV)
     zc = [HFV[el].zeta * HA2CM for el in ELEMENTOS]
     zn = [zeta_nist(el).zeta for el in ELEMENTOS]
     zb = [ALFA^2 / 2 * INFO[el].Z * HFV[el].r3 * HA2CM for el in ELEMENTOS]
-    F2 = [HFV[el].F2 * HA2CM for el in ELEMENTOS]
+    # Separacion electrostatica E(1D) - E(3P) = (6/25) F^2 de Hartree-Fock: la escala con la que
+    # compite zeta en el regimen de acoplamiento (no F^2 sola, que la sobrestima por 25/6).
+    dLS = [6 / 25 * HFV[el].F2 * HA2CM for el in ELEMENTOS]
 
     p = plot(Zs, zc; xscale = :log10, yscale = :log10, xticks = xt, marker = :circle, lw = 2,
              color = :red, label = "ζ_np calculado", xlabel = "Z", ylabel = "Energía (cm⁻¹)",
              legend = :bottomright, size = (850, 500), margin = 5Plots.mm)
     scatter!(p, Zs, zn; marker = :diamond, color = :black, label = "ζ que pide el NIST")
-    plot!(p, Zs, F2; marker = :square, lw = 2, color = :blue, label = "F²(np,np)")
+    plot!(p, Zs, dLS; marker = :square, lw = 2, color = :blue, label = "E(¹D) − E(³P) = 6F²/25 (HF)")
     guardar(p, "scaling_law.pdf")
 
     q = plot(Zs, zc ./ zn; xticks = xt, marker = :circle, lw = 2, color = :red,

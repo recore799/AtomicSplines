@@ -36,6 +36,8 @@ fmt(x, d) = x === nothing ? "--" : @sprintf("%.*f", d, x)
 fmtS(x, d) = x === nothing ? "{--}" : @sprintf("%.*f", d, x)     # columnas S de siunitx
 # Notacion cientifica sin ceros de relleno en el exponente (3.6e-8, no 3.6e-08), como la tesis.
 cient(x) = replace(@sprintf("%.1E", x), r"E([+-])0*(\d)" => s"e\1\2")
+# La misma notacion para columnas que no son de siunitx: $4.0\times10^{-12}$.
+cient_tex(x) = replace(cient(x), r"e([+-]?)(\d+)" => s"\\times10^{\1\2}") |> t -> "\$" * replace(t, "{+" => "{") * "\$"
 linea(io, partes...) = println(io, "    ", join(partes, " & "), " \\\\")
 etiqueta_Z(el) = "$(INFO[el].etiqueta) (\$Z=$(Int(INFO[el].Z))\$)"
 proc_scf(archivo) = "$archivo (sha256 $(corto(sha256_de(ruta_np2(archivo)))))"
@@ -81,16 +83,16 @@ curva_convergencia(el) = curva_convergencia(CI, MAN, el)
 # -----------------------------------------------------------------------------
 function tabla_energia(HF)
     io = IOBuffer(); proc = String[]
-    println(io, raw"\begin{tabular}{l l S[table-format=-4.8] S[table-format=-4.8] S[table-format=1.1e-1]}")
+    println(io, raw"\begin{tabular}{l l S[table-format=-4.8] S[table-format=-4.10] S[table-format=1.1e-1]}")
     println(io, raw"    \toprule")
-    linea(io, raw"\textbf{Sistema}", raw"\textbf{Propiedad}", raw"{\textbf{Valor calculado}}",
-          raw"{\textbf{Referencia F.F.}}", raw"{$\Delta$}")
+    linea(io, raw"\textbf{Elemento}", raw"\textbf{Magnitud}", raw"{\textbf{Este trabajo}}",
+          raw"{\textbf{Froese Fischer}}", raw"{$|\Delta|$}")
     for el in ELEMENTOS
         h, ref = HF[el], FF[el]
         println(io, raw"    \midrule")
-        println(io, "    \\multirow{3}{*}{$(etiqueta_Z(el))}")
-        for (nombre, x, r) in ((raw"Energía total $E$", h.E, ref.E), (raw"Cinética $T$", h.T, ref.T),
-                               ("Cociente virial", h.virial, ref.virial))
+        println(io, "    \\multirow{3}{*}{$(INFO[el].etiqueta)}")
+        for (nombre, x, r) in ((raw"$E$ ($E_h$)", h.E, ref.E), (raw"$T$ ($E_h$)", h.T, ref.T),
+                               (raw"$-V/T$", h.virial, ref.virial))
             d = r === nothing ? "{--}" : cient(abs(x - parse(Float64, r)))
             linea(io, "", nombre, @sprintf("%.8f", x), something(r, "{--}"), d)
         end
@@ -101,80 +103,78 @@ function tabla_energia(HF)
     return String(take!(io)), proc
 end
 
-function tabla_momentos(HF)
-    io = IOBuffer(); proc = String[]
-    println(io, raw"\begin{tabular}{l c S[table-format=1.6] S[table-format=1.6] S[table-format=1.1e-1]}")
-    println(io, raw"    \toprule")
-    linea(io, raw"\textbf{Átomo}", raw"\textbf{Capa}", raw"{\textbf{V.C. $\langle r^{-3} \rangle$}}",
-          raw"{\textbf{F.F. $\langle r^{-3} \rangle$}}", raw"{$\Delta$}")
-    println(io, raw"    \midrule")
-    for el in ELEMENTOS
-        h, r = HF[el], FF[el].r3
-        d = r === nothing ? "{--}" : cient(abs(h.r3 - parse(Float64, r)))
-        linea(io, etiqueta_Z(el), "\$$(INFO[el].n_val)p\$", @sprintf("%.6f", h.r3), something(r, "{--}"), d)
-        push!(proc, proc_scf(h.archivo))
-    end
-    println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
-    return String(take!(io)), proc
-end
-
-function tabla_slater(HF)
+"""F^0, F^2 y <r^-3> del orbital de valencia frente a Froese Fischer, en un solo cuadro."""
+function tabla_radiales(HF)
     io = IOBuffer(); proc = String[]
     println(io, raw"\begin{tabular}{l l S[table-format=1.8] S[table-format=1.8] S[table-format=1.1e-1]}")
     println(io, raw"    \toprule")
-    linea(io, raw"\textbf{Átomo}", raw"\textbf{Multipolo}", raw"{\textbf{V.C. ($E_h$)}}",
-          raw"{\textbf{F.F. ($E_h$)}}", raw"{$\Delta$}")
+    linea(io, raw"\textbf{Elemento}", raw"\textbf{Magnitud}", raw"{\textbf{Este trabajo}}",
+          raw"{\textbf{Froese Fischer}}", raw"{$|\Delta|$}")
     for el in ELEMENTOS
-        h, n = HF[el], INFO[el].n_val
+        h, n, ref = HF[el], INFO[el].n_val, FF[el]
         println(io, raw"    \midrule")
-        println(io, "    \\multirow{2}{*}{$(INFO[el].etiqueta)}")
-        for (k, x, r) in ((0, h.F0, FF[el].F0), (2, h.F2, FF[el].F2))
+        println(io, "    \\multirow{3}{*}{$(INFO[el].etiqueta)}")
+        for (nombre, x, r, dec) in (("\$F^0($(n)p,$(n)p)\$ (\$E_h\$)", h.F0, ref.F0, 8),
+                                    ("\$F^2($(n)p,$(n)p)\$ (\$E_h\$)", h.F2, ref.F2, 8),
+                                    ("\$\\langle r^{-3}\\rangle_{$(n)p}\$ (\$a_0^{-3}\$)", h.r3, ref.r3, 6))
             d = r === nothing ? "{--}" : cient(abs(x - parse(Float64, r)))
-            linea(io, "", "\$F^$k($(n)p, $(n)p)\$", @sprintf("%.8f", x), something(r, "{--}"), d)
+            linea(io, "", nombre, @sprintf("%.*f", dec, x), something(r, "{--}"), d)
         end
         push!(proc, proc_scf(h.archivo))
     end
     println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
+    push!(proc, "Referencias: Froese Fischer (1977), copiadas en tesis/config.jl.")
     return String(take!(io)), proc
 end
 
-function tabla_koopmans(HF)
+# Error relativo con signo frente a una referencia, en por ciento.
+err_rel(v, ref) = (v === nothing || ref == 0.0) ? "--" : @sprintf("\$%+.1f\$\\%%", 100 * (v - ref) / ref)
+
+"""Energía de ionización de los cuatro elementos: Koopmans, + CI de valencia, + V_pol, NIST."""
+function tabla_ionizacion(HF)
     io = IOBuffer(); proc = String[]
+    celda(x, nist) = x === nothing ? "--" : "$(fmt(x, 2)) ($(err_rel(x, nist)))"
     println(io, raw"\begin{tabular}{lcccc}")
     println(io, raw"    \toprule")
-    linea(io, raw"\textbf{Átomo}", raw"\textbf{SCF ($-\epsilon_{np}$, eV)}", raw"\textbf{CI ($\Delta E$, eV)}",
-          raw"\textbf{NIST (eV)}", raw"\textbf{Error CI}")
+    linea(io, raw"\textbf{Elemento}", raw"\textbf{Koopmans}", raw"\textbf{HF+CI}",
+          raw"\textbf{CI+$V_{\text{pol}}$}", raw"\textbf{NIST}")
     println(io, raw"    \midrule")
     for el in ELEMENTOS
-        h, e = HF[el], ci_de(el, ESTADO, 0.0)
-        scf = -h.eps * HA2EV
-        ci = e === nothing ? nothing : (-h.eps - e["E_corr_Ha"]) * HA2EV
-        nist = NIST_IONIZACION[el]
-        err = ci === nothing ? "--" : @sprintf("%.1f\\%%", 100 * abs(ci - nist) / nist)
-        linea(io, "$(INFO[el].etiqueta) (\$$(INFO[el].n_val)p\$)", fmt(scf, 2), fmt(ci, 2), fmt(nist, 2), err)
+        h, e0, nist = HF[el], ci_de(el, ESTADO, 0.0), NIST_IONIZACION[el]
+        ip_hf = -h.eps * HA2EV
+        ip_ci = e0 === nothing ? nothing : (-h.eps - e0["E_corr_Ha"]) * HA2EV
         push!(proc, proc_scf(h.archivo))
-        e === nothing || push!(proc, proc_ci(e))
+        e0 === nothing || push!(proc, proc_ci(e0))
+        ip_vp = nothing
+        if haskey(BARRIDO_ALPHA, el)
+            sel = alpha_elegido(el)
+            if sel !== nothing
+                a, ev = sel
+                eps_a = load(ruta_np2(ev["archivo"]))["orbitals"][end].energy
+                ip_vp = (-eps_a - ev["E_corr_Ha"]) * HA2EV
+                push!(proc, proc_scf(ev["archivo"]), proc_ci(ev) * @sprintf(" <- alpha_d = %.2f", a))
+            end
+        end
+        linea(io, INFO[el].etiqueta, celda(ip_hf, nist), celda(ip_ci, nist), celda(ip_vp, nist), fmt(nist, 2))
     end
     println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
-    push!(proc, "CI (Delta E) = -eps_np - E_corr: el ion np^1 no tiene correlacion de pareja de valencia.")
+    push!(proc, "En eV, con el error relativo frente al NIST entre parentesis. HF+CI = -eps_np - E_corr: " *
+                "el ion np^1 no tiene correlacion de pareja de valencia.")
     return String(take!(io)), proc
 end
 
+"""
+Niveles de los elementos `els` frente al NIST, un bloque de filas por elemento. El 3P_0 es el
+origen de la escala y no se imprime. Con `con_vpol`, se añaden las columnas CI+V_pol del alpha_d
+elegido.
+"""
 function tabla_niveles(els, con_vpol::Bool)
     io = IOBuffer(); proc = String[]
-    # Por elemento: HF+CI, err, [CI+Vpol, err,] NIST
-    cols = con_vpol ? 5 : 3
-    println(io, con_vpol ? raw"\small" : "")
-    println(io, "\\begin{tabular}{l|", join(fill("r"^cols, length(els)), "|"), "}")
+    println(io, con_vpol ? raw"\begin{tabular}{llrrrrr}" : raw"\begin{tabular}{llrrr}")
     println(io, raw"    \toprule")
-    enc = ["\\multicolumn{$cols}{c$(i < length(els) ? "|" : "")}{\\textbf{$(INFO[el].etiqueta) ($(el) I)}}"
-           for (i, el) in enumerate(els)]
-    linea(io, "", enc...)
-    sub = con_vpol ? [raw"\textbf{HF+CI}", raw"$\Delta$", raw"\textbf{CI+$V_{\text{pol}}$}", raw"$\Delta$", raw"\textbf{NIST}"] :
+    enc = con_vpol ? [raw"\textbf{HF+CI}", raw"$\Delta$", raw"\textbf{CI+$V_{\text{pol}}$}", raw"$\Delta$", raw"\textbf{NIST}"] :
                      [raw"\textbf{HF+CI}", raw"$\Delta$", raw"\textbf{NIST}"]
-    linea(io, raw"\textbf{Término}", repeat(sub, length(els))...)
-    println(io, raw"    \midrule")
-    datos = Dict{String,Any}()
+    linea(io, raw"\textbf{Elemento}", raw"\textbf{Nivel}", enc...)
     for el in els
         e0 = ci_de(el, ESTADO, 0.0)
         e0 === nothing || push!(proc, proc_ci(e0))
@@ -186,83 +186,54 @@ function tabla_niveles(els, con_vpol::Bool)
                 push!(proc, proc_ci(ev) * @sprintf(" <- alpha_d elegido por %s", CRITERIO_ALPHA))
             end
         end
-        datos[el] = (e0, ev)
-    end
-    # Error relativo al NIST; el 3P_0 es la referencia (0 cm^-1) y no admite error relativo.
-    err(v, ref) = (v === nothing || ref == 0.0) ? "--" : @sprintf("%+.1f\\%%", 100 * (v - ref) / ref)
-    for (t, nombre) in enumerate(TERMINOS)
-        celdas = String[]
-        for el in els
-            e0, ev = datos[el]
+        println(io, raw"    \midrule")
+        println(io, "    \\multirow{4}{*}{$(INFO[el].etiqueta)}")
+        for t in 2:5
             ref = NIST_NIVELES[el][t]
-            push!(celdas, e0 === nothing ? "--" : fmt(e0["niveles_cm"][t], 1))
-            push!(celdas, err(e0 === nothing ? nothing : e0["niveles_cm"][t], ref))
+            v0 = e0 === nothing ? nothing : e0["niveles_cm"][t]
+            celdas = [fmt(v0, 1), err_rel(v0, ref)]
             if con_vpol
-                push!(celdas, ev === nothing ? "--" : fmt(ev["niveles_cm"][t], 1))
-                push!(celdas, err(ev === nothing ? nothing : ev["niveles_cm"][t], ref))
+                vv = ev === nothing ? nothing : ev["niveles_cm"][t]
+                append!(celdas, [fmt(vv, 1), err_rel(vv, ref)])
             end
-            push!(celdas, fmt(ref, 1))
-        end
-        linea(io, nombre, celdas...)
-    end
-    println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
-    push!(proc, "Delta = error relativo frente al NIST, en por ciento. El 3P_0 es el origen de la escala.")
-    return String(take!(io)), proc
-end
-
-function tabla_barrido(el)
-    io = IOBuffer(); proc = String[]
-    sel = alpha_elegido(el)
-    println(io, raw"\begin{tabular}{ccccc}")
-    println(io, raw"    \toprule")
-    linea(io, raw"$\alpha_d$", raw"$\zeta_{np}$ (Ha)", raw"$^3P_1$ (cm$^{-1}$)", raw"$^3P_2$ (cm$^{-1}$)",
-          CRITERIO_ALPHA == :solo_3P2 ? raw"Error $^3P_2$" : raw"Error rms $^3P_J$")
-    println(io, raw"    \midrule")
-    for a in vcat(0.0, get(BARRIDO_ALPHA, el, Float64[]))
-        e = ci_de(el, ESTADO, a)
-        marca = (sel !== nothing && sel[1] == a) ? raw"$^{*}$" : ""
-        if e === nothing
-            linea(io, fmt(a, 2) * marca, "--", "--", "--", "--")
-        else
-            n = e["niveles_cm"]
-            linea(io, fmt(a, 2) * marca, fmt(e["zeta_Ha"], 5), fmt(n[2], 1), fmt(n[3], 1),
-                  @sprintf("%.1f\\%%", 100 * costo_alpha(n, el)))
-            push!(proc, proc_ci(e))
+            linea(io, "", TERMINOS[t], celdas..., fmt(ref, 1))
         end
     end
     println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
-    push!(proc, "El asterisco marca el alpha_d elegido por el criterio $(CRITERIO_ALPHA); r_c = $(R_C) a0.")
+    push!(proc, "Niveles en cm^-1 desde el 3P_0 (origen de la escala, no se imprime). " *
+                "Delta = error relativo frente al NIST, en por ciento.")
     return String(take!(io)), proc
 end
 
-function tabla_ionizacion(el, HF)
+"""Barrido de alpha_d de todos los elementos que lo tienen, con zeta en cm^-1."""
+function tabla_barrido()
     io = IOBuffer(); proc = String[]
-    nist = NIST_IONIZACION[el]
-    println(io, raw"\begin{tabular}{lccc}")
+    println(io, raw"\begin{tabular}{lcrrrr}")
     println(io, raw"    \toprule")
-    linea(io, "\\textbf{Modelo para $(el) ($(INFO[el].n_val)p)}", raw"\textbf{Ionización (eV)}",
-          raw"\textbf{NIST (eV)}", raw"\textbf{Error}")
-    println(io, raw"    \midrule")
-    err(x) = x === nothing ? "--" : @sprintf("%.1f\\%%", 100 * abs(x - nist) / nist)
-    h = HF[el]
-    e0 = ci_de(el, ESTADO, 0.0)
-    ip_hf = -h.eps * HA2EV
-    ip_ci = e0 === nothing ? nothing : (-h.eps - e0["E_corr_Ha"]) * HA2EV
-    linea(io, "HF (Koopmans)", fmt(ip_hf, 2), fmt(nist, 2), err(ip_hf))
-    linea(io, "HF + CI (valencia)", fmt(ip_ci, 2), fmt(nist, 2), err(ip_ci))
-    push!(proc, proc_scf(h.archivo))
-    e0 === nothing || push!(proc, proc_ci(e0))
-    sel = alpha_elegido(el)
-    if sel !== nothing
-        a, ev = sel
-        eps_a = load(ruta_np2(ev["archivo"]))["orbitals"][end].energy
-        ip_vp = (-eps_a - ev["E_corr_Ha"]) * HA2EV
-        linea(io, @sprintf("HF + CI + \$V_{\\text{pol}}\$ (\$\\alpha_d = %.2f\$)", a), fmt(ip_vp, 2), fmt(nist, 2), err(ip_vp))
-        push!(proc, proc_scf(ev["archivo"]), proc_ci(ev))
-    else
-        linea(io, raw"HF + CI + $V_{\text{pol}}$", "--", fmt(nist, 2), "--")
+    linea(io, raw"\textbf{Elemento}", raw"$\alpha_d$", raw"$\zeta_{np}$", raw"$^3P_1$", raw"$^3P_2$",
+          CRITERIO_ALPHA == :solo_3P2 ? raw"Error $^3P_2$" : raw"Error rms")
+    for el in ELEMENTOS
+        haskey(BARRIDO_ALPHA, el) || continue
+        sel = alpha_elegido(el)
+        as = vcat(0.0, BARRIDO_ALPHA[el])
+        println(io, raw"    \midrule")
+        println(io, "    \\multirow{$(length(as))}{*}{$(INFO[el].etiqueta)}")
+        for a in as
+            e = ci_de(el, ESTADO, a)
+            marca = (sel !== nothing && sel[1] == a) ? raw"$^{*}$" : ""
+            if e === nothing
+                linea(io, "", fmt(a, 2) * marca, "--", "--", "--", "--")
+            else
+                n = e["niveles_cm"]
+                linea(io, "", fmt(a, 2) * marca, fmt(e["zeta_Ha"] * HA2CM, 1), fmt(n[2], 1), fmt(n[3], 1),
+                      @sprintf("%.1f\\%%", 100 * costo_alpha(n, el)))
+                push!(proc, proc_ci(e))
+            end
+        end
     end
     println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
+    push!(proc, "zeta y niveles en cm^-1. El asterisco marca el alpha_d elegido por el criterio " *
+                "$(CRITERIO_ALPHA); r_c = $(R_C) a0.")
     return String(take!(io)), proc
 end
 
@@ -272,18 +243,23 @@ function tabla_convergencia()
                                                       e["sha256_entrada"] == sha256_de(ruta_np2(archivo_scf(el, ESTADO, 0.0))))
                   for el in ELEMENTOS)
     ms = sort(unique(vcat([collect(keys(d)) for d in values(por_el)]...)))
-    println(io, raw"\begin{tabular}{rrr", "r"^length(ELEMENTOS), "}")
+    nel = length(ELEMENTOS)
+    println(io, raw"\begin{tabular}{rr", "r"^nel, "}")
     println(io, raw"    \toprule")
-    linea(io, raw"$m$", raw"Orbitales", raw"CSF $^3P$", ["\$E_{\\text{corr}}\$ $(el) (mHa)" for el in ELEMENTOS]...)
+    linea(io, "", "", "\\multicolumn{$nel}{c}{\$E_{\\text{corr}}\$ (mHa)}")
+    println(io, "    \\cmidrule(lr){3-$(2 + nel)}")
+    linea(io, raw"$m$", raw"CSF $^3P$", [el for el in ELEMENTOS]...)
     println(io, raw"    \midrule")
-    println(io2, raw"\begin{tabular}{r", "r"^(2 * length(ELEMENTOS)), "}")
+    println(io2, raw"\begin{tabular}{r", "r"^(2 * nel), "}")
     println(io2, raw"    \toprule")
-    linea(io2, raw"$m$", ["\$R^k\$ $(el)" for el in ELEMENTOS]..., ["\$t\$ $(el) (s)" for el in ELEMENTOS]...)
+    linea(io2, "", "\\multicolumn{$nel}{c}{Integrales \$R^k\$ en caché}", "\\multicolumn{$nel}{c}{Tiempo de pared (s)}")
+    println(io2, "    \\cmidrule(lr){2-$(1 + nel)} \\cmidrule(lr){$(2 + nel)-$(1 + 2nel)}")
+    linea(io2, raw"$m$", [el for el in ELEMENTOS]..., [el for el in ELEMENTOS]...)
     println(io2, raw"    \midrule")
     for m in ms
         ref = first(d[m] for d in values(por_el) if haskey(d, m))
-        linea(io, string(m), string(ref["n_orb"]), string(ref["n_csf"][1]),
-              [haskey(por_el[el], m) ? fmt(1e3 * por_el[el][m]["E_corr_Ha"], 3) : "--" for el in ELEMENTOS]...)
+        linea(io, string(m), string(ref["n_csf"][1]),
+              [haskey(por_el[el], m) ? "\$$(fmt(1e3 * por_el[el][m]["E_corr_Ha"], 3))\$" : "--" for el in ELEMENTOS]...)
         linea(io2, string(m), [haskey(por_el[el], m) ? string(por_el[el][m]["n_rk"]) : "--" for el in ELEMENTOS]...,
               [haskey(por_el[el], m) ? fmt(por_el[el][m]["tiempo_s"], 0) : "--" for el in ELEMENTOS]...)
     end
@@ -312,8 +288,9 @@ function tabla_cdiis()
     io = IOBuffer(); proc = String[]
     println(io, raw"\begin{tabular}{lrrrc}")
     println(io, raw"    \toprule")
-    linea(io, raw"\textbf{Elemento}", raw"\textbf{Iter. sin C-DIIS}", raw"\textbf{Iter. con C-DIIS}",
-          raw"\textbf{Factor}", raw"$|\Delta E|$ entre ambos (Ha)")
+    linea(io, "", raw"\multicolumn{2}{c}{\textbf{Iteraciones}}", "", "")
+    println(io, raw"    \cmidrule(lr){2-3}")
+    linea(io, raw"\textbf{Elemento}", raw"sin C-DIIS", raw"con C-DIIS", raw"\textbf{Factor}", raw"$|\Delta E|$ (Ha)")
     println(io, raw"    \midrule")
     for el in ELEMENTOS
         s, c = traza_diis(el, "sin_diis"), traza_diis(el, "con_diis")
@@ -326,7 +303,7 @@ function tabla_cdiis()
         d = min(s.decimales, c.decimales)
         dE = abs(s.E - c.E)
         linea(io, INFO[el].etiqueta, string(s.iters), string(c.iters), @sprintf("%.1f", s.iters / c.iters),
-              dE < 10.0^(-d) ? "\$<10^{-$d}\$" : cient(dE))
+              dE < 10.0^(-d) ? "\$<10^{-$d}\$" : cient_tex(dE))
         push!(proc, "$(s.archivo), $(c.archivo)")
     end
     println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
@@ -337,28 +314,48 @@ end
 
 function tabla_zeta(HF, ZETA_SENS)
     io = IOBuffer(); proc = String[]
-    println(io, raw"\begin{tabular}{lrccccccc}")
+    println(io, raw"\begin{tabular}{lccccc}")
     println(io, raw"    \toprule")
-    linea(io, raw"\textbf{Elemento}", raw"$Z$", raw"$(\alpha Z)^2$", raw"$\zeta_{\text{desnudo}}$",
-          raw"$\zeta_{\text{calc}}$", raw"$\zeta_{\text{NIST}}$", raw"$\zeta_{\text{calc}}/\zeta_{\text{NIST}}$",
-          raw"$R_{\text{NIST}}$", raw"$R_{\text{modelo}}$")
+    linea(io, raw"\textbf{Elemento}", raw"$(\alpha Z)^2$", raw"$\zeta_{\text{desnudo}}$",
+          raw"$\zeta_{\text{calc}}$", raw"$\zeta_{\text{NIST}}$", raw"$\zeta_{\text{calc}}/\zeta_{\text{NIST}}$")
     println(io, raw"    \midrule")
     for el in ELEMENTOS
         h, Z = HF[el], INFO[el].Z
         zb = ALFA^2 / 2 * Z * h.r3 * HA2CM
         zc = h.zeta * HA2CM
         zn = zeta_nist(el).zeta
+        linea(io, INFO[el].etiqueta, fmt((ALFA * Z)^2, 4), fmt(zb, 1), fmt(zc, 1), fmt(zn, 1), fmt(zc / zn, 3))
+        push!(proc, proc_scf(h.archivo))
+    end
+    println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
+    push!(proc, "zeta en cm^-1. zeta_desnudo = (alpha^2/2) Z <r^-3>. zeta_NIST: la zeta unica que reproduce " *
+                "3P_2, 1D_2 y 1S_0 del NIST en Breit-Pauli de p^2 sin CI, con las energias LS libres.")
+    return String(take!(io)), proc
+end
+
+"""
+Escalas del regimen de acoplamiento: zeta frente a la separacion electrostatica
+E(1D) - E(3P) = (6/25) F^2 de Hartree-Fock, y la razon de intervalos R del modelo y del NIST.
+"""
+function tabla_acoplamiento(HF)
+    io = IOBuffer(); proc = String[]
+    println(io, raw"\begin{tabular}{lccccc}")
+    println(io, raw"    \toprule")
+    linea(io, raw"\textbf{Elemento}", raw"$\zeta_{np}$", raw"$\frac{6}{25}F^2$",
+          raw"$\zeta_{np}\big/\frac{6}{25}F^2$", raw"$R_{\text{modelo}}$", raw"$R_{\text{NIST}}$")
+    println(io, raw"    \midrule")
+    for el in ELEMENTOS
+        h = HF[el]
+        zc, dls = h.zeta * HA2CM, 6 / 25 * h.F2 * HA2CM
         n = NIST_NIVELES[el]
         e0 = ci_de(el, ESTADO, 0.0)
         Rmod = e0 === nothing ? nothing : (e0["niveles_cm"][3] - e0["niveles_cm"][2]) / e0["niveles_cm"][2]
-        linea(io, INFO[el].etiqueta, string(Int(Z)), fmt((ALFA * Z)^2, 4), fmt(zb, 1), fmt(zc, 1), fmt(zn, 1),
-              fmt(zc / zn, 3), fmt((n[3] - n[2]) / n[2], 3), fmt(Rmod, 3))
+        linea(io, INFO[el].etiqueta, fmt(zc, 1), fmt(dls, 0), fmt(zc / dls, 4), fmt(Rmod, 3), fmt((n[3] - n[2]) / n[2], 3))
         push!(proc, proc_scf(h.archivo))
         e0 === nothing || push!(proc, proc_ci(e0))
     end
     println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
-    push!(proc, "zeta en cm^-1. zeta_desnudo = (alpha^2/2) Z <r^-3>. zeta_NIST: la zeta unica que reproduce " *
-                "3P_2, 1D_2 y 1S_0 del NIST en Breit-Pauli de p^2 sin CI. R = (3P_2 - 3P_1)/(3P_1 - 3P_0); " *
+    push!(proc, "zeta y (6/25)F^2 = E(1D) - E(3P) de Hartree-Fock en cm^-1. R = (3P_2 - 3P_1)/(3P_1 - 3P_0); " *
                 "una zeta de un cuerpo en LS puro da R = 2.")
     return String(take!(io)), proc
 end
@@ -377,11 +374,12 @@ end
 
 function tabla_lande()
     io = IOBuffer(); proc = String[]
-    pct(x) = x === nothing ? "--" : @sprintf("%.2f\\%%", 100 * x)
+    pct(x) = x === nothing ? "--" : @sprintf("%.2f", 100 * x)
     println(io, raw"\begin{tabular}{lcccccc}")
     println(io, raw"    \toprule")
-    linea(io, raw"\textbf{Elemento}", raw"$g$ HF+CI", raw"$g$ CI+$V_{\text{pol}}$", raw"$g$ NIST",
-          raw"$^1D_2$ HF+CI", raw"$^1D_2$ CI+$V_{\text{pol}}$", raw"$^1D_2$ NIST")
+    linea(io, "", raw"\multicolumn{3}{c}{\textbf{Factor $g$ del $^3P_2$}}", raw"\multicolumn{3}{c}{\textbf{Peso de $^1D_2$ (\%)}}")
+    println(io, raw"    \cmidrule(lr){2-4} \cmidrule(lr){5-7}")
+    linea(io, raw"\textbf{Elemento}", "HF+CI", raw"CI+$V_{\text{pol}}$", "NIST", "HF+CI", raw"CI+$V_{\text{pol}}$", "NIST")
     println(io, raw"    \midrule")
     for el in ELEMENTOS
         e0 = ci_de(el, ESTADO, 0.0)
@@ -560,6 +558,29 @@ function valores_texto(HF, ZETA_SENS)
                     nist)
         end
     end
+    println(io, "\n## Peso perturbativo de 1D_2 en el nivel 3P_2: w = zeta^2 / (2 Delta^2)\n")
+    println(io, "Primer orden en el bloque J = 2 de Breit-Pauli, cuyo elemento fuera de la diagonal es ",
+            "-zeta/sqrt(2); Delta = E(1D_2) - E(3P_2) entre los dos niveles de J = 2. Modelo: zeta calculado ",
+            "y niveles del CI; NIST: zeta_NIST y niveles del ASD. 'diagonalizado' y 'del factor g' son los ",
+            "pesos de la tabla de Lande, para comparar.\n")
+    w_pert(z, n) = z^2 / (2 * (n[4] - n[3])^2)
+    for el in ELEMENTOS
+        e0 = ci_de(el, ESTADO, 0.0)
+        e0 === nothing && continue
+        zn, nn, gn = zeta_nist(el).zeta, NIST_NIVELES[el], NIST_LANDE_3P2[el]
+        @printf(io, "- %s: modelo w = %.2f%% (diagonalizado %.2f%%); NIST w = %.2f%% (del factor g %s)",
+                INFO[el].etiqueta, 100 * w_pert(HF[el].zeta * HA2CM, e0["niveles_cm"]), 100 * peso_1D(g_real(e0)),
+                100 * w_pert(zn, nn), gn === nothing ? "sin dato" : @sprintf("%.2f%%", 100 * peso_1D(gn)))
+        if haskey(BARRIDO_ALPHA, el)
+            sel = alpha_elegido(el)
+            if sel !== nothing
+                ev = sel[2]
+                @printf(io, "; con V_pol (alpha_d = %.2f) w = %.2f%% (diagonalizado %.2f%%)", sel[1],
+                        100 * w_pert(ev["zeta_Ha"] * HA2CM, ev["niveles_cm"]), 100 * peso_1D(g_real(ev)))
+            end
+        end
+        println(io)
+    end
     println(io, "\n## Barridos de V_pol: error frente al NIST\n")
     for el in ELEMENTOS
         haskey(BARRIDO_ALPHA, el) || continue
@@ -625,22 +646,19 @@ function main_etapa3()
                      end for el in ELEMENTOS)
 
     escribir_tabla("energia_global.tex", tabla_energia(HF)...; dir = SALIDA)
-    escribir_tabla("momentos_inversos.tex", tabla_momentos(HF)...; dir = SALIDA)
-    escribir_tabla("integrales_slater.tex", tabla_slater(HF)...; dir = SALIDA)
-    escribir_tabla("koopmans.tex", tabla_koopmans(HF)...; dir = SALIDA)
-    escribir_tabla("niveles_ligeros.tex", tabla_niveles(["C", "Si"], false)...; dir = SALIDA)
-    escribir_tabla("niveles_pesados.tex", tabla_niveles(["Ge", "Sn"], true)...; dir = SALIDA)
-    for el in ELEMENTOS
-        haskey(BARRIDO_ALPHA, el) || continue
-        escribir_tabla("barrido_vpol_$(el).tex", tabla_barrido(el)...; dir = SALIDA)
-        escribir_tabla("ionizacion_$(el).tex", tabla_ionizacion(el, HF)...; dir = SALIDA)
-    end
+    escribir_tabla("parametros_radiales.tex", tabla_radiales(HF)...; dir = SALIDA)
+    escribir_tabla("ionizacion.tex", tabla_ionizacion(HF)...; dir = SALIDA)
+    escribir_tabla("niveles.tex", tabla_niveles(ELEMENTOS, false)...; dir = SALIDA)
+    escribir_tabla("niveles_vpol.tex", tabla_niveles([el for el in ELEMENTOS if haskey(BARRIDO_ALPHA, el)], true)...;
+                   dir = SALIDA)
+    escribir_tabla("barrido_vpol.tex", tabla_barrido()...; dir = SALIDA)
     conv, costo, proc = tabla_convergencia()
     escribir_tabla("convergencia_ci.tex", conv, proc; dir = SALIDA)
     escribir_tabla("convergencia_ci_costo.tex", costo, proc; dir = SALIDA)
     escribir_tabla("convergencia_singletes.tex", tabla_convergencia_singletes()...; dir = SALIDA)
     escribir_tabla("cdiis.tex", tabla_cdiis()...; dir = SALIDA)
     escribir_tabla("zeta.tex", tabla_zeta(HF, ZETA_SENS)...; dir = SALIDA)
+    escribir_tabla("acoplamiento.tex", tabla_acoplamiento(HF)...; dir = SALIDA)
     escribir_tabla("lande.tex", tabla_lande()...; dir = SALIDA)
     write(joinpath(SALIDA, "valores_texto.md"), valores_texto(HF, ZETA_SENS))
     println("  valores -> ", joinpath(SALIDA, "valores_texto.md"))

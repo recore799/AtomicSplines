@@ -28,7 +28,9 @@
 %   lmax = 3. t es incremental (cada tamano reutiliza las R^k del anterior) salvo donde resultados_ci.toml marca cache_heredada = false: primer tamano o corrida reanudada.
 \begin{tabular}{rrrrrrrrr}
     \toprule
-    $m$ & $R^k$ C & $R^k$ Si & $R^k$ Ge & $R^k$ Sn & $t$ C (s) & $t$ Si (s) & $t$ Ge (s) & $t$ Sn (s) \\
+     & \multicolumn{4}{c}{Integrales $R^k$ en caché} & \multicolumn{4}{c}{Tiempo de pared (s)} \\
+    \cmidrule(lr){2-5} \cmidrule(lr){6-9}
+    $m$ & C & Si & Ge & Sn & C & Si & Ge & Sn \\
     \midrule
     4 & 4548 & 4738 & 5058 & 5378 & 4 & 0 & 4 & 10 \\
     8 & 65718 & 66402 & 67554 & 68706 & 4 & 3 & 15 & 33 \\

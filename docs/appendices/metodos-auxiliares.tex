@@ -4,25 +4,14 @@
 \section{Ortogonalización de Gram-Schmidt}
 \label{sec:gram-schmidt}
 
-En un cálculo Hartree-Fock estándar para configuraciones de capas cerradas, los orbitales espaciales radiales $P_{nl}(r)$ que comparten el mismo momento angular $l$ pero difieren en el número cuántico principal $n$ emergen automáticamente ortogonales, es decir, $\langle P_{nl} | P_{n'l} \rangle = \delta_{nn'}$. Esto ocurre porque, matemáticamente, dichos orbitales son los autovectores correspondientes a autovalores distintos ($\epsilon_{nl} \neq \epsilon_{n'l}$) de un \textit{mismo} operador hermitiano (la matriz de Fock $\mathbf{F}$). El teorema espectral garantiza su ortogonalidad intrínseca.
-
-Sin embargo, en el esquema de Hartree-Fock Restringido para Capas Abiertas (ROHF) que implementamos para abordar configuraciones como $np^2$, la simetría esférica del potencial colapsa. Para mantener la forma central de los orbitales, el operador de Fock se divide en Hamiltonianos efectivos disjuntos para las diferentes capas. Específicamente, en nuestro motor computacional, las capas cerradas (core) se optimizan bajo un operador $\mathbf{F}_c$, mientras que la capa de valencia abierta obedece a un operador distinto $\mathbf{F}_v$.
-
-Al provenir de diagonalizaciones de operadores numéricos diferentes, se pierde la garantía espectral estricta: un orbital de valencia $P_{v}$ no será perfectamente ortogonal a un orbital del core $P_{c}$ con el mismo momento angular, provocando solapamientos espurios $S_{vc} = \langle P_v | P_c \rangle \neq 0$. Si este cruce no nulo entra al ciclo SCF, la matriz de densidad se contamina y el sistema diverge en espiral.
-
-Para imponer coercitivamente el requerimiento físico del Principio de Exclusión de Pauli, implementamos un proceso de proyección en cada iteración, conocido como el método de \textbf{Ortogonalización de Gram-Schmidt}. Después de que el solucionador de eigenvalores obtiene el vector de la capa de valencia $| \tilde{P}_v \rangle$ expandido en la base B-spline, calculamos su superposición con todos los orbitales del core previamente fijados $| P_{c_i} \rangle$:
-
+En un Hartree-Fock de capa cerrada, los orbitales radiales con el mismo $l$ y distinto $n$ son autovectores de un mismo operador hermítico con autovalores distintos y resultan ortogonales de manera automática. En el esquema ROHF de este trabajo (Sección \ref{sec:rohf}) el orbital de valencia se obtiene de su propio operador de Fock, distinto del que produce los orbitales del core, y esa garantía se pierde: el orbital de valencia deja de ser exactamente ortogonal a los orbitales del core con su mismo momento angular. El motor restituye la ortogonalidad después de cada diagonalización proyectando el orbital de valencia fuera del core en la métrica de la base,
 \begin{equation}
-    | P_v \rangle = | \tilde{P}_v \rangle - \sum_{i \in \text{core}} \langle \tilde{P}_v | P_{c_i} \rangle | P_{c_i} \rangle.
+    \mathbf{c}_v \leftarrow \mathbf{c}_v - \sum_{i \in \text{core}} \left( \mathbf{c}_v^T \mathbf{S}\, \mathbf{c}_{c_i} \right) \mathbf{c}_{c_i},
+    \qquad
+    \mathbf{c}_v \leftarrow \frac{\mathbf{c}_v}{\sqrt{\mathbf{c}_v^T \mathbf{S}\, \mathbf{c}_v}}.
 \end{equation}
 
-Computacionalmente, en el espacio discreto gobernado por la matriz de solapamiento $\mathbf{B}$, la operación se ejecuta mediante vectores columna expandidos:
-
-\begin{equation}
-    \mathbf{c}_v^{\text{ortogonal}} = \tilde{\mathbf{c}}_v - \sum_{i \in \text{core}} \left( \tilde{\mathbf{c}}_v^T \mathbf{B} \mathbf{c}_{c_i} \right) \mathbf{c}_{c_i}.
-\end{equation}
-
-Posterior a esta sustracción escalar, el orbital de valencia purificado es renormado $\mathbf{c}_v \leftarrow \mathbf{c}_v / \sqrt{\mathbf{c}_v^T \mathbf{B} \mathbf{c}_v}$ y reintegrado al ciclo SCF, asegurando convergencia incondicional \cite{Roothaan1960}.
+La proyección impone la ortogonalidad pero no la incorpora al problema variacional, como harían los multiplicadores de Lagrange de la formulación completa de Hartree-Fock. La solución queda por ello ligeramente fuera del punto estacionario exacto. De ahí proceden la desviación de $\langle r^{-3}\rangle$ y de la energía cinética frente a la referencia en los elementos con core $p$ (Sección \ref{sec:parametros_fina}) y el piso del conmutador que obliga a proyectar el vector de error de C-DIIS (Sección \ref{sec:cdiis_metodo}).
 
 \section{Cuadratura de Gauss-Legendre en B-splines}
 \label{sec:gauss-legendre}
@@ -49,7 +38,7 @@ Con el jacobiano $J_i = \frac{t_{i+1} - t_i}{2}$, la integral sobre cada interva
     \int_{t_i}^{t_{i+1}} f(r) dr \approx J_i \sum_{q=1}^{N_q} w_q f(r(x_q)),
 \end{equation}
 
-con igualdad exacta cuando $f$ es un polinomio de grado a lo sumo $2N_q - 1$. Los valores de la base y de sus derivadas en los puntos $r(x_q)$ forman los tensores de colocación de la Sección \ref{sec:estructura-algebraica}.
+con igualdad exacta cuando $f$ es un polinomio de grado a lo sumo $2N_q - 1$. Los valores de la base y de sus derivadas en los puntos $r(x_q)$ forman los tensores de colocación de la Sección \ref{sec:tensores_geometria}.
 
 \section{Reducción del Potencial de Polarización del Core al Caso Atómico}
 \label{sec:cpp-muller}
@@ -171,13 +160,9 @@ La comparación entre elementos muestra que el tiempo sí depende de $Z$, aunque
 \section{Arquitectura Computacional y Repositorio de Código}
 \label{sec:repositorio}
 
-Para salvaguardar la pureza teórica del manuscrito y mantener el rigor físico, se ha omitido la inclusión directa de código fuente a lo largo de esta tesis. Sin embargo, todos los métodos, derivaciones y algoritmos descritos (generación de mallas nodales, ortogonalización de Gram-Schmidt, rutinas de Campo Autoconsistente y resolución de la ecuación de Poisson por Galerkin) fueron programados y ensamblados desde cero en una librería de desarrollo propio bautizada como \textbf{AtomicSplines}.
+Los métodos descritos en esta tesis están implementados en una biblioteca propia, \textbf{AtomicSplines}, escrita en \textbf{Julia}, un lenguaje compilado de cómputo científico. Aunque el método de Galerkin con B-splines produce matrices de banda, el motor las almacena en arreglos densos: se exploró el almacenamiento especializado de \texttt{BandedMatrices.jl} y su sobrecosto resultó mayor que la ganancia para bases de unos cientos de funciones. Las diagonalizaciones del ciclo autoconsistente y del cálculo de interacción de configuraciones son completas y densas, mediante las rutinas de LAPACK que expone la biblioteca estándar de álgebra lineal de Julia, y su costo no domina el cálculo, que como muestra la Sección \ref{sec:costo_ci} lo fija el ensamblado de las integrales $R^k$.
 
-El motor está escrito en \textbf{Julia}, un lenguaje compilado de cómputo científico. Inicialmente se exploró el uso de estructuras de datos esparsas especializadas (como las provistas por \texttt{BandedMatrices.jl}) debido a que el método de Galerkin con B-splines produce naturalmente matrices diagonales por bandas. No obstante, se determinó empíricamente que el sobrecosto de gestión de memoria (\textit{overhead}) de estas estructuras era prohibitivo para la escala de nuestras discretizaciones. Por lo tanto, se optó por una arquitectura mucho más veloz basada en el ecosistema básico de \texttt{LinearAlgebra.jl} auxiliado en ciertas rutinas críticas por \texttt{StaticArrays.jl}, lo que acelera drásticamente las operaciones algebraicas en memoria contigua.
-
-Las diagonalizaciones del ciclo SCF y del cálculo de interacción de configuraciones son completas y densas, mediante las rutinas de LAPACK que expone la biblioteca estándar de álgebra lineal de Julia. Con bases de unos cientos de funciones y espacios de configuraciones de unos pocos miles, su costo no domina el cálculo, que como muestra la Sección \ref{sec:costo_ci} lo fija el ensamblado de las integrales $R^k$. Los símbolos $3j$ y $6j$ que requiere el cálculo de interacción de configuraciones se evalúan con la biblioteca \texttt{WignerSymbols.jl}.
-
-Fomentando el paradigma de ciencia abierta y reproducibilidad, el código fuente completo, junto con los módulos de álgebra de tensores y la documentación técnica, se encuentra versionado y disponible públicamente en el siguiente repositorio de GitHub:
+Los símbolos $3j$ y $6j$ del cálculo de interacción de configuraciones se evalúan con la biblioteca \texttt{WignerSymbols.jl}. Los resultados que reporta el Capítulo \ref{ch:resultados} se regeneran desde los archivos de resultados registrados con un conjunto de programas que escribe directamente los cuadros y las figuras del manuscrito. El código completo está disponible en el repositorio
 
 \begin{center}
     \url{https://github.com/recore799/AtomicSplines.git}

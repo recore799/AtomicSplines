@@ -89,75 +89,9 @@ El cambio entre los dos regímenes se decide por el residual y no por un número
 \section{Estructura Algebraica del Ciclo Autoconsistente}
 \label{sec:estructura-algebraica}
 
-Todas las integrales que aparecen en esta sección se evalúan por cuadratura de Gauss-Legendre sobre cada intervalo de la malla, con $N_q = k+6$ puntos por intervalo. Una regla de $N_q$ puntos integra exactamente polinomios de grado hasta $2N_q - 1 = 2k+11$, de modo que las matrices de solapamiento y cinética, cuyos integrandos son polinomios a trozos de grado a lo sumo $2k-2$, se obtienen sin error de cuadratura. Los integrandos con factores $1/r$, $1/r^2$ o $r^{-4}$, y los productos triples del tensor de interacción que se define más abajo, no son polinómicos; para ellos los puntos adicionales reducen el error de cuadratura sin anularlo, y el acuerdo de las energías y de las integrales de Slater con la referencia (Tablas \ref{tab:resultados_energia_global} y \ref{tab:parametros_radiales}) acota su efecto. El detalle del mapeo afín al intervalo de referencia se encuentra en la Sección \ref{sec:gauss-legendre} del Apéndice \ref{ap:metodos-auxiliares}.
+Todas las integrales que aparecen en esta sección se evalúan por cuadratura de Gauss-Legendre sobre cada intervalo de la malla, con $N_q = k+6$ puntos por intervalo. Una regla de $N_q$ puntos integra exactamente polinomios de grado hasta $2N_q - 1 = 2k+11$, de modo que las matrices de solapamiento y cinética, cuyos integrandos son polinomios a trozos de grado a lo sumo $2k-2$, se obtienen sin error de cuadratura. Los integrandos con factores $1/r$, $1/r^2$ o $r^{-4}$, y los productos triples del tensor de interacción del Apéndice \ref{ap:bsplines}, no son polinómicos; para ellos los puntos adicionales reducen el error de cuadratura sin anularlo, y el acuerdo de las energías y de las integrales de Slater con la referencia (Tablas \ref{tab:resultados_energia_global} y \ref{tab:parametros_radiales}) acota su efecto. El detalle del mapeo afín al intervalo de referencia se encuentra en la Sección \ref{sec:gauss-legendre} del Apéndice \ref{ap:metodos-auxiliares}.
 
-Tal como se describió, cada iteración del ciclo SCF vuelve a construir la matriz de Fock y a resolver las ecuaciones de Poisson que definen los potenciales de interacción. Leído literalmente, esto significa repetir en cada paso la integración numérica de todos los operadores. Sin embargo, esa repetición es en buena medida innecesaria: aunque la densidad electrónica evoluciona, las funciones base y los operadores sobre los que se integra permanecen fijos. Existe entonces una separación exacta entre lo que depende de la \textit{geometría} de la base (la malla de nudos y los splines definidos sobre ella) y lo que depende del \textit{estado} del átomo (la matriz de densidad). Hacer explícita esa separación reorganiza el ciclo autoconsistente como una sucesión de contracciones algebraicas. Conviene subrayar que no se trata de una aproximación adicional, sino de un reordenamiento exacto de las mismas sumas.
-
-\subsection{Tensores de colocación}
-
-Aunque la formulación variacional sea de tipo Galerkin, la evaluación de las integrales mediante cuadratura requiere conocer la base en un conjunto discreto de puntos. Sea $\mathcal{Q} = \{(r_q, w_q)\}_{q=1}^{Q}$ el conjunto de puntos y pesos de cuadratura. Definimos el \textbf{tensor de colocación} $\bm{E}$ y su tensor diferencial $\bm{E}'$ como las evaluaciones puntuales de la base:
-
-\begin{equation}
-\label{eq:collocation-tensor}
-  E_{iq} = B_i(r_q) \qquad \text{y} \qquad E'_{iq} = \eval{\dv{B_i(r)}{r}}_{r=r_q}.
-\end{equation}
-
-Estos dos objetos encapsulan toda la información geométrica de la base. Bajo esta óptica, cualquier operador local de un cuerpo $\hat{O}$, con valor $\Omega(r)$ sobre la malla, se obtiene como una contracción:
-
-\begin{equation}
-\label{eq:one-body-contraction}
-  O_{ij} = \sum_{q=1}^{Q} w_q\, E_{iq}\, \Omega(r_q)\, E_{jq}.
-\end{equation}
-
-La Ec. (\ref{eq:one-body-contraction}) unifica el cálculo de los operadores fundamentales del Hamiltoniano, que dejan de ser integrales distintas para volverse el mismo objeto con distinto peso local:
-
-\begin{align}
-  S_{ij} &= \sum_q w_q\, E_{iq} E_{jq}, &
-  T_{ij} &= \frac{1}{2}\sum_q w_q\, E'_{iq} E'_{jq}, &
-  (V_{\text{nuc}})_{ij} &= -Z \sum_q w_q\, E_{iq}\, \frac{1}{r_q}\, E_{jq}.
-\end{align}
-
-Nótese que la energía cinética emplea el tensor de derivadas $\bm{E}'$ y no una segunda derivada: es la forma débil obtenida al integrar por partes en el Capítulo \ref{ch:bsplines-galerkin} la que permite expresar el Laplaciano como un producto escalar de gradientes. La física del operador entra únicamente a través del factor $\Omega(r_q)$; la base contribuye siempre con los mismos tensores.
-
-\subsection{Factorización de la interacción electrónica}
-
-Los operadores anteriores son estáticos y basta calcularlos una vez. El caso interesante es el de la interacción electrón-electrón, que sí depende de la densidad. En la formulación de Galerkin, el término fuente de la ecuación de Poisson proyectado sobre una función de prueba $B_\mu$ es
-
-\begin{equation}
-\label{eq:poisson-source-continuous}
-  b_\mu = \int_0^{R_{\text{max}}} \frac{B_\mu(r)}{r}\, \rho(r) \dd{r},
-\end{equation}
-
-donde la densidad se expande en la misma base a través de la matriz de densidad $\bm{P}$, como $\rho(r) = \sum_{\alpha\beta} P_{\alpha\beta} B_\alpha(r) B_\beta(r)$. Discretizando la integral con nuestra cuadratura:
-
-\begin{equation}
-\label{eq:poisson-source-discrete}
-  b_\mu \approx \sum_{q=1}^{Q} w_q\, \frac{E_{\mu q}}{r_q} \qty[ \sum_{\alpha, \beta} P_{\alpha\beta}\, E_{\alpha q} E_{\beta q} ].
-\end{equation}
-
-En esta forma, el índice de cuadratura $q$ aparece entrelazado con los índices $\alpha,\beta$ de la densidad, lo que obliga a reconstruir la densidad sobre la malla y a reintegrar en cada iteración. Pero los pesos $w_q$, el factor $r_q^{-1}$ y los tensores de colocación son invariantes, de modo que podemos permutar el orden de las sumas y aislar la parte que no cambia:
-
-\begin{equation}
-\label{eq:factorizacion-W}
-  b_\mu = \sum_{\alpha, \beta} P_{\alpha\beta} \underbrace{ \qty[ \sum_{q=1}^{Q} w_q\, \frac{E_{\mu q} E_{\alpha q} E_{\beta q}}{r_q} ] }_{\text{invariante geométrico}}.
-\end{equation}
-
-El término entre corchetes no depende del estado del sistema. Lo definimos como el \textbf{tensor de interacción de Coulomb}:
-
-\begin{equation}
-\label{eq:inter-tensor}
-  W_{\mu\alpha\beta} \equiv \sum_{q=1}^{Q} w_q\, E_{\mu q} E_{\alpha q} E_{\beta q}\, r_q^{-1},
-\end{equation}
-
-con lo cual la construcción del término fuente se reduce a una contracción puramente algebraica entre geometría y estado:
-
-\begin{equation}
-\label{eq:b-contraction}
-  b_\mu = \sum_{\alpha,\beta} W_{\mu\alpha\beta}\, P_{\alpha\beta}.
-\end{equation}
-
-La lectura física de la Ec. (\ref{eq:b-contraction}) es transparente: $\mathbf{W}$ contiene la geometría de la base y el operador de Coulomb, mientras que $\bm{P}$ contiene el estado electrónico del átomo; la interacción es lineal en el objeto geométrico y bilineal en la densidad. Además, el soporte compacto de los B-splines vuelve a $\mathbf{W}$ un tensor disperso: $W_{\mu\alpha\beta}$ es no nulo si y solo si las tres funciones base involucradas son simultáneamente activas sobre al menos un intervalo de la malla.
-Esa dispersión es lo que vuelve practicable el precálculo. Almacenar $\mathbf{W}$ como un arreglo tridimensional denso sería inviable incluso para las mallas de los elementos ligeros, mientras que guardar únicamente las ternas con soporte común reduce la memoria a una fracción pequeña y convierte la contracción de la Ec. (\ref{eq:b-contraction}) en un recorrido sobre entradas no nulas. La organización concreta de ese almacenamiento y del ensamblaje por elementos se documenta en el Apéndice \ref{ap:bsplines}.
+Cada iteración del ciclo reconstruye la matriz de Fock y resuelve las ecuaciones de Poisson que definen los potenciales de interacción, pero las funciones base y la cuadratura con que se integran permanecen fijas. Eso permite separar de manera exacta lo que depende de la geometría de la base de lo que depende del estado del átomo: las matrices de un cuerpo se calculan una sola vez, y el término fuente de la ecuación de Poisson se obtiene contrayendo un tensor geométrico precalculado con la matriz de densidad, sin reconstruir la densidad sobre la malla (Sección \ref{sec:tensores_geometria} del Apéndice \ref{ap:bsplines}). Lo que sigue describe la parte de ese esquema que tiene contenido físico, el operador de Poisson y sus condiciones de frontera.
 
 \subsection{El operador de Poisson y sus condiciones de frontera}
 
@@ -184,9 +118,7 @@ En el extremo exterior la situación es distinta, porque el valor del potencial 
   \left. \dv{Y^k}{r} \right|_{R_{\text{max}}} + \frac{k}{R_{\text{max}}}\, Y^k(R_{\text{max}}) = 0 .
 \end{equation}
 
-La Ecuación \eqref{eq:robin} es una condición de Robin, y su virtud práctica es que en la formulación débil el término de borde se traduce en sumar $k/R_{\text{max}}$ a un único elemento diagonal de $\bm{A}^{(k)}$, el último. La matriz permanece simétrica y definida positiva, de modo que la factorización de Cholesky sigue siendo válida y el potencial ajusta su propia normalización sin que haya que suministrarla. Para el monopolo la condición degenera en una de Neumann, $\dd Y^0/\dd r = 0$, que es la condición natural de la formulación débil y que reproduce correctamente el límite $Y^0 \to M_0$ constante.
-
-Con estos elementos, cada iteración del ciclo autoconsistente se reduce a contraer $\mathbf{W}$ con la matriz de densidad para formar los términos fuente, resolver los sistemas de Poisson mediante sustitución triangular sobre las factorizaciones precalculadas, ensamblar la matriz de Fock y diagonalizarla. El detalle algorítmico de esta arquitectura ---el kernel de evaluación de la base, el ensamblaje por elementos finitos y la organización de los precálculos en memoria--- se documenta en el Apéndice \ref{ap:bsplines}.
+La Ecuación \eqref{eq:robin} es una condición de Robin, y su virtud práctica es que en la formulación débil el término de borde se traduce en sumar $k/R_{\text{max}}$ a un único elemento diagonal de $\bm{A}^{(k)}$, el último. La matriz permanece simétrica y definida positiva, de modo que la factorización de Cholesky sigue siendo válida y el potencial ajusta su propia normalización sin que haya que suministrarla. Para el monopolo la condición degenera en una de Neumann, $\dd Y^0/\dd r = 0$, que es la condición natural de la formulación débil y que reproduce correctamente el límite $Y^0 \to M_0$ constante. Con estos elementos, cada iteración del ciclo autoconsistente se reduce a formar los términos fuente, resolver los sistemas de Poisson mediante sustitución triangular sobre las factorizaciones precalculadas, ensamblar la matriz de Fock y diagonalizarla.
 
 \section{Implementación de Correcciones y Post-HF}
 

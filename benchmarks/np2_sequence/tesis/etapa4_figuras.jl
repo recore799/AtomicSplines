@@ -81,8 +81,11 @@ function figuras_orbitales(D)
     # plot_np2_sequence.jl cortaba al estanio, cuyo minimo ronda -400 Ha.
     fondo = minimum(minimum(d["V_eff"][d["R_grid"] .<= R_PLOT] .+ 1.0 ./ d["R_grid"][d["R_grid"] .<= R_PLOT] .^ 2)
                     for d in values(D))
-    p1 = plot(; comun..., title = "Funciones de Onda Radiales de Valencia (Secuencia np²)",
-              ylabel = "P_np(r)", legend = :topright)
+    # Figura de la tesis: sin titulo (lo da la leyenda del documento) y con marcas en radios redondos
+    # sobre el mismo eje en sqrt(r).
+    rt = [0.0, 0.1, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0]
+    p1 = plot(; comun..., xticks = (sqrt.(rt), ["0", "0.1", "0.5", "1", "2", "4", "8", "12"]),
+              xlabel = "r (a₀), eje en escala √r", ylabel = "P_np(r)", legend = :topright)
     p2 = plot(; comun..., title = "Potenciales Centrales Efectivos (Secuencia np²)",
               ylabel = "V_eff(r) (Ha)", legend = :bottomright,
               yticks = (plog.(yv), string.(yv)), ylims = (plog(-3600), plog(2)))

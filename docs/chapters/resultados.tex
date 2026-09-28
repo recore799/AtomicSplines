@@ -42,7 +42,7 @@ La Figura \ref{fig:wavefunctions} muestra las funciones radiales de valencia $P_
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.75\textwidth]{figures/np2_valence_wavefunctions.pdf}
-    \caption{Funciones de onda radiales de valencia $P_{np}(r)$ de la secuencia $np^2$.}
+    \caption{Funciones de onda radiales de valencia $P_{np}(r)$ de la secuencia $np^2$. El eje horizontal está en escala $\sqrt{r}$ para resolver los lóbulos internos junto con la cola exterior.}
     \label{fig:wavefunctions}
 \end{figure}
 
@@ -97,7 +97,7 @@ La secuencia se eligió porque fija la simetría angular de la valencia mientras
 \begin{table}[htbp]
     \centering
     \input{tablas/acoplamiento}
-    \caption{Escalas del régimen de acoplamiento, en cm$^{-1}$: el parámetro de espín-órbita calculado y la separación electrostática $E(^1D)-E(^3P) = \frac{6}{25}F^2$ de Hartree-Fock. La razón $R = (E_{^3P_2} - E_{^3P_1})/(E_{^3P_1} - E_{^3P_0})$ vale $2$ para una $\zeta$ de un cuerpo en acoplamiento $LS$ puro, por la regla de intervalos de Landé (Apéndice \ref{ap:momento-angular}).}
+    \caption{Escalas del régimen de acoplamiento, en cm$^{-1}$: el parámetro de espín-órbita calculado y la separación electrostática $E(^1D)-E(^3P) = \frac{6}{25}F^2$ de Hartree-Fock. La razón $R = (E_{^3P_2} - E_{^3P_1})/(E_{^3P_1} - E_{^3P_0})$ vale $2$ para una $\zeta$ de un cuerpo en acoplamiento $LS$ puro, por la regla de intervalos de Landé (Sección \ref{sec:matrices_bp}).}
     \label{tab:acoplamiento}
 \end{table}
 
@@ -224,6 +224,10 @@ El $^1D_2$ plantea un problema distinto. Queda por encima del valor medido en el
 \subsection{La polarizabilidad efectiva}
 
 El parámetro $\alpha_d$ se determinó por ajuste contra los intervalos del tripleto, y la prueba cruzada de la energía de ionización mostró que absorbe más física que la respuesta dipolar del core; el candidato más probable son los efectos relativistas que contraen los orbitales y que un tratamiento de Breit-Pauli a primer orden sobre orbitales no relativistas no incorpora. La comparación de los valores ajustados con polarizabilidades de referencia habría permitido acotar esa contaminación, pero no dispusimos de valores primarios verificables para los cores del germanio y el estaño. A esa ambigüedad se suma una aproximación de la implementación: el potencial actúa también sobre los orbitales del propio core, y no solo sobre los de valencia como en el modelo de Müller (Sección \ref{sec:impl_polarizacion}), y el efecto de esa elección sobre los observables no se cuantificó.
+
+\subsection{El espacio de orbitales del cálculo CI}
+
+Los orbitales virtuales del cálculo de interacción de configuraciones no son exactamente ortogonales al core congelado. En el canal $s$ el operador que los produce incluye un spline que no se anula en el origen, y los virtuales $s$ conservan un solapamiento con los orbitales $s$ del core de hasta $3.6\times10^{-2}$ (Sección \ref{sec:estado_espurio}). Esa desviación afecta solo a las configuraciones con electrones $s$, que intervienen en los singletes y no en el tripleto, de modo que los intervalos del $^3P$ no dependen de ella. Su efecto sobre el $^1S_0$ y el $^1D_2$ no se cuantificó; hacerlo exige repetir el cálculo de interacción de configuraciones con los virtuales construidos sobre el mismo espacio que el ciclo autoconsistente, y hasta entonces las conclusiones sobre los singletes de la Sección \ref{sec:casi_degeneracion} deben leerse con esa reserva.
 
 \subsection{Precisión numérica}
 

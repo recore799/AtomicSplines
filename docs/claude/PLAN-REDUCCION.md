@@ -37,7 +37,7 @@ minúsculas con `fancyhdr`, leyendas en `\small`, índice hasta secciones. Solo 
 tesis de 167 a 129 páginas; con la fase B quedó en **116** (cuerpo 1-60, apéndices 61-109).
 Desde esa fecha Claude compila y revisa el PDF (regla 1 de `CLAUDE.md`).
 
-| bloque (tras la fase B) | páginas |
+| bloque (tras la fase B; tras la C los apéndices bajaron a 18 y la tesis a 82) | páginas |
 |---|---|
 | preliminares | 5 |
 | prólogo, introducción, portadillas | 7 |
@@ -109,16 +109,36 @@ Resultados y discusión quedaron en un solo capítulo, "Resultados y Discusión"
 - [x] "Cuadro" → "Tabla" en el texto, como ya decían las leyendas.
 - [ ] Figura de funciones de onda: tiene título interno y ejes poco legibles (etapa 4).
 
-## Fase C. Apéndices
+## Fase C. Apéndices (hecha el 2026-09-27: de 49 a 18 páginas; tesis en 82)
 
-- [ ] A: cuadro de constantes y conversiones.
-- [ ] B: Hund y la regla de intervalos al cap. 3.
-- [ ] C: fuera §C.5 y los CFP generales; completar la fórmula del CI para parejas no equivalentes.
-- [ ] D: fuera lo que repite el cap. 4, los listados y la prosa de rendimiento; decidir "Estados
-      espurios" (el filtro existe en `src/ci.jl:71`, la explicación física no se sostiene).
-- [ ] E: fuera la formulación de Galerkin repetida y la prueba de Leibniz; conservar la deducción
-      breve de la ecuación de Poisson y la condición de Robin.
-- [ ] F: acortar la arquitectura; quitar "se ha omitido el código fuente" si quedan listados.
+- [x] A: un párrafo y un cuadro de constantes y conversiones.
+- [x] B (momento angular) eliminado: Hund y la regla de intervalos de Landé pasaron al cap. 3.
+      Los apéndices se reletraron: A unidades, B tensores, C B-splines, D Galerkin, E auxiliares.
+- [x] Tensores: fuera la evaluación de 3j con log-gamma (describía código que no existe) y los CFP
+      generales; la fórmula del CI es ahora la general de parejas, la que implementa
+      `np2_ci_full.jl` (normalización, fase de intercambio, 6j).
+- [x] B-splines: nudos y condiciones de frontera, evaluación, separación geometría/estado (movida
+      desde el cap. 5 §5.2, que conserva solo el operador de Poisson y sus fronteras) y el estado
+      espurio, ahora medido (ver "Hallazgo" abajo). Fuera listados, BLAS y prosa de rendimiento.
+- [x] Galerkin/Poisson: equivalencia Ritz-Galerkin (con la cota variacional), derivación directa de
+      la ecuación de Poisson y condición de Robin. Fuera la formulación repetida, el cuadro de
+      residuos ponderados y la prueba de Leibniz.
+- [x] Auxiliares: Gram-Schmidt reescrito (sin "convergencia incondicional" ni Pauli), arquitectura
+      en dos párrafos.
+
+## Hallazgo del 2026-09-27: el espacio de orbitales del CI no es ortogonal al core
+
+`build_orbital_pool` (np2_ci_full.jl) diagonaliza el Fock de core congelado sobre TODOS los
+splines (1:n); el SCF usa 2:n-1 en s, 3:n-1 en p, 4:n-1 en d. En el canal s, el primer spline
+(no nulo en r = 0) produce un autovalor espurio (-1178.6 Ha en C, -108515.4 en Sn) que el filtro
+-Z^2 de `extract_virtuals` descarta, pero el resto del espectro s queda distorsionado y los
+virtuales s solapan con los orbitales s del core hasta 3.6e-2 (peso máximo 2.0e-3 en un virtual).
+p: <= 8.8e-4; d de Ge y Sn: <= 8.5e-3. Afecta solo a configuraciones con electrones s (¹S, ¹D), no
+al ³P. Medido con `tesis/diagnostico_estados_espurios.jl`; los números salen en `valores_texto.md`.
+
+Documentado como limitación (resultados §6.5, apéndice C). **No se corrigió**: cambia la física
+del CI, que está congelada. Corregirlo = construir los virtuales sobre el mismo espacio que el SCF
+(y/o ortogonalizarlos al core) y repetir la etapa 2 (~2.5 h, la corre el usuario). Decide el usuario.
 
 ## Fase D. Capítulos 2-5
 

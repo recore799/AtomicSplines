@@ -4,7 +4,7 @@
 
 \addto\captionsspanish{%
   \renewcommand{\tablename}{Tabla}%
-  \renewcommand{\listtablename}{Indice de tablas}%
+  \renewcommand{\listtablename}{Índice de tablas}%
 }
 
 \spanishdecimal{.}
@@ -28,8 +28,9 @@
 \usepackage{enumitem}
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 
-\usepackage{caption}
+\captionsetup{font=small, labelfont=bf}
 \usepackage{siunitx}
+\sisetup{group-digits=integer}  % los decimales largos de los cuadros sin separar
 \usepackage{multirow}
 \usepackage{longtable}
 
@@ -155,6 +156,8 @@
 % --- HIPERVÍNCULOS ---
 \usepackage[colorlinks=true, linkcolor=blue, citecolor=red, urlcolor=teal]{hyperref}
 \usepackage[nameinlink, noabbrev]{cleveref}
+\crefname{table}{tabla}{tablas}
+\Crefname{table}{Tabla}{Tablas}
 
 % --- BIBLIOGRAFÍA ---
 \usepackage[
@@ -164,6 +167,21 @@
 ]{biblatex}
 \addbibresource{bib/bibliografia.bib}
 
-% --- MÁRGENES ---
-% \usepackage{geometry}
-% \geometry{a4paper, total={170mm,257mm}, left=25mm, top=25mm}
+% --- FORMATO DE PÁGINA ---
+% A4 a 12 pt con interlineado sencillo; márgenes de 2.5 cm y 3 cm del lado del lomo.
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm, headheight=15pt]{geometry}
+
+% Encabezado: número y título del capítulo en minúsculas a la izquierda, página a la derecha.
+% Las páginas de apertura de capítulo llevan solo el número de página al pie.
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\nouppercase{\leftmark}}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\chaptermark}[1]{\markboth{\ifnum\value{chapter}>0 \thechapter.\ \fi #1}{}}
+\renewcommand{\sectionmark}[1]{}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
+
+% El índice llega hasta las secciones.
+\setcounter{tocdepth}{1}

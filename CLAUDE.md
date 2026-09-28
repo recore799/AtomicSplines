@@ -5,8 +5,11 @@ tesis de licenciatura del usuario; el manuscrito vive en `docs/`.
 
 ## Reglas duras
 
-1. **El usuario compila el LaTeX.** Nunca ejecutar `latexmk`, `pdflatex` ni `bibtex`. Verificación
-   estática únicamente (leer, hacer grep, comprobar `\label`/`\ref`).
+1. **Compilar después de tocar el manuscrito** (cambio pedido por el usuario el 2026-09-27). Desde
+   `docs/`: `latexmk -pdf -interaction=nonstopmode -file-line-error main.tex`, con el log guardado
+   en archivo. Revisar en el log las cajas desbordadas (`Overfull \hbox`) y las referencias
+   indefinidas, y mirar como imagen las páginas con cuadros anchos (`pdftoppm`). Los artefactos de
+   compilación no se commitean.
 2. **Nunca cambiar un número de una tabla de la tesis sin regenerarlo y dejar registro de su
    procedencia.** Si un número no se puede regenerar con el código actual, decirlo en vez de copiarlo.
 3. **Nunca hardcodear una cantidad física que el código puede calcular.** Este repo ya sufrió por eso:

@@ -62,7 +62,8 @@ convergencia de los singletes con sus extrapolaciones y el error de cada punto d
 
 - Vale el registro de redacción de `CLAUDE.md`: sinodales físicos, párrafos de al menos tres
   oraciones, nada de vocabulario inflado, toda afirmación fuerte con `\ref`, y comillas de Babel.
-- El usuario compila el LaTeX; aquí solo verificación estática.
+- ~~El usuario compila el LaTeX.~~ Desde el 2026-09-27 Claude compila y revisa el PDF (regla 1 de
+  `CLAUDE.md`).
 - **Ningún número se escribe a mano.** Si el texto necesita uno que no está, se agrega a
   `valores_texto.md` desde la etapa 3 y se cita de ahí.
 - Una discrepancia nueva se documenta como limitación (punto 5), no se persigue con código.

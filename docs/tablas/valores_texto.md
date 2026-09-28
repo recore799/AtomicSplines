@@ -123,3 +123,12 @@ G1(ns,np) y Delta en Ha; el resto en cm^-1. 'baja S-P' es cuanto desciende la se
 - Germanio (alpha_d = 0.75): G1 = 0.23205, Delta = 0.6602, peso de np^4 1.32% en 3P y 4.73% en 1S, baja S-P 5599, residuo 1S_0 +96 -> sumado -5503
 - Estaño: G1 = 0.19967, Delta = 0.5116, peso de np^4 1.61% en 3P y 5.65% en 1S, baja S-P 5277, residuo 1S_0 -1117 -> sumado -6394
 - Estaño (alpha_d = 3.00): G1 = 0.21101, Delta = 0.5662, peso de np^4 1.48% en 3P y 5.22% en 1S, baja S-P 5359, residuo 1S_0 +368 -> sumado -4991
+
+## Espacio de orbitales del CI: estado espurio del canal s y solapamiento con el core
+
+build_orbital_pool diagonaliza el Fock de core congelado sobre todos los splines, incluido el primero, que no se anula en r = 0 (el SCF lo excluye). 'espurio' es el autovalor mas bajo del canal s que descarta el filtro -Z^2; 'sin 1,N' es el mas bajo sin el primer y el ultimo spline. Despues, max |<v|c>| y el peso maximo del core en un virtual del espacio activo (m de produccion), por l. Detalle en tesis/diagnostico_estados_espurios.jl.
+
+- Carbono: espurio -1178.6 Ha (filtro -Z^2 = -36, descartados 1); sin 1,N -12.86 Ha; l=0: max |<v|c>| 3.2e-02, peso 2.0e-03
+- Silicio: espurio -4483.4 Ha (filtro -Z^2 = -196, descartados 1); sin 1,N -69.76 Ha; l=0: max |<v|c>| 3.6e-02, peso 1.6e-03; l=1: max |<v|c>| 8.8e-04, peso 7.8e-07
+- Germanio: espurio -32816.3 Ha (filtro -Z^2 = -1024, descartados 1); sin 1,N -406.13 Ha; l=0: max |<v|c>| 2.9e-02, peso 1.2e-03; l=1: max |<v|c>| 4.9e-04, peso 2.4e-07; l=2: max |<v|c>| 6.2e-03, peso 3.9e-05
+- Estaño: espurio -108515.4 Ha (filtro -Z^2 = -2500, descartados 1); sin 1,N -1041.99 Ha; l=0: max |<v|c>| 2.5e-02, peso 1.1e-03; l=1: max |<v|c>| 6.1e-04, peso 3.7e-07; l=2: max |<v|c>| 8.5e-03, peso 7.2e-05

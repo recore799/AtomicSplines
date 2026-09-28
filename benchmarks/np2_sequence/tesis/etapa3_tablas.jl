@@ -18,6 +18,7 @@ isdefined(Main, :run_full_ci) || include(joinpath(NP2, "np2_ci_full.jl"))
 include(joinpath(@__DIR__, "diagnostico_rayleigh.jl"))
 include(joinpath(@__DIR__, "analisis_zeta.jl"))
 include(joinpath(@__DIR__, "diagnostico_casi_degeneracion.jl"))
+include(joinpath(@__DIR__, "diagnostico_estados_espurios.jl"))
 
 const CI     = leer_ci(argumento("--ci", RESULTADOS_CI))
 # --m fuerza un mismo tamano para todo (pruebas). Sin el, cada elemento usa su m de produccion y
@@ -632,6 +633,23 @@ function valores_texto(HF, ZETA_SENS)
                     d.G1, d.Delta, 100 * d.peso_P, 100 * d.peso_S, d.baja_S * HA2CM,
                     res, res - d.baja_S * HA2CM)
         end
+    end
+
+    println(io, "\n## Espacio de orbitales del CI: estado espurio del canal s y solapamiento con el core\n")
+    println(io, "build_orbital_pool diagonaliza el Fock de core congelado sobre todos los splines, incluido el ",
+            "primero, que no se anula en r = 0 (el SCF lo excluye). 'espurio' es el autovalor mas bajo del canal ",
+            "s que descarta el filtro -Z^2; 'sin 1,N' es el mas bajo sin el primer y el ultimo spline. Despues, ",
+            "max |<v|c>| y el peso maximo del core en un virtual del espacio activo (m de produccion), por l. ",
+            "Detalle en tesis/diagnostico_estados_espurios.jl.\n")
+    for el in ELEMENTOS
+        ws = workspace(el)
+        orbs = load(ruta_np2(archivo_scf(el, ESTADO, 0.0)))["orbitals"]
+        core, n, Z = orbs[1:end-1], ws.basis.num_splines, INFO[el].Z
+        ev1, ev2 = espectro_canal(ws, core, 0, 1:n), espectro_canal(ws, core, 0, 2:n-1)
+        sol = solapamiento_con_core(ws, orbs, Z, m_tabla(el))
+        @printf(io, "- %s: espurio %.1f Ha (filtro -Z^2 = %.0f, descartados %d); sin 1,N %.2f Ha; %s\n", INFO[el].etiqueta,
+                minimum(ev1), -Z^2, count(<(-Z^2), ev1), minimum(ev2),
+                join([@sprintf("l=%d: max |<v|c>| %.1e, peso %.1e", l, sol[l]...) for l in sort(collect(keys(sol)))], "; "))
     end
 
     return String(take!(io))

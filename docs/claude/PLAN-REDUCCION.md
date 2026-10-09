@@ -147,10 +147,10 @@ del CI, que está congelada. Corregirlo = construir los virtuales sobre el mismo
 ## Fase D. Capítulos 2-5
 
 - [ ] Prólogo: su párrafo útil (por qué construir desde cero) abre la introducción.
-- [ ] Intro: quitar la autoevaluación (":13, avala la capacidad técnica") y la de §8.4.
+- [x] Intro: quitar la autoevaluación (":13, avala la capacidad técnica") y la de §8.4 (reescritas el 2026-10-09).
 - [ ] Cap. 2: espín-estadística más corta; fuera la anécdota de la ocupación fraccionaria (2/3 F⁰).
-- [ ] Cap. 3: definir con precisión el modelo de CI (parejas nl n'l, m orbitales por canal, l_max).
-- [ ] Cap. 3: MP2 y la analogía de EDP fuera.
+- [x] Cap. 3: definir con precisión el modelo de CI (parejas nl n'l, m orbitales por canal, l_max).
+- [x] Cap. 3: MP2 y la analogía de EDP fuera.
 - [ ] Cap. 5: fuera el diagrama de flujo; §5.2 de tensores al apéndice D.
 
 ## Fase E. Estilo y notación
@@ -164,7 +164,8 @@ del CI, que está congelada. Corregirlo = construir los virtuales sobre el mismo
 
 Números del texto que no están en `valores_texto.md`. Agregarlos es de lo permitido sin preguntar.
 
-- [ ] Pisos del conmutador (`ciclo-scf.tex`, sección C-DIIS): hoy solo en HALLAZGOS.
+- [x] Pisos del conmutador (`ciclo-scf.tex`, sección C-DIIS): en `valores_texto.md` desde el 2026-10-09,
+      leídos de las trazas registradas.
 - [ ] Prueba de malla del silicio (`resultados.tex`, 100/200/300 intervalos).
 - [ ] Diferencias autovalor-Rayleigh (`discusion.tex`, limitaciones numéricas).
 - [ ] Memoria del CI (apéndice F: 17 bytes por casilla, 1.1 y 1.7 GB).

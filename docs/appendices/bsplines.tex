@@ -7,15 +7,24 @@ Este apéndice documenta cómo el motor construye y emplea la base de B-splines 
 
 Los nudos interiores se distribuyen sobre $[0, R_{\text{max}}]$ con la malla exponencial de la Ecuación \eqref{eq:exp-grid}, y el primero y el último se repiten hasta alcanzar multiplicidad $k$, el orden del spline. Con esa multiplicidad, en $r = 0$ el único spline no nulo es el primero y en $R_{\text{max}}$ el último; además, los primeros $j+1$ splines son los únicos cuyas derivadas hasta el orden $j$ no se anulan en el origen. Esa estructura permite imponer las condiciones de frontera sin añadir ecuaciones: en el canal de momento angular $l$, el ciclo autoconsistente elimina los primeros $l+1$ splines y el último, de modo que la función radial cumple $P(0) = P(R_{\text{max}}) = 0$ y se anula en el origen como $r^{l+1}$, el comportamiento que exige la barrera centrífuga. La ecuación de Poisson recibe el mismo tratamiento en el origen, con $k+1$ splines eliminados para el multipolo $k$ (Sección \ref{sec:estructura-algebraica}).
 
+Los parámetros de la base con que se obtuvieron los resultados del Capítulo \ref{ch:resultados} se recogen en la Tabla \ref{tab:parametros_base}. El radio de la caja es el mismo en los cuatro elementos, y al aumentar $Z$ crecen el número de intervalos y el parámetro $\gamma$, que concentra más nudos cerca del núcleo para resolver la contracción de las capas internas. Estos valores no son únicos: el motor los recibe como argumentos, y se eligieron de modo que los resultados fueran estables frente a un refinamiento de la malla, como comprueba para el silicio la prueba de la Sección \ref{sec:parametros_fina}.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/parametros_base}
+    \caption{Base de B-splines de cada elemento en los cálculos de este trabajo: radio de la caja, número de intervalos de la malla exponencial, orden $k$ del spline (grado $k-1$), parámetro $\gamma$ de la Ecuación \eqref{eq:exp-grid} y número de funciones de la base.}
+    \label{tab:parametros_base}
+\end{table}
+
 La derivada de un B-spline de grado $p$ se expresa exactamente en términos de dos B-splines de grado $p-1$,
 \begin{equation}
     \dv{r} B_i^p(r) = p \qty( \frac{B_i^{p-1}(r)}{t_{i+p}-t_i} - \frac{B_{i+1}^{p-1}(r)}{t_{i+p+1}-t_{i+1}} ),
 \end{equation}
-con la convención de anular los términos cuyo denominador se anula por nudos repetidos. La derivada conserva el soporte $[t_i, t_{i+p+1})$, de modo que la matriz cinética, construida con primeras derivadas en la forma débil, tiene la misma estructura de banda que la de solapamiento. Por último, los B-splines forman una partición de la unidad en el intervalo de definición, lo que garantiza que el espacio que generan reproduce exactamente las constantes y, con ellas, cualquier polinomio de grado menor que $k$ en cada intervalo.
+con la convención de anular los términos cuyo denominador se anula por nudos repetidos. La derivada conserva el soporte $[t_i, t_{i+p+1})$, de modo que la matriz cinética, construida con primeras derivadas en la forma débil, tiene la misma estructura de banda que la de solapamiento. Por último, los B-splines forman una partición de la unidad en el intervalo de definición, y el espacio que generan contiene a todos los polinomios de grado menor que $k$ en cada intervalo.
 
 \section{Evaluación de la base}
 
-En cualquier punto $r \in [t_\mu, t_{\mu+1})$ solo hay $k$ splines no nulos, y el motor los calcula todos a la vez en lugar de evaluar funciones aisladas. Parte del único valor no nulo de orden uno, $B_{\mu}^0(r) = 1$, y aplica la recurrencia de Cox-de Boor orden por orden, de modo que los $j$ valores del orden $j$ producen los $j+1$ del orden siguiente; el costo es de orden $k^2$ por punto, con un único vector auxiliar de longitud $k$. Las derivadas se obtienen en la misma pasada: el cálculo se detiene en el orden $k-1$, se aplican las fórmulas de la derivada sobre esos valores, y se completa el último orden. Como el orden $k$ es un parámetro conocido en tiempo de compilación, los bucles de la recurrencia se desenrollan por completo.
+En cualquier punto $r \in [t_\mu, t_{\mu+1})$ solo hay $k$ splines no nulos, y el motor los calcula todos a la vez en lugar de evaluar funciones aisladas. Parte del único valor no nulo de orden uno, $B_{\mu}^0(r) = 1$, y aplica la recurrencia de Cox-de Boor orden por orden, de modo que los $j$ valores del orden $j$ producen los $j+1$ del orden siguiente; el costo es de orden $k^2$ por punto, con un único vector auxiliar de longitud $k$. Las derivadas se obtienen en la misma pasada: el cálculo se detiene en el orden $k-1$, se aplican las fórmulas de la derivada sobre esos valores, y se completa el último orden. El orden $k$ se pasa como parámetro de tipo, conocido en tiempo de compilación, lo que permite al compilador especializar los bucles de la recurrencia.
 
 \section{Separación entre geometría y estado}
 \label{sec:tensores_geometria}
@@ -32,16 +41,16 @@ Cualquier operador local de un cuerpo con valor $\Omega(r)$ se obtiene entonces 
 \end{equation}
 de modo que las matrices de solapamiento, nuclear, centrífuga y de polarización son el mismo objeto con distinto peso local, y la cinética usa $\bm{E}'$ en lugar de $\bm{E}$, como corresponde a la forma débil.
 
-El caso que depende del estado es el término fuente de la ecuación de Poisson. Con la densidad de par expandida en la misma base a través de una matriz de densidad, $\rho(r) = \sum_{\alpha\beta} P_{\alpha\beta} B_\alpha(r) B_\beta(r)$, su proyección sobre la función de prueba $B_\mu$ es
+El caso que depende del estado es el término fuente de la ecuación de Poisson. Con la densidad de par expandida en la misma base a través de una matriz de densidad, $\rho(r) = \sum_{\alpha\beta} D_{\alpha\beta} B_\alpha(r) B_\beta(r)$, su proyección sobre la función de prueba $B_\mu$ es
 \begin{equation}
-  b_\mu = \int_0^{R_{\text{max}}} \frac{B_\mu(r)}{r}\,\rho(r)\dd{r} \approx \sum_{\alpha\beta} P_{\alpha\beta} \sum_q w_q\,\frac{E_{\mu q}E_{\alpha q}E_{\beta q}}{r_q}.
+  b_\mu = \int_0^{R_{\text{max}}} \frac{B_\mu(r)}{r}\,\rho(r)\dd{r} \approx \sum_{\alpha\beta} D_{\alpha\beta} \sum_q w_q\,\frac{E_{\mu q}E_{\alpha q}E_{\beta q}}{r_q}.
 \end{equation}
 La suma sobre $q$ no depende del estado del átomo y define el \textbf{tensor de interacción}
 \begin{equation}
 \label{eq:inter-tensor}
   W_{\mu\alpha\beta} = \sum_{q} w_q\, E_{\mu q} E_{\alpha q} E_{\beta q}\, r_q^{-1},
 \end{equation}
-con lo cual el término fuente se reduce a la contracción $b_\mu = \sum_{\alpha\beta} W_{\mu\alpha\beta} P_{\alpha\beta}$, sin reconstruir la densidad sobre la malla en cada iteración. No se trata de una aproximación adicional sino de un reordenamiento exacto de las mismas sumas.
+con lo cual el término fuente se reduce a la contracción $b_\mu = \sum_{\alpha\beta} W_{\mu\alpha\beta} D_{\alpha\beta}$, sin reconstruir la densidad sobre la malla en cada iteración. No se trata de una aproximación adicional sino de un reordenamiento exacto de las mismas sumas.
 
 El soporte compacto vuelve a $\mathbf{W}$ un tensor disperso, no nulo solo cuando las tres funciones son activas en un mismo intervalo. El motor no construye el tensor global: guarda un tensor local de dimensión $k^3$ por intervalo de la malla, con índices locales que se trasladan a los globales por un desplazamiento fijo, y lo ensambla en el mismo recorrido por intervalos que produce las matrices de un cuerpo. Con eso, el almacenamiento crece como $N k^3$ en lugar de $N^3$, y el ciclo autoconsistente queda reducido a contraer $\mathbf{W}$ con las matrices de densidad, resolver los sistemas de Poisson sobre factorizaciones precalculadas y diagonalizar.
 

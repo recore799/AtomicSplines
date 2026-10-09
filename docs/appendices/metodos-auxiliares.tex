@@ -16,17 +16,17 @@ La proyección impone la ortogonalidad pero no la incorpora al problema variacio
 \section{Cuadratura de Gauss-Legendre en B-splines}
 \label{sec:gauss-legendre}
 
-Los elementos matriciales de Galerkin $\int B_i(r)\,\mathcal{L}\,B_j(r)\,dr$ del Hamiltoniano y de la ecuación de Poisson se evalúan por cuadratura de Gauss-Legendre sobre cada intervalo de la malla \cite{Bachau2001}. Una regla gaussiana de $N_q$ puntos integra exactamente cualquier polinomio de grado hasta $2N_q - 1$. Como los B-splines de orden $k$ son polinomios por partes de grado $k-1$, los integrandos de las matrices de solapamiento y cinética son polinomios de grado a lo sumo $2k-2$ en cada intervalo, y el motor emplea $N_q = k+6$ puntos, de modo que esas dos matrices se obtienen sin error de cuadratura.
+Los elementos matriciales de Galerkin $\int B_i(r)\,\mathcal{L}\,B_j(r)\,dr$ del Hamiltoniano y de la ecuación de Poisson se evalúan por cuadratura de Gauss-Legendre sobre cada intervalo de la malla \parencite{Bachau2001}. Una regla gaussiana de $N_q$ puntos integra exactamente cualquier polinomio de grado hasta $2N_q - 1$. Como los B-splines de orden $k$ son polinomios por partes de grado $k-1$, los integrandos de las matrices de solapamiento y cinética son polinomios de grado a lo sumo $2k-2$ en cada intervalo, y el motor emplea $N_q = k+6$ puntos, de modo que esas dos matrices se obtienen sin error de cuadratura.
 
 Los demás integrandos contienen factores $1/r$, $1/r^2$ o $r^{-4}$, o productos de tres funciones base con un factor $1/r$, y no son polinómicos. Para ellos la cuadratura no es exacta. Los seis puntos adicionales reducen su error, y la malla exponencial, que concentra intervalos cortos cerca del origen, donde esos factores varían más rápido, contribuye a mantenerlo pequeño.
 
-Las reglas de cuadratura canónicas están definidas sobre el dominio estándar $[-1, 1]$ mediante la sumatoria ponderada:
+Las reglas de cuadratura están definidas sobre el intervalo estándar $[-1, 1]$:
 \begin{equation}
     \int_{-1}^{1} f(x) dx \approx \sum_{q=1}^{N_q} w_q f(x_q),
 \end{equation}
 donde las raíces $x_q$ son los ceros del polinomio de Legendre $P_{N_q}(x)$ y $w_q$ son los pesos asociados.
 
-Debido a que nuestros polinomios B-spline están definidos en los subintervalos nodales locales $[t_i, t_{i+1}]$ generados por nuestra malla no lineal discreta, procedemos a realizar un mapeo de transformación afín unidimensional. El cambio de variable para transferir la cuadratura del espacio estándar $x \in [-1, 1]$ al espacio físico $r \in [t_i, t_{i+1}]$ está dado por:
+Como los B-splines son polinomios en cada intervalo $[t_i, t_{i+1}]$ de la malla, la regla se traslada a cada uno con un cambio de variable afín del intervalo estándar $x \in [-1, 1]$ al intervalo físico $r \in [t_i, t_{i+1}]$:
 
 \begin{equation}
     r(x) = \frac{t_{i+1} - t_i}{2} x + \frac{t_{i+1} + t_i}{2}, \quad \text{con diferencial } dr = \frac{t_{i+1} - t_i}{2} dx.
@@ -43,7 +43,7 @@ con igualdad exacta cuando $f$ es un polinomio de grado a lo sumo $2N_q - 1$. Lo
 \section{Reducción del Potencial de Polarización del Core al Caso Atómico}
 \label{sec:cpp-muller}
 
-El potencial de polarización empleado en el Capítulo \ref{ch:correlacion-estructura-fina} se presenta allí a partir de un argumento electrostático elemental: un electrón de valencia induce un dipolo en el core y se estabiliza al interactuar con él. Esa derivación es suficiente para justificar la forma $-\alpha_d/2r^4$, pero conviene mostrar que coincide con la formulación general del \textit{Core Polarization Potential} (CPP) de Müller, Flesch y Meyer \cite{Muller1984}, concebida para moléculas y agregados, cuando se le imponen las condiciones de un átomo aislado. El ejercicio deja explícito, además, un término de dos cuerpos que la derivación elemental no hace visible.
+El potencial de polarización empleado en el Capítulo \ref{ch:correlacion-estructura-fina} se presenta allí a partir de un argumento electrostático elemental: un electrón de valencia induce un dipolo en el core y se estabiliza al interactuar con él. Esa derivación es suficiente para justificar la forma $-\alpha_d/2r^4$, pero conviene mostrar que coincide con la formulación general del \textit{Core Polarization Potential} (CPP) de \textcite{Muller1984}, concebida para moléculas y agregados, cuando se le imponen las condiciones de un átomo aislado. El ejercicio deja explícito, además, un término de dos cuerpos que la derivación elemental no hace visible.
 
 \subsection{La formulación general}
 
@@ -98,7 +98,7 @@ Los términos cruzados, con $i \neq j$, sobreviven en cambio como un operador de
     V_{\text{pol}}^{(2)} = -\alpha_d\,\frac{\bm{r}_1 \cdot \bm{r}_2}{r_1^3 r_2^3}\,W(r_1)W(r_2).
 \end{equation}
 
-Este término tiene una interpretación física propia y no es un residuo despreciable: describe el apantallamiento dieléctrico que el core interpone entre los dos electrones de valencia, ya que el dipolo inducido por uno de ellos es sentido por el otro. Se suma al operador de repulsión $1/r_{12}$ y, al depender del ángulo entre ambos radios vectores, contribuye a la parte anisótropa de la interacción, reduciendo la separación entre los términos del multiplete. Su omisión en un tratamiento que retenga únicamente \eqref{eq:cpp_un_cuerpo} constituye, por tanto, una aproximación que conviene tener presente al interpretar los desdoblamientos calculados.
+Este término tiene una interpretación física propia: describe el apantallamiento dieléctrico que el core interpone entre los dos electrones de valencia, ya que el dipolo inducido por uno de ellos es sentido por el otro. Se suma al operador de repulsión $1/r_{12}$ y tiene la dependencia angular de un multipolo de orden uno, de modo que dentro de la configuración $np^2$ su valor esperado se anula por la regla de paridad de la Sección \ref{sec:wigner_eckart} y solo contribuye a través de la mezcla con otras configuraciones. Este trabajo retiene únicamente \eqref{eq:cpp_un_cuerpo}, y el efecto del término de dos cuerpos sobre los niveles queda sin evaluar.
 
 \section{Aceleración con C-DIIS}
 \label{sec:cdiis_resultados}
@@ -119,7 +119,7 @@ Esta sección documenta el efecto de la extrapolación C-DIIS de la Sección \re
     \label{fig:cdiis}
 \end{figure}
 
-La Tabla \ref{tab:cdiis} muestra que el efecto depende del elemento. En el germanio y el estaño, los dos elementos que necesitan el desplazamiento de nivel, la aceleración reduce el número de iteraciones por factores de $2.8$ y $4.8$, de doscientas cuarenta y doscientas cincuenta a ochenta y cinco y cincuenta y dos. En el carbono, que converge sin desplazamiento, el factor es de $2.2$, y en el silicio el método no aporta ganancia: el ciclo simple converge en veintisiete iteraciones y la extrapolación necesita veintiocho. La ganancia grande procede, por tanto, de soltar el desplazamiento de nivel en cuanto el ciclo entra en la cuenca de atracción (Figura \ref{fig:cdiis}), y no de una lentitud genérica del punto fijo.
+La Tabla \ref{tab:cdiis} muestra que el efecto depende del elemento. En el germanio y el estaño, los dos elementos que emplean el desplazamiento de nivel, la aceleración reduce el número de iteraciones por factores de $2.8$ y $4.8$, de doscientas cuarenta y doscientas cincuenta a ochenta y cinco y cincuenta y dos. En el carbono, que converge sin desplazamiento, el factor es de $2.2$, y en el silicio el método no aporta ganancia: el ciclo simple converge en veintisiete iteraciones y la extrapolación necesita veintiocho, porque su error proyectado toca el piso en la iteración once y la extrapolación se desactiva poco después (Sección \ref{sec:cdiis_metodo}). En el germanio y el estaño el piso se alcanza hacia la iteración quince, de modo que también allí la mayor parte del recorrido la hace el ciclo simple, ya sin desplazamiento. La ganancia grande procede, por tanto, de soltar el desplazamiento de nivel en cuanto el ciclo entra en la cuenca de atracción (Figura \ref{fig:cdiis}), y no de una lentitud genérica del punto fijo.
 
 El dato decisivo es la última columna. Las energías obtenidas con y sin aceleración coinciden dentro de $4\times10^{-12}$ Hartree en el carbono y por debajo de $10^{-8}$ Hartree en el germanio y el estaño, muy por debajo de cualquier escala física del problema. C-DIIS actúa, por tanto, sobre la trayectoria del ciclo y no sobre su punto fijo, y los resultados del Capítulo \ref{ch:resultados} describen la misma solución Hartree-Fock que produciría el ciclo sin acelerar.
 
@@ -153,16 +153,16 @@ Estas curvas exigen repetir el cálculo de interacción de configuraciones para 
     \label{tab:convergencia_ci_costo}
 \end{table}
 
-La Tabla \ref{tab:convergencia_ci_costo} cuantifica ambos recursos. El conteo de integrales es prácticamente el mismo para los cuatro elementos, ya que depende del tamaño de la base y no de la carga nuclear, y pasa de unos cuatro mil quinientos valores en $m=4$ a treinta y ocho millones en $m=40$. Con un ocupamiento medido de unos diecisiete bytes por casilla, el caso extremo del carbono requiere del orden de $1.1$ gigabytes de memoria residente, que llegan a $1.7$ durante los redimensionamientos de la tabla asociativa. El tiempo de pared del mismo punto es de unos quince minutos, y la curva completa del carbono hasta $m=40$ tomó cerca de treinta y nueve minutos.
+La Tabla \ref{tab:convergencia_ci_costo} cuantifica ambos recursos. El conteo de integrales es prácticamente el mismo para los cuatro elementos, ya que depende del tamaño de la base y no de la carga nuclear, y pasa de unos cuatro mil quinientos valores en $m=4$ a treinta y ocho millones en $m=40$. Con un ocupamiento medido de unos diecisiete bytes por casilla, el caso extremo del carbono requiere del orden de $1.1$ gigabytes de memoria residente, que llegan a $1.7$ durante los redimensionamientos de la tabla asociativa. El tiempo de pared del mismo punto es de unos quince minutos, y la curva completa del carbono hasta $m=40$ tomó cerca de cuarenta y un minutos.
 
-La comparación entre elementos muestra que el tiempo sí depende de $Z$, aunque el número de integrales no. A $m=20$ el silicio emplea sesenta y ocho segundos y el estaño quinientos noventa y ocho, casi nueve veces más, pese a evaluar una cantidad de integrales que difiere en menos del uno por ciento. La razón es el número de puntos de la malla radial, que debe crecer con $Z$ para resolver la contracción de las capas internas: cada integral $R^k$ se evalúa sobre esa malla, de modo que el costo por integral escala con la discretización y no con el espacio activo. Esta separación entre los dos factores es la que permite reutilizar la caché entre tamaños consecutivos y hace viable el barrido completo.
+La comparación entre elementos muestra que el tiempo sí depende de $Z$, aunque el número de integrales no. A $m=20$ el silicio emplea sesenta y ocho segundos y el estaño quinientos noventa y ocho, casi nueve veces más, pese a evaluar una cantidad de integrales que difiere en menos del uno por ciento. La razón es el número de puntos de la malla radial, que debe crecer con $Z$ para resolver la contracción de las capas internas: cada integral $R^k$ se evalúa sobre esa malla, de modo que el costo por integral escala con la discretización y no con el espacio activo. Como el espacio activo de cada tamaño contiene al del anterior, las integrales ya calculadas se reutilizan, y eso es lo que hace viable el barrido completo.
 
 \section{Arquitectura Computacional y Repositorio de Código}
 \label{sec:repositorio}
 
 Los métodos descritos en esta tesis están implementados en una biblioteca propia, \textbf{AtomicSplines}, escrita en \textbf{Julia}, un lenguaje compilado de cómputo científico. Aunque el método de Galerkin con B-splines produce matrices de banda, el motor las almacena en arreglos densos: se exploró el almacenamiento especializado de \texttt{BandedMatrices.jl} y su sobrecosto resultó mayor que la ganancia para bases de unos cientos de funciones. Las diagonalizaciones del ciclo autoconsistente y del cálculo de interacción de configuraciones son completas y densas, mediante las rutinas de LAPACK que expone la biblioteca estándar de álgebra lineal de Julia, y su costo no domina el cálculo, que como muestra la Sección \ref{sec:costo_ci} lo fija el ensamblado de las integrales $R^k$.
 
-Los símbolos $3j$ y $6j$ del cálculo de interacción de configuraciones se evalúan con la biblioteca \texttt{WignerSymbols.jl}. Los resultados que reporta el Capítulo \ref{ch:resultados} se regeneran desde los archivos de resultados registrados con un conjunto de programas que escribe directamente los cuadros y las figuras del manuscrito. El código completo está disponible en el repositorio
+Los símbolos $3j$ y $6j$ del cálculo de interacción de configuraciones se evalúan con la biblioteca \texttt{WignerSymbols.jl}. Los resultados que reporta el Capítulo \ref{ch:resultados} se regeneran desde los archivos de resultados registrados con un conjunto de programas que escribe directamente las tablas y las figuras del manuscrito. El código completo está disponible en el repositorio
 
 \begin{center}
     \url{https://github.com/recore799/AtomicSplines.git}

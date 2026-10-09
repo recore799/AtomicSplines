@@ -7,6 +7,10 @@ salidas nuevas de la etapa 3 que se indican.
 
 **Punto de entrada de cada sesión mientras dure la reducción: este archivo.**
 
+**Auditoría del 2026-10-09:** `REVISION-2026-10-09.md` tiene el estado del manuscrito de 82 páginas
+y la lista de lo que hay que corregir antes de enviarlo, con archivo y línea. Las fases D, E y F
+de abajo siguen pendientes y esa lista las concreta.
+
 ---
 
 ## 0. Dónde están las páginas

@@ -122,6 +122,12 @@ y los datos de literatura (NIST, Froese Fischer) viven solo en
 | `etapa3_tablas.jl` | `docs/tablas/*.tex` (fragmentos `tabular` con su procedencia) y `valores_texto.md` | sí |
 | `etapa4_figuras.jl` | `docs/figures/*.pdf` | no (`*.pdf`); la primera vez que pisa una figura copia la anterior a `docs/figures/anteriores/` |
 
+En un clon nuevo hay que correr la etapa 4 antes de compilar `docs/main.tex`: seis de
+las diez figuras del manuscrito salen de ella. Las otras cuatro
+(`figura_evolucion_splines.pdf`, `figura_control_local_fem.pdf`,
+`figura_comparacion_mallas.pdf` y `scf.pdf`) no las regenera ningún script y por eso
+sí están versionadas, como excepción en `.gitignore`.
+
 Tres reglas sostienen la procedencia:
 
 - La etapa 2 no usa un `.jld2` sin registrar o cuyo sha256 cambió.

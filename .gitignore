@@ -12,6 +12,13 @@
 !docs/images/
 *.pdf
 /plots/
+# Excepción: cuatro figuras del manuscrito que ningún script regenera. Sin ellas un
+# clon nuevo no puede compilar docs/main.tex. Las demás figuras salen de la etapa 4
+# (benchmarks/README.md) y siguen sin versionarse.
+!docs/figures/figura_evolucion_splines.pdf
+!docs/figures/figura_control_local_fem.pdf
+!docs/figures/figura_comparacion_mallas.pdf
+!docs/figures/scf.pdf
 
 # macos
 .DS_Store
@@ -30,6 +37,8 @@ docs/auto/
 *.log
 *.out
 *.toc
+*.lof
+*.lot
 *.fls
 *.fdb_latexmk
 *.synctex.gz

@@ -313,6 +313,46 @@ function tabla_cdiis()
     return String(take!(io)), proc
 end
 
+"""
+Residuales de las trazas con C-DIIS: los de la ultima iteracion (conmutador crudo y proyectado)
+y la primera iteracion en que el proyectado queda a menos del 10 % de su valor final, es decir,
+donde toca su piso. `nothing` si la traza no existe.
+"""
+function residuales_diis(el)
+    ruta = joinpath(NP2, "diis_trace_$(INFO[el].prefijo)_con_diis.csv")
+    isfile(ruta) || return nothing
+    filas = [parse.(Float64, split(l, ",")) for l in readlines(ruta)
+             if !isempty(strip(l)) && !startswith(l, "#") && !startswith(l, "iter")]
+    proy, crudo = filas[end][4], filas[end][5]
+    piso = findfirst(f -> f[4] <= 1.1 * proy, filas)
+    return (iters = length(filas), proy = proy, crudo = crudo, iter_piso = Int(filas[piso][1]))
+end
+
+"""
+Base de B-splines de cada elemento: la malla de INFO (comun.jl), que `verificar_malla` contrasta
+con RESULTS.toml, y el numero de splines leido de los coeficientes guardados en el .jld2.
+"""
+function tabla_parametros_base()
+    io = IOBuffer(); proc = String[]
+    println(io, raw"\begin{tabular}{lccccc}")
+    println(io, raw"    \toprule")
+    linea(io, raw"\textbf{Elemento}", raw"$R_{\text{max}}$ ($a_0$)", raw"\textbf{Intervalos}",
+          raw"\textbf{Orden} $k$", raw"$\gamma$", raw"\textbf{Splines}")
+    println(io, raw"    \midrule")
+    for el in ELEMENTOS
+        i = INFO[el]
+        archivo = archivo_scf(el, ESTADO)
+        verificar_malla(el, archivo, MAN)
+        n = length(load(ruta_np2(archivo))["orbitals"][1].coeffs)
+        linea(io, i.etiqueta, fmt(R_MAX, 0), string(i.N), string(i.K), fmt(i.gamma, 1), string(n))
+        push!(proc, proc_scf(archivo))
+    end
+    println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
+    push!(proc, "Malla de INFO (comun.jl), la de cada *_rohf.jl y de RESULTS.toml. Splines = longitud de los " *
+                "coeficientes guardados; k es el orden (grado k - 1).")
+    return String(take!(io)), proc
+end
+
 function tabla_zeta(HF, ZETA_SENS)
     io = IOBuffer(); proc = String[]
     println(io, raw"\begin{tabular}{lccccc}")
@@ -652,6 +692,30 @@ function valores_texto(HF, ZETA_SENS)
                 join([@sprintf("l=%d: max |<v|c>| %.1e, peso %.1e", l, sol[l]...) for l in sort(collect(keys(sol)))], "; "))
     end
 
+    println(io, "\n## C-DIIS: residuales de las trazas registradas (estado 3P, |dE| < 1e-10 Ha)\n")
+    println(io, "De diis_trace_<elemento>_con_diis.csv. 'crudo' es max |FDS - SDF| y 'proyectado' el mismo ",
+            "conmutador fuera del espacio ocupado, ambos en la ultima iteracion. 'piso desde' es la primera ",
+            "iteracion en que el proyectado queda a menos del 10 % de su valor final; si coincide con la ",
+            "ultima, el residual seguia bajando y no hay piso.\n")
+    for el in ELEMENTOS
+        r = residuales_diis(el)
+        r === nothing && (push!(FALTAS, "traza con C-DIIS de $(INFO[el].prefijo)"); continue)
+        @printf(io, "- %s: %d iteraciones; crudo %s, proyectado %s (crudo/proyectado = %.0f); piso desde la iteracion %d\n",
+                INFO[el].etiqueta, r.iters, cient(r.crudo), cient(r.proy), r.crudo / r.proy, r.iter_piso)
+    end
+
+    println(io, "\n## Compresion del espectro por el CI de pareja (alpha_d = 0, m de produccion)\n")
+    println(io, "Separaciones entre terminos del CI, sin espin-orbita, frente a las de Hartree-Fock ",
+            "(6/25) F^2 y (15/25) F^2. En cm^-1.\n")
+    for el in ELEMENTOS
+        e = ci_de(el, ESTADO, 0.0)
+        e === nothing && continue
+        dD, dS = (e["E_1D_Ha"] - e["E_3P_Ha"]) * HA2CM, (e["E_1S_Ha"] - e["E_3P_Ha"]) * HA2CM
+        F2 = e["F2_Ha"] * HA2CM
+        @printf(io, "- %s: 1D - 3P = %.0f (HF %.0f, razon %.2f); 1S - 3P = %.0f (HF %.0f, razon %.2f, baja %.0f)\n",
+                INFO[el].etiqueta, dD, 6F2 / 25, dD / (6F2 / 25), dS, 15F2 / 25, dS / (15F2 / 25), 15F2 / 25 - dS)
+    end
+
     return String(take!(io))
 end
 
@@ -675,6 +739,7 @@ function main_etapa3()
     escribir_tabla("convergencia_ci_costo.tex", costo, proc; dir = SALIDA)
     escribir_tabla("convergencia_singletes.tex", tabla_convergencia_singletes()...; dir = SALIDA)
     escribir_tabla("cdiis.tex", tabla_cdiis()...; dir = SALIDA)
+    escribir_tabla("parametros_base.tex", tabla_parametros_base()...; dir = SALIDA)
     escribir_tabla("zeta.tex", tabla_zeta(HF, ZETA_SENS)...; dir = SALIDA)
     escribir_tabla("acoplamiento.tex", tabla_acoplamiento(HF)...; dir = SALIDA)
     escribir_tabla("lande.tex", tabla_lande()...; dir = SALIDA)

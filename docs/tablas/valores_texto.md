@@ -132,3 +132,21 @@ build_orbital_pool diagonaliza el Fock de core congelado sobre todos los splines
 - Silicio: espurio -4483.4 Ha (filtro -Z^2 = -196, descartados 1); sin 1,N -69.76 Ha; l=0: max |<v|c>| 3.6e-02, peso 1.6e-03; l=1: max |<v|c>| 8.8e-04, peso 7.8e-07
 - Germanio: espurio -32816.3 Ha (filtro -Z^2 = -1024, descartados 1); sin 1,N -406.13 Ha; l=0: max |<v|c>| 2.9e-02, peso 1.2e-03; l=1: max |<v|c>| 4.9e-04, peso 2.4e-07; l=2: max |<v|c>| 6.2e-03, peso 3.9e-05
 - Estaño: espurio -108515.4 Ha (filtro -Z^2 = -2500, descartados 1); sin 1,N -1041.99 Ha; l=0: max |<v|c>| 2.5e-02, peso 1.1e-03; l=1: max |<v|c>| 6.1e-04, peso 3.7e-07; l=2: max |<v|c>| 8.5e-03, peso 7.2e-05
+
+## C-DIIS: residuales de las trazas registradas (estado 3P, |dE| < 1e-10 Ha)
+
+De diis_trace_<elemento>_con_diis.csv. 'crudo' es max |FDS - SDF| y 'proyectado' el mismo conmutador fuera del espacio ocupado, ambos en la ultima iteracion. 'piso desde' es la primera iteracion en que el proyectado queda a menos del 10 % de su valor final; si coincide con la ultima, el residual seguia bajando y no hay piso.
+
+- Carbono: 12 iteraciones; crudo 1.1e-13, proyectado 1.1e-13 (crudo/proyectado = 1); piso desde la iteracion 12
+- Silicio: 28 iteraciones; crudo 4.4e-5, proyectado 7.8e-8 (crudo/proyectado = 561); piso desde la iteracion 11
+- Germanio: 85 iteraciones; crudo 2.2e-6, proyectado 1.6e-9 (crudo/proyectado = 1379); piso desde la iteracion 15
+- Estaño: 52 iteraciones; crudo 7.1e-7, proyectado 5.3e-10 (crudo/proyectado = 1342); piso desde la iteracion 15
+
+## Compresion del espectro por el CI de pareja (alpha_d = 0, m de produccion)
+
+Separaciones entre terminos del CI, sin espin-orbita, frente a las de Hartree-Fock (6/25) F^2 y (15/25) F^2. En cm^-1.
+
+- Carbono: 1D - 3P = 10768 (HF 12816, razon 0.84); 1S - 3P = 23852 (HF 32039, razon 0.74, baja 8187)
+- Silicio: 1D - 3P = 7142 (HF 8741, razon 0.82); 1S - 3P = 14530 (HF 21853, razon 0.66, baja 7323)
+- Germanio: 1D - 3P = 6902 (HF 8571, razon 0.81); 1S - 3P = 14799 (HF 21428, razon 0.69, baja 6630)
+- Estaño: 1D - 3P = 6091 (HF 7755, razon 0.79); 1S - 3P = 13311 (HF 19388, razon 0.69, baja 6077)

@@ -253,7 +253,7 @@ function tabla_convergencia()
     println(io, raw"    \midrule")
     println(io2, raw"\begin{tabular}{r", "r"^(2 * nel), "}")
     println(io2, raw"    \toprule")
-    linea(io2, "", "\\multicolumn{$nel}{c}{Integrales \$R^k\$ en caché}", "\\multicolumn{$nel}{c}{Tiempo de pared (s)}")
+    linea(io2, "", "\\multicolumn{$nel}{c}{Integrales \$R^k\$ en caché}", "\\multicolumn{$nel}{c}{Tiempo de ejecución (s)}")
     println(io2, "    \\cmidrule(lr){2-$(1 + nel)} \\cmidrule(lr){$(2 + nel)-$(1 + 2nel)}")
     linea(io2, raw"$m$", [el for el in ELEMENTOS]..., [el for el in ELEMENTOS]...)
     println(io2, raw"    \midrule")
@@ -703,6 +703,26 @@ function valores_texto(HF, ZETA_SENS)
         @printf(io, "- %s: %d iteraciones; crudo %s, proyectado %s (crudo/proyectado = %.0f); piso desde la iteracion %d\n",
                 INFO[el].etiqueta, r.iters, cient(r.crudo), cient(r.proy), r.crudo / r.proy, r.iter_piso)
     end
+
+    println(io, "\n## Coeficiente de la configuracion np^2 en cada termino del CI (m de produccion)\n")
+    println(io, "|C| del CSF de referencia np^2 en la raiz de cada termino (pesos_np2 de resultados_ci.toml). ",
+            "breit_pauli_levels multiplica por ellos los elementos de espin-orbita: -zeta C(3P)^2 en la diagonal ",
+            "del 3P, sqrt(2) zeta C(3P) C(1S) y -zeta C(3P) C(1D) / sqrt(2) fuera de ella.\n")
+    cs_np2 = Float64[]
+    for el in ELEMENTOS
+        casos = Any[(0.0, ci_de(el, ESTADO, 0.0))]
+        sel = alpha_elegido(el)
+        sel === nothing || push!(casos, sel)
+        for (a, e) in casos
+            e === nothing && continue
+            c = e["pesos_np2"]
+            append!(cs_np2, c)
+            @printf(io, "- %s%s: C(3P) = %.4f, C(1D) = %.4f, C(1S) = %.4f; C(3P)^2 = %.4f, C(3P) C(1D) = %.4f, C(3P) C(1S) = %.4f\n",
+                    INFO[el].etiqueta, a == 0.0 ? "" : @sprintf(" (alpha_d = %.2f)", a),
+                    c[1], c[2], c[3], c[1]^2, c[1] * c[2], c[1] * c[3])
+        end
+    end
+    isempty(cs_np2) || @printf(io, "- Intervalo de |C| sobre todos los casos: %.3f a %.3f\n", minimum(cs_np2), maximum(cs_np2))
 
     println(io, "\n## Compresion del espectro por el CI de pareja (alpha_d = 0, m de produccion)\n")
     println(io, "Separaciones entre terminos del CI, sin espin-orbita, frente a las de Hartree-Fock ",

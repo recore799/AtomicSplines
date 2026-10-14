@@ -1,7 +1,7 @@
 \chapter{Implementación de la Base de B-splines}
 \label{ap:bsplines}
 
-Este apéndice documenta cómo el motor construye y emplea la base de B-splines introducida en el Capítulo \ref{ch:bsplines-galerkin}. Recoge la construcción del vector de nudos y las condiciones de frontera, la evaluación de la base, la separación entre la geometría de la base y el estado del átomo que reorganiza el ciclo autoconsistente, y el estado espurio que aparece en el espacio de orbitales del cálculo de interacción de configuraciones. La definición de los B-splines por la recurrencia de Cox-de Boor y sus propiedades de soporte compacto y control local están en el Capítulo \ref{ch:bsplines-galerkin} y no se repiten aquí.
+Este apéndice documenta cómo el motor construye y emplea la base de B-splines introducida en el Capítulo \ref{ch:bsplines-galerkin}. Recoge la construcción del vector de nudos y las condiciones de frontera, la evaluación de la base y la separación entre la geometría de la base y el estado del átomo que reorganiza el ciclo autoconsistente. La definición de los B-splines por la recurrencia de Cox-de Boor y sus propiedades de soporte compacto y control local están en el Capítulo \ref{ch:bsplines-galerkin} y no se repiten aquí.
 
 \section{Vector de nudos y condiciones de frontera}
 
@@ -24,7 +24,7 @@ con la convención de anular los términos cuyo denominador se anula por nudos r
 
 \section{Evaluación de la base}
 
-En cualquier punto $r \in [t_\mu, t_{\mu+1})$ solo hay $k$ splines no nulos, y el motor los calcula todos a la vez en lugar de evaluar funciones aisladas. Parte del único valor no nulo de orden uno, $B_{\mu}^0(r) = 1$, y aplica la recurrencia de Cox-de Boor orden por orden, de modo que los $j$ valores del orden $j$ producen los $j+1$ del orden siguiente; el costo es de orden $k^2$ por punto, con un único vector auxiliar de longitud $k$. Las derivadas se obtienen en la misma pasada: el cálculo se detiene en el orden $k-1$, se aplican las fórmulas de la derivada sobre esos valores, y se completa el último orden. El orden $k$ se pasa como parámetro de tipo, conocido en tiempo de compilación, lo que permite al compilador especializar los bucles de la recurrencia.
+En cualquier punto $r \in [t_\mu, t_{\mu+1})$ solo hay $k$ splines no nulos, y el motor calcula de una vez los $k$ splines activos en ese intervalo, en lugar de recorrer las funciones de la base una por una. Parte del único valor no nulo de orden uno, $B_{\mu}^0(r) = 1$, y aplica la recurrencia de Cox-de Boor orden por orden, de modo que los $j$ valores del orden $j$ producen los $j+1$ del orden siguiente; el costo es de orden $k^2$ por punto, con un único vector auxiliar de longitud $k$. Las derivadas se obtienen en la misma pasada: el cálculo se detiene en el orden $k-1$, se aplican las fórmulas de la derivada sobre esos valores, y se completa el último orden. El orden $k$ se pasa a estas rutinas como \textit{parámetro de tipo} (\textit{type parameter}), un mecanismo del lenguaje Julia por el cual un valor queda fijado en tiempo de compilación, lo que permite al compilador generar una versión de los bucles de la recurrencia especializada para cada orden. Es una decisión de implementación y no una condición matemática del método.
 
 \section{Separación entre geometría y estado}
 \label{sec:tensores_geometria}
@@ -53,13 +53,6 @@ La suma sobre $q$ no depende del estado del átomo y define el \textbf{tensor de
 con lo cual el término fuente se reduce a la contracción $b_\mu = \sum_{\alpha\beta} W_{\mu\alpha\beta} D_{\alpha\beta}$, sin reconstruir la densidad sobre la malla en cada iteración. No se trata de una aproximación adicional sino de un reordenamiento exacto de las mismas sumas.
 
 El soporte compacto vuelve a $\mathbf{W}$ un tensor disperso, no nulo solo cuando las tres funciones son activas en un mismo intervalo. El motor no construye el tensor global: guarda un tensor local de dimensión $k^3$ por intervalo de la malla, con índices locales que se trasladan a los globales por un desplazamiento fijo, y lo ensambla en el mismo recorrido por intervalos que produce las matrices de un cuerpo. Con eso, el almacenamiento crece como $N k^3$ en lugar de $N^3$, y el ciclo autoconsistente queda reducido a contraer $\mathbf{W}$ con las matrices de densidad, resolver los sistemas de Poisson sobre factorizaciones precalculadas y diagonalizar.
-
-\section{El estado espurio del espacio de orbitales del CI}
-\label{sec:estado_espurio}
-
-El espacio de orbitales del cálculo de interacción de configuraciones se obtiene diagonalizando, para cada $l$, el operador de Fock de core congelado, y a diferencia del ciclo autoconsistente esa diagonalización emplea todos los splines, incluido el primero, que no se anula en el origen. En los canales con $l > 0$ la barrera centrífuga penaliza a ese spline y no ocurre nada. En el canal $s$, en cambio, una función que no se anula en $r = 0$ tiene una energía potencial coulombiana no acotada inferiormente, y la cuadratura la regulariza en un autovalor espurio muy por debajo de cualquier estado físico: $-1178.6$ Hartree en el carbono y $-108515.4$ en el estaño, frente a una cota hidrogenoide de $-Z^2/2$. El motor descarta cualquier autovalor menor que $-Z^2$, y el filtro elimina exactamente ese estado en los cuatro elementos.
-
-El filtro no repara el resto del espectro. Los demás autovectores del canal $s$ son ortogonales al estado espurio y no a los orbitales $s$ del core que produjo el ciclo autoconsistente, y los virtuales $s$ del espacio activo conservan un solapamiento con esos orbitales de hasta $3.6\times10^{-2}$, con un peso máximo del core de $2.0\times10^{-3}$ en un solo virtual. En el canal $p$ el solapamiento no pasa de $8.8\times10^{-4}$, y en el canal $d$ del germanio y del estaño, donde solo refleja la diferencia entre el operador de core congelado y el del ciclo, llega a $8.5\times10^{-3}$. El cálculo de interacción de configuraciones supone que el espacio activo es ortogonal al core congelado, de modo que esta es una aproximación de la implementación. La desviación del canal $s$, la mayor, afecta solo a las configuraciones con electrones $s$, que entran en los términos $^1S$ y $^1D$ y no en el $^3P$, y su efecto sobre los singletes no se cuantificó (Sección \ref{sec:limitaciones}).
 
 %%% Local Variables:
 %%% mode: LaTeX

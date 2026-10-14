@@ -125,8 +125,9 @@ y los datos de literatura (NIST, Froese Fischer) viven solo en
 En un clon nuevo hay que correr la etapa 4 antes de compilar `docs/main.tex`: seis de
 las diez figuras del manuscrito salen de ella. Las otras cuatro
 (`figura_evolucion_splines.pdf`, `figura_control_local_fem.pdf`,
-`figura_comparacion_mallas.pdf` y `scf.pdf`) no las regenera ningún script y por eso
-sí están versionadas, como excepción en `.gitignore`.
+`figura_comparacion_mallas.pdf` y `scf.pdf`) sí están versionadas, como excepción en
+`.gitignore`: tres no las regenera ningún script, y `figura_comparacion_mallas.pdf` sale
+de `tesis/figura_comparacion_mallas.jl`, una ilustración que no depende de ningún resultado.
 
 Tres reglas sostienen la procedencia:
 

@@ -37,11 +37,11 @@ La propiedad que distingue a los B-splines es su \textbf{soporte compacto}. A di
 
 Esta localidad tiene dos consecuencias:
 \begin{enumerate}
-    \item \textbf{Matrices Banda:} Al integrar el producto de dos funciones base, $\int B_i(r) B_j(r) dr$, el resultado es distinto de cero solo si sus soportes se intersectan ($|i-j| \leq p$). Las matrices resultantes (solapamiento, energía cinética) son matrices de banda (\textit{banded matrices}), con un ancho fijado por el orden del spline. Un solucionador que aproveche esa estructura resuelve un sistema lineal con costo $O(N)$ en lugar de $O(N^3)$; nuestro motor no la explota y almacena las matrices en formato denso, por las razones que se discuten en la Sección \ref{sec:repositorio}.
-    \item \textbf{Control Local:} La alteración de un coeficiente $c_k$ en la expansión de la función de onda altera la curva \textit{exclusivamente} dentro de su región de influencia local $[t_k, t_{k+p+1})$. Esto permite resolver detalles finos, como el comportamiento cerca del núcleo, refinando la malla solo donde hace falta y sin introducir oscilaciones en el resto del dominio, a diferencia de lo que ocurre al elevar el grado de un interpolante polinómico global (fenómeno de Runge; ver Figura \ref{fig:control_local_fem}).
+    \item \textbf{Matrices Banda:} Al integrar el producto de dos funciones base, $\int B_i(r) B_j(r) dr$, el resultado es distinto de cero solo si sus soportes se intersectan ($|i-j| \leq p$). Las matrices resultantes (solapamiento, energía cinética) son matrices de banda (\textit{banded matrices}), con un ancho fijado por el orden del spline. Un solucionador que aproveche esa estructura resuelve un sistema lineal con costo $O(N)$ en lugar de $O(N^3)$. Nuestro motor no la explota en el álgebra lineal: almacena las matrices en formato denso y las entrega a rutinas densas, por las razones que se discuten en la Sección \ref{sec:repositorio}. La localidad se aprovecha, en cambio, al construirlas, porque en cada intervalo de la malla solo hay $p+1$ funciones no nulas y las integrales se ensamblan intervalo por intervalo, con un costo que crece linealmente con el número de funciones (Sección \ref{sec:tensores_geometria}).
+    \item \textbf{Control Local:} La alteración de un coeficiente $c_k$ en la expansión de la función de onda altera la curva \textit{exclusivamente} dentro de su región de influencia local $[t_k, t_{k+p+1})$. Esto permite resolver detalles finos, como el comportamiento cerca del núcleo, refinando la malla solo donde hace falta y sin introducir oscilaciones en el resto del dominio (Figura \ref{fig:control_local_fem}).
 \end{enumerate}
 
-Ambas propiedades son las que motivan el uso de esta base en física atómica, y la revisión de \textcite{Bachau2001} documenta con detalle su aplicación a problemas de estructura y de continuo. El fenómeno de Runge que el control local evita, consistente en la aparición de oscilaciones de amplitud creciente cerca de los extremos del dominio al elevar el grado de un interpolante polinómico global, es un resultado clásico del análisis numérico cuyo tratamiento en el contexto de splines puede consultarse en \textcite{deBoor1978}.
+Ambas propiedades son las que motivan el uso de esta base en física atómica, y la revisión de \textcite{Bachau2001} documenta con detalle su aplicación a problemas de estructura y de continuo. El control local evita además el fenómeno de Runge: al elevar el grado de un interpolante polinómico global sobre puntos equiespaciados aparecen oscilaciones de amplitud creciente cerca de los extremos del dominio. Es un resultado clásico del análisis numérico, que \textcite[Capítulo II]{deBoor1978} emplea para motivar las aproximaciones polinómicas a trozos.
 
 \begin{figure}[htbp]
     \centering
@@ -59,17 +59,17 @@ Para resolver eficientemente la ecuación radial atómica, es necesario adaptar 
 \end{equation}
 donde $\gamma$ controla cuánto se concentran los nudos cerca del origen. El jacobiano de esta transformación, $\dv*{r}{\xi} \propto e^{\gamma \xi}$, indica que el tamaño de cada intervalo crece exponencialmente al alejarse del núcleo (Figura \ref{fig:grid_comparison}). Los valores de $\gamma$, del número de intervalos y del orden del spline empleados en cada elemento se recogen en la Tabla \ref{tab:parametros_base}.
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
     \centering
     \includegraphics[width=0.85\textwidth]{figura_comparacion_mallas.pdf}
-    \caption{\textbf{Comparación de distribuciones de nudos B-spline.} a) Distribución uniforme, ineficiente para orbitales atómicos. b) Distribución exponencial ($\gamma=2.5$), mostrando la alta densidad de bases requerida cerca del origen.}
+    \caption{\textbf{Comparación de distribuciones de nudos B-spline.} a) Distribución uniforme, ineficiente para orbitales atómicos. b) Distribución exponencial con $\gamma=4$, el valor empleado para el estaño (Tabla \ref{tab:parametros_base}), que concentra las funciones cerca del origen. Ambos paneles usan el mismo número de intervalos y el mismo orden; las marcas del eje señalan los nudos.}
     \label{fig:grid_comparison}
 \end{figure}
 
 \section{El Método de Galerkin}
 \label{sec:galerkin}
 
-Elegida la base, resta el problema de cómo proyectar sobre ella una ecuación diferencial. En este trabajo empleamos el \textbf{método de Galerkin}, una formulación del Método de Elementos Finitos (FEM) que discretiza de manera unificada tanto la ecuación de eigenvalores de Hartree-Fock como la ecuación de Poisson que determina los potenciales de interacción. Presentamos aquí el esquema y sus resultados; la demostración de su equivalencia con el principio variacional de Ritz y la deducción de la ecuación de Poisson radial se desarrollan en el Apéndice \ref{ap:galerkin-poisson}.
+Elegida la base, resta el problema de cómo proyectar sobre ella una ecuación diferencial. En este trabajo empleamos el \textbf{método de Galerkin}, una formulación del Método de Elementos Finitos (FEM) que discretiza de manera unificada tanto la ecuación de eigenvalores de Hartree-Fock como la ecuación de Poisson que determina los potenciales de interacción. Presentamos aquí el esquema, su equivalencia con el principio variacional de Ritz y su aplicación a la ecuación de Poisson radial, cuya deducción se desarrolla en el Apéndice \ref{ap:galerkin-poisson}.
 
 \subsection{Del problema continuo al problema matricial}
 
@@ -110,7 +110,7 @@ El término cinético de (\ref{eq:galerkin-condition}) contiene una segunda deri
   \int_{0}^{R_{\text{max}}} B_i(r) \dv[2]{\tilde{P}}{r} \dd{r} = \underbrace{\eval{ B_i(r) \dv{\tilde{P}}{r} }_{0}^{R_{\text{max}}}}_{=\,0} - \int_{0}^{R_{\text{max}}} \dv{B_i}{r} \dv{\tilde{P}}{r} \dd{r},
 \end{equation}
 
-donde el término de borde se anula porque las funciones de prueba $B_i$ que se retienen se anulan en ambos extremos, la misma condición $P(0) = P(R_{\text{max}}) = 0$ que cumple la solución. Este paso, característico de la \textit{forma débil}, cumple dos funciones: rebaja el requisito de continuidad sobre la base (basta con que sea derivable una vez) y simetriza el operador, lo cual garantiza que la matriz resultante sea Hermitiana.
+donde el término de borde se anula porque las funciones de prueba $B_i$ que se retienen se anulan en ambos extremos, la misma condición $P(0) = P(R_{\text{max}}) = 0$ que cumple la solución. La ecuación que resulta es la \textbf{forma débil} del problema, por contraste con la forma fuerte \eqref{eq:strong-form}: ya no se exige que la ecuación diferencial se cumpla punto a punto, sino solo en promedio contra cada función de prueba, y en ella aparecen únicamente primeras derivadas. El paso cumple así dos funciones: rebaja el requisito de regularidad sobre la base, a la que basta con ser derivable una vez, y simetriza el operador, lo cual garantiza que la matriz resultante sea hermitiana. En el resto del documento, forma débil designa siempre esta ecuación proyectada e integrada por partes.
 
 Sustituyendo la expansión (\ref{eq:expansion-metodo}) y factorizando los coeficientes, cada integral se convierte en un elemento de matriz:
 
@@ -129,6 +129,18 @@ La condición de Galerkin para todo $i$ produce entonces el sistema $\sum_j (T_{
 \end{equation}
 
 La aparición de la matriz de solapamiento $\bm{S}$ en el lado derecho es consecuencia directa de que la base de B-splines no es ortogonal: a diferencia de una base ortonormal, $S_{ij} \neq \delta_{ij}$, y $\bm{S}$ define la métrica del espacio de Hilbert discretizado. Por el soporte compacto de la base, tanto $\bm{H}$ como $\bm{S}$ son matrices de banda con ancho determinado únicamente por el orden $k$ del spline.
+
+\subsection{Equivalencia con el principio variacional de Ritz}
+\label{sec:ritz-galerkin}
+
+El sistema \eqref{eq:eigen-metodo} puede obtenerse también por un camino variacional. El método de Ritz busca los puntos estacionarios del cociente de Rayleigh dentro del espacio generado por la base,
+\begin{equation}
+\label{eq:rayleigh}
+  E[\tilde{P}] = \frac{\bm{c}^{T}\bm{H}\bm{c}}{\bm{c}^{T}\bm{S}\bm{c}},
+\end{equation}
+y la condición $\partial E/\partial c_i = 0$ da $\sum_j (H_{ij} - E\,S_{ij})\,c_j = 0$, que es la condición de Galerkin \eqref{eq:galerkin-condition} escrita en forma matricial. La coincidencia requiere dos cosas: que el operador sea hermítico, de modo que $\bm{H}$ sea simétrica, y que las funciones de peso sean las mismas funciones de la base. Los dos caminos conducen entonces al mismo problema generalizado de eigenvalores.
+
+La equivalencia tiene una consecuencia práctica. Un operador hermítico está acotado inferiormente cuando su espectro tiene un valor mínimo, como ocurre con el Hamiltoniano atómico, cuyo estado fundamental tiene energía finita. Para un operador así, los eigenvalores del problema de Ritz en un subespacio, ordenados de menor a mayor, son cotas superiores de los eigenvalores exactos correspondientes y decrecen de manera monótona al ampliar el subespacio \parencite{MacDonald1933}. La formulación de Galerkin hereda esa propiedad siempre que las funciones de la base satisfagan las condiciones de frontera del problema. Otras familias de residuos ponderados, como la colocación o los mínimos cuadrados, emplean funciones de peso distintas de la base y no comparten esta interpretación variacional \parencite{Finlayson1972}.
 
 \subsection{Aplicación: la ecuación de Poisson radial}
 \label{subsec:poisson-metodo}

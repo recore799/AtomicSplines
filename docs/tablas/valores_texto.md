@@ -142,6 +142,18 @@ De diis_trace_<elemento>_con_diis.csv. 'crudo' es max |FDS - SDF| y 'proyectado'
 - Germanio: 85 iteraciones; crudo 2.2e-6, proyectado 1.6e-9 (crudo/proyectado = 1379); piso desde la iteracion 15
 - Estaño: 52 iteraciones; crudo 7.1e-7, proyectado 5.3e-10 (crudo/proyectado = 1342); piso desde la iteracion 15
 
+## Coeficiente de la configuracion np^2 en cada termino del CI (m de produccion)
+
+|C| del CSF de referencia np^2 en la raiz de cada termino (pesos_np2 de resultados_ci.toml). breit_pauli_levels multiplica por ellos los elementos de espin-orbita: -zeta C(3P)^2 en la diagonal del 3P, sqrt(2) zeta C(3P) C(1S) y -zeta C(3P) C(1D) / sqrt(2) fuera de ella.
+
+- Carbono: C(3P) = 0.9976, C(1D) = 0.9942, C(1S) = 0.9830; C(3P)^2 = 0.9952, C(3P) C(1D) = 0.9918, C(3P) C(1S) = 0.9806
+- Silicio: C(3P) = 0.9950, C(1D) = 0.9911, C(1S) = 0.9757; C(3P)^2 = 0.9901, C(3P) C(1D) = 0.9861, C(3P) C(1S) = 0.9708
+- Germanio: C(3P) = 0.9962, C(1D) = 0.9916, C(1S) = 0.9778; C(3P)^2 = 0.9924, C(3P) C(1D) = 0.9879, C(3P) C(1S) = 0.9741
+- Germanio (alpha_d = 0.75): C(3P) = 0.9964, C(1D) = 0.9920, C(1S) = 0.9787; C(3P)^2 = 0.9928, C(3P) C(1D) = 0.9884, C(3P) C(1S) = 0.9751
+- Estaño: C(3P) = 0.9960, C(1D) = 0.9906, C(1S) = 0.9772; C(3P)^2 = 0.9921, C(3P) C(1D) = 0.9867, C(3P) C(1S) = 0.9733
+- Estaño (alpha_d = 3.00): C(3P) = 0.9962, C(1D) = 0.9911, C(1S) = 0.9786; C(3P)^2 = 0.9925, C(3P) C(1D) = 0.9874, C(3P) C(1S) = 0.9749
+- Intervalo de |C| sobre todos los casos: 0.976 a 0.998
+
 ## Compresion del espectro por el CI de pareja (alpha_d = 0, m de produccion)
 
 Separaciones entre terminos del CI, sin espin-orbita, frente a las de Hartree-Fock (6/25) F^2 y (15/25) F^2. En cm^-1.

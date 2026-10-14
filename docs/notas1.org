@@ -1,0 +1,244 @@
+
+* Planteamiento
+
+Quite la oracion innecesaria: Por tratarse de una tesis de licenciatura, el objetivo no es proponer un desarrollo teórico original para la física atómica,sino uno formativo.
+
+* Estrategia de modelado
+
++ Que 5 niveles?
+
++ El tripleto?
+
+
+* Estructura del documento
+
++ Poner por que se divide en partes
+
+
+* Parte 1
+
+** Problema multielectronico
+
+Ponerle referencia al apendice A en unidades atomicas
+
++ Ejercicio: hacer los cambios de variable para obtener el hamiltoniano atomico
+
+** Aproximacion de campo central
+
+En la seccion 3.1 hay una breve descripcion de la notacion espectroscopica, pero desde esta seccion ya hay cosas como "recuperando los terminos espectroscopicos", hay que poner algo como que la degeneracion se divide en tales que son los de interes para este trabajo y que en el capitulo 3 se describen mas a fondo, o bien, como solo son dos parrafos cortos, que tal mover la seccion 3.1 *Notiacion de estructura electronica y espectroscopica* al inicio  de una vez y ya poder darlo por sentado durante todo el documento
+
++ Ejercicio: sutituir la funcion de onda separada y ver que si se cancela ese termino de primer derivada para obtener 2.7
+
+
+** Modelo de dos electrones
+
+Que tal cambiar la referencia de la expansion de laplace al Jackson, para anadir variedad
+
+** Operador efectivo de fock
+
++ Ejercicio: como muestro que f es efectivo?
+
+
+** HF restringido
+
+en la ecuacion 2.18 es la primera vez que se usa el simbolo 3j, cabe mencionarlo
+
+
++ Ejercicio: Repasar que significa el ultimo parrafo de esta seccion
+
+
+
+** Las operadores de fock diferenciados
+
+Que es \( K_{np\to c} \) en 2.20
+
+
+
++ para pensar: En algun punto del capitulo 2 poner que son los terminos espectroscopicos
+
+** Recuperacion de los terminos espectroscopicos
+
+Que es la regla del baricentro
+
+
+** Koopmaans
+
+Hacer referencia al szabo para la demostracion
++ Ejercicio: repasar demostracion
+
+** Virial
+
++ Ejercicio: demostrar teorema del virial
+
+
+** Estructura electronica de la configuracion
+
+Se usan las reglas de Hund como justificacion, pero no se definen, tal vez anadir al apendice de tensores, junto con referencia; si el tamano del documento crece demasiado despues de todas las correcciones, vamos a pensar como usar una referencia estartegica para que no quede flotando el "segun las reglas de Hund"
+
+** Estructura fina
+
+Buscar en que parte del cowan viene lo de estructura fina
+
++ Referencia al Zitterbewegung
+
++ Ejercicio: por que sale la constante de estructura fina
+
+** Esquema de acoplamiento intermedio
+
++ No entiendo muy bien esta parte, de como deja de ser fiable la serie perturbativa:
+  Cuando ζnp es pequeño frente a la separación entre ellos la mezcla puede tratarse como una perturbación, y la Sección 3.4.2 emplea esa estimación; cuando las dos escalas son comparables la serie perturbativa deja de ser fiable.
+
+
+** Matrices de breit-pauli
+
+
+Creo que falta explicar al menos de donde salen los factores en las matrices, entiendo lo de E(^3P) y E(^1S) en J=0, pero como se puede ver claramente que el elemento 11 es E(^3P) - \zeta_np por ejemplo y luego los factores de sqrt(2) en la off-diagonal. Igual con J=2 que ahora cambia a -1/sqrt(2) en la off-diagonal.
+
++ Ejercicio: que significa que un operador conserve algo
+
+
+** CI
+
+Por que una combinacion lineal de estados recupera energia de correlacion?
+
+
+** Vpol
+
++ Ejercicio: recordar por que vpol solo funciona para Ge y Sn
+
+
+* Parte 2
+
+** Metodo numerico
+
+
+*** Soporte compacto
+
++ Ejercicio: estudiar la nocion topologica de soporte compacto y verificar si son lo mismo
+
++ Buscar en que seccion de Boor (1978) sale el fenomeno de runge
+
++ Tal vez mencionar algo como que, aunque no explotamos las matrices banda por el sobrecosto de tratarlas en julia, como dice el ultimo apendice, para el tamano de matriz que tenemos (que creo que es lo que dice el apendice), que sean bandadas, sigue siendo una ventaja para la libreria general de LinearAlgebra.jl que usamos o algo asi.
+
++ Ejercicio: repasar como se hacen las derivadas de los b-splines
+
+  
+*** Malla exponencial
+
+Que tal regenerar la figura 4.3 que compara la distribucion de nudos, pero con un Gamma mas alto, como de 4 para que se distinga mejor la distincion
+
+
+
+** Implementacion scf
+
+En el 4to paso del scf dice "Si difiere de la de la iteracion", vamos a dejar por ahora ese error de dedo; a ver si mi asesor lo encuentra y en caso de que lo haga, le dara un toque de hecho por mi. Si no lo encuentra, simplemente lo corregire antes de la entrega final
+
+
++ Ejercicio:  repasar la explicacion de level-shifting
+
++ Nota: dices que cambiaste la frase de "necesitan level-shift" a que lo "emplean", en mi testing, fue totalmente necesario introducirlo, tanto el germanio como el estanio oscilaban sin fin hasta que lo introduci y segun yo tenia que ver un poco con hacer gram-schmidt, pero creo que es la misma explicacion actual que dice: cuando una variación de la matriz de densidad D altera el orden de los autovalores de un bloque, el principio de construcción ocupa un autovector distinto en iteraciones sucesivas y el ciclo alterna entre dos densidades sin converger a ninguna.
+
+  Toda la explicacion es muy buena, pero creo que si vale la pena cambiar al menos esa palabra, de emplean a necesitan o algo asi.
+
+
+*** Extrapolacion de pulay
+
++ Parece que las referencias estan bien, ya vi los articulos, solo me tengo que dar el tiempo de verificar lo que dice esta seccion, la ecuacion (5.4) si se va sacada de la manga, entonces lo vamos a revisar despues.
+
+
+*** El operador de Poisson y sus condiciones de frontera
+
++ Nota: el costo es cuadratico por lo que cuesta acceder al valor almacenado?, ademas como ya no se tiene que hacer ninguna operacion de punto flotante extra, esa comparacion con un costo "cubico" de factorizar, esta un poco subestimada no?
+
++ Creo que en el apendice cortamos lo de "formulacion debil" cuando quitamos de ahi la derivacion de Galerkin y hasta este punto en el manuscrito ya lo hemos mencionado unas tres o cuatro veces, como un "crutch", que en realidad no dice mucho. Creo que es suficiente con poner algun comentario de eso en la seccion 4.2.1 "Del problema continuo al problema matricial"
+
+
+*** CI
+
++ Que es un canal?
+
+* Notas generales
+
+Cambiar todas las instancias de core a nucleo, excepto donde sea completamente necesario
+
+** Cosas para decirle a mi asesor
+
+Mencionarle que la tabla con los parametros de la malla estan en el apendice C, si quiere la subo al capitulo 4
+
+** Apendices
+
+
+*** Operadores tensoriales
+
+Tal vez cabe recalcar que desarrollar el formalismo completo me tomaria todo el espacio de la tesis y que en este apendice se reunen los *resultados* que estudiamos sobre el modelo para poder construir nuestro motor.
+
+**** En el teorema de wigner-eckart
+
+Hay que decir que es cada cosa en B.3
+
+**** Coeficientes angulares
+
++ No se como reconciliar la complejidad aqui, porque esta claro que hay que poner el coeficiente angular y motivar de donde sale, pero no deberia de decir terminos sin definirlos y para explicarlo hay que usar "coeficiente de parentesco fraccional", lo cual no cabe ya en la tesis. No se si solo quitarlo y poner la formula tal cual, diciendo que la sacamos del cowan o algo asi, o tendria que anadir un parrafo mas diciendo que del cowan, se puede armar un algoritmo genealogico para construir los estados acoplados y aunque es super complicado de explicar, con notacion muy engorrosa, para el caso np^2, se simplifica bastante, etc.
+
+*** B-splines
+
++ C.2 dice: En cualquier punto \( r\in [t_{\mu},t_{\mu+1}) \) solo hay k splines no nulos, y el motor los calcula todos a la vez en lugar de evaluar funciones aisladas.
+
+  Creo que estaria mejor explicado si dijera: el motor calcula los k splines activos en cada elemento, en lugar de iterar sobre cada spline uno por uno de manera aislada.
+
+  Ademas, hay que mencionar al menos que "parametro de tipo" es un constructo de Julia que sirve para optimizar memoria o lo que sea, tal vez ponerle en italica el nombre en ingles haria que se entienda que es una decision arquitectural del desarrollo del software, no una condicion matematica.
+
++ Para seguir guardando espacio, creoque esta bien documentar el estado espurio del espacio de orbitales del CI, pero para que se entienda, la explicacion tendria que ser mucho mas extensa y en realidad no anade nada; lo podemos dejar como algo que yo hice al nivel de implementacion, sin necedidad de que vaya en el manuscrito final, asi como los otros desarrollos que quitamos, osea que lo podemos documentar en otro lado, creo que al final dejare algun otro pdf de "mas detalles" o algo asi donde si pueden ir todas estas cosas, pero aqui, solo servira para confundir tanto al jurado como a mi al intentar explicarlo.
+
+*** apendice galerkin
+
+El apendice de galerkin complementa el capitulo 4 y 5 porque las condiciones de frontera de poisson se usan en el capitulo 5 no?
+
++ Tal vez poner referencias, del metodo de ritz y de las consecuencias de que un operador sea hermitico acotado inferiormente (que significa eso?). Tal vez lo podriamos sacar del libro de moretti. Pero no se si es usual poner referencias en los apendices. Ademas, sobre la proposicion de que otros metodos de residuos ponderados no comparten la equivalencia variacional se deberia de referenciar; yo lo vi en un libro que presentaba como 4 o 5 metodos distintos de FEM que es de donde habia construido la tabla del borrador original y entiendo que para ahorrar espacio la quitamos, pero estaria bien la referencia. nota: el libro original lo vi en fisico en la biblioteca y ya no recuerdo cual era
++ Mi mayor preocupacion sobre este apendice es que siento que no se "gana" el nombre de Galerkin, podria llamarse solamente "El potencial Y^k" y lo de la equivalencia con Ritz quedaria solo como un comentario al margen.
+
+
+*** Gauss-legendre
+
++ Ejercicio: Practicar como se deriva, por que son polinomios de Legendre, etc.
+
+
+
+*** C-DIIS
+
+Me gustaria poner la figura E.1 sobre la historia de convergencia en el cuerpo principal, se ve algo llamativa y asi ya no se ve tan abstracta la seccion 5.1.2 de Pulay, solo que tendriamos que corregir la posicion de la figura 5.1, el diagrama SCF, que toma una pagina entera, se inserta en medio de la seccion 5.1.2, yo creoque lo podemos poner justo antes del enumerate que explica el ciclo, para que se vea bien, simplemente hay que asegurar que se llene una pagina entera desde donde empieza el capitulo 5, es decir, que "El algoritmo procede de la siguiente manera:" sea justo el comienzo de la siguiente pagina; entonces quedaria algo como
+
++ Primera pagina en la secuencia:
+  Capitulo 5
+  Implementacion del ciclo scf y correcciones
+
+  5.1 El ciclo del campo autoconsistente (SCF)
+  ... Texto que llene exactamente toda la pagina
+
++ Segunda pagina en la secuencia:
+  El diagrama SCF
+
++ Tercera pagina en la secuencia:
+  Empieza con "El algoritmo procede de la siguiente manera: ..."
+
+
+Asi, al incluir la tabla E.1 en la seccion 5.1.2 (en vez de poner una referencia a ella), el contenido ya no se ve saturado por el diagrama SCF. Y de todos modos es un mejor flujo que el lector vea primero el diagrama simplificado, seguido de la explicacion un poco mas exacta en el texto. Las demas tablas quedan muy bien para el apendice.
+
++ Por cierto, que significa "tiempo de pared"?
+
+
+
+* Parte 3
+
+** Limite hf
+
+En las tablas 6.1 y 6.2 dice \( E(E_h) \), sin definir que es \( E_h \), hace falta dicho comentario
+
+** Parametros radiales de la valencia
+
++ Me van a preguntar por que a segundo orden en: "La energia, por ser estacionaria, se desvia a segundo orden"
+
+
+** El espectro de la configuracion np2
+
+

@@ -1,7 +1,7 @@
 \chapter{Operadores Tensoriales y Coeficientes Angulares}
 \label{ap:operadores-tensoriales}
 
-Este apéndice reúne el álgebra angular que el texto principal emplea: la escritura de la repulsión coulombiana en términos de operadores tensoriales, el teorema de Wigner-Eckart con las reglas de selección que de él se siguen, el teorema de Unsöld, los elementos de matriz del cálculo de interacción de configuraciones de parejas y la evaluación explícita de los coeficientes angulares de la configuración $np^2$. En todos los casos la parte angular se resuelve de forma analítica y la física del átomo queda contenida en integrales radiales.
+Este apéndice reúne los resultados del álgebra angular que el texto principal emplea, sin desarrollar el formalismo del que proceden. La teoría de los operadores tensoriales irreducibles y el álgebra de Racah ocupan varios capítulos del texto de \textcite{Cowan1981}, y reproducirlas excedería el alcance de este trabajo. Aquí se recogen únicamente las fórmulas con las que se construyó el motor, en el orden en que intervienen: la escritura de la repulsión coulombiana en términos de operadores tensoriales, el teorema de Wigner-Eckart con las reglas de selección que de él se siguen, el teorema de Unsöld, los elementos de matriz del cálculo de interacción de configuraciones de parejas y la evaluación explícita de los coeficientes angulares de la configuración $np^2$. En todos los casos la parte angular se resuelve de forma analítica y la física del átomo queda contenida en integrales radiales.
 
 \section{Operadores tensoriales y expansión de Laplace}
 
@@ -18,14 +18,18 @@ Sobre orbitales de la forma $\frac{P(r)}{r} Y_{lm}(\Omega)$, cada término de la
 \section{El teorema de Wigner-Eckart y las reglas de selección}
 \label{sec:wigner_eckart}
 
-Por ser $C^{(k)}$ un operador tensorial irreducible, sus elementos de matriz obedecen el teorema de Wigner-Eckart,
+Por ser $C^{(k)}$ un operador tensorial irreducible, sus elementos de matriz entre armónicos esféricos obedecen el teorema de Wigner-Eckart,
 \begin{align}
-  \mel{lm}{C_{q}^{(k)}}{l'm'} &= (-1)^{l-m} \begin{pmatrix} l & k & l' \\ -m & q & m' \end{pmatrix} \mel{l}{\|C^{(k)}\|}{l'}, \\
-  \mel{l}{\|C^{(k)}\|}{l'} &= (-1)^l \sqrt{(2l+1)(2l'+1)} \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}.
+  \mel{lm}{C_{q}^{(k)}}{l'm'} &= (-1)^{l-m} \begin{pmatrix} l & k & l' \\ -m & q & m' \end{pmatrix} \mel{l}{\|C^{(k)}\|}{l'}, \label{eq:wigner_eckart}\\
+  \mel{l}{\|C^{(k)}\|}{l'} &= (-1)^l \sqrt{(2l+1)(2l'+1)} \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}. \label{eq:reducido_Ck}
 \end{align}
-El símbolo $3j$ contiene toda la dependencia en las proyecciones magnéticas y el elemento de matriz reducido no depende de ellas, de modo que la orientación del sistema queda separada de su estructura dinámica. Las propiedades de los símbolos $3j$ imponen tres reglas de selección que truncan la suma sobre $k$: la de paridad, que exige $l + k + l'$ par; la triangular, $|l - l'| \le k \le l + l'$; y la conservación de la proyección, $m = q + m'$.
+En la Ecuación \eqref{eq:wigner_eckart}, $\ket{lm}$ denota el armónico esférico $Y_l^m$ y $q$ es la componente del tensor de rango $k$. El arreglo de dos filas entre paréntesis es un símbolo $3j$ de Wigner, y $\mel{l}{\|C^{(k)}\|}{l'}$, con doble barra, es el elemento de matriz reducido, cuyo valor da la Ecuación \eqref{eq:reducido_Ck}. El símbolo $3j$ es, salvo una fase y una normalización, el coeficiente de Clebsch-Gordan que acopla dos momentos angulares $j_1$ y $j_2$ a un tercero $j_3$ \parencite{Edmonds1957},
+\begin{equation}
+  \begin{pmatrix} j_1 & j_2 & j_3 \\ m_1 & m_2 & m_3 \end{pmatrix} = \frac{(-1)^{j_1 - j_2 - m_3}}{\sqrt{2j_3+1}}\, \braket{j_1 m_1\, j_2 m_2}{j_3\, {-m_3}},
+\end{equation}
+y se anula salvo que $m_1 + m_2 + m_3 = 0$ y que $j_1$, $j_2$ y $j_3$ satisfagan la desigualdad triangular.
 
-Para la configuración $np^2$, con $l = l' = 1$ en todos los orbitales, la regla triangular permite $k \in \{0, 1, 2\}$ y la de paridad elimina el término dipolar. La repulsión dentro de la subcapa depende entonces exactamente de dos integrales radiales, el monopolo $F^0(np,np)$ y el cuadrupolo $F^2(np,np)$, y todos los multipolos con $k > 2$ se anulan por construcción.
+El símbolo $3j$ contiene toda la dependencia en las proyecciones magnéticas y el elemento de matriz reducido no depende de ellas, de modo que la orientación del sistema queda separada de su estructura dinámica. Las propiedades de los símbolos $3j$ imponen tres reglas de selección que truncan la suma sobre $k$: la de paridad, que exige $l + k + l'$ par; la triangular, $|l - l'| \le k \le l + l'$; y la conservación de la proyección, $m = q + m'$. Para la configuración $np^2$, con $l = l' = 1$ en todos los orbitales, la regla triangular permite $k \in \{0, 1, 2\}$ y la de paridad elimina el término dipolar. La repulsión dentro de la subcapa depende entonces exactamente de dos integrales radiales, el monopolo $F^0(np,np)$ y el cuadrupolo $F^2(np,np)$, y todos los multipolos con $k > 2$ se anulan por construcción.
 
 \section{El teorema de Unsöld}
 \label{sec:unsold}
@@ -34,7 +38,7 @@ La densidad angular de una subcapa llena es esféricamente simétrica:
 \begin{equation}
     \sum_{m=-l}^{l} |Y_l^m(\theta, \phi)|^2 = \frac{2l+1}{4\pi}.
 \end{equation}
-La demostración sigue del teorema de adición, $P_l(\cos \gamma) = \frac{4\pi}{2l+1} \sum_{m} Y_l^{m*}(\Omega_1) Y_l^m(\Omega_2)$, evaluado en direcciones coincidentes: con $\Omega_1 = \Omega_2$ el ángulo entre ellas es $\gamma = 0$, y como $P_l(1) = 1$ para todo $l$, la suma de los módulos al cuadrado es la constante indicada. Esta es la propiedad que hace exacta la aproximación de campo central para las capas cerradas (Sección \ref{sec:rohf}) y la que anula el momento dipolar permanente del core en el potencial de polarización (Sección \ref{sec:cpp-muller}).
+La demostración sigue del teorema de adición, $P_l(\cos \gamma) = \frac{4\pi}{2l+1} \sum_{m} Y_l^{m*}(\Omega_1) Y_l^m(\Omega_2)$, evaluado en direcciones coincidentes: con $\Omega_1 = \Omega_2$ el ángulo entre ellas es $\gamma = 0$, y como $P_l(1) = 1$ para todo $l$, la suma de los módulos al cuadrado es la constante indicada. Esta es la propiedad que hace exacta la aproximación de campo central para las capas cerradas (Sección \ref{sec:rohf}) y la que anula el momento dipolar permanente de las capas internas en el potencial de polarización (Sección \ref{sec:cpp-muller}).
 
 \section{Elementos de matriz del cálculo de interacción de configuraciones}
 \label{sec:ci_racah}
@@ -43,21 +47,21 @@ El cálculo de interacción de configuraciones de la Sección \ref{sec:ci_method
 \begin{equation}
     \mel{ab;LS}{\hat{H}}{cd;LS} = 2 N_{ab} N_{cd} \qty[ \mel{ab}{\hat{H}}{cd}_L + (-1)^{l_c + l_d + L + S} \mel{ab}{\hat{H}}{dc}_L ],
 \end{equation}
-donde el segundo término es el de intercambio. La parte de un cuerpo, con el Hamiltoniano de core congelado $\hat{h}$ que contiene la energía cinética, la atracción nuclear, la barrera centrífuga y los operadores de Coulomb e intercambio del core, es $\mel{ab}{\hat{h}_1 + \hat{h}_2}{cd} = \delta_{bd}\mel{a}{\hat{h}}{c} + \delta_{ac}\mel{b}{\hat{h}}{d}$ para orbitales ortonormales. La parte de dos cuerpos se reduce, por el álgebra de Racah, a una suma de integrales de Slater pesadas por un símbolo $6j$,
+donde el segundo término es el de intercambio. La parte de un cuerpo, con el Hamiltoniano de capas internas congeladas $\hat{h}$ que contiene la energía cinética, la atracción nuclear, la barrera centrífuga y los operadores de Coulomb e intercambio de las capas internas, es $\mel{ab}{\hat{h}_1 + \hat{h}_2}{cd} = \delta_{bd}\mel{a}{\hat{h}}{c} + \delta_{ac}\mel{b}{\hat{h}}{d}$ para orbitales ortonormales. La parte de dos cuerpos se reduce, por el álgebra de Racah, a una suma de integrales de Slater pesadas por un símbolo $6j$,
 \begin{equation}
     \mel{ab}{\frac{1}{r_{12}}}{cd}_L = \sum_k (-1)^{l_b + l_c + L} \begin{Bmatrix} l_a & l_b & L \\ l_d & l_c & k \end{Bmatrix} \mel{l_a}{\|C^{(k)}\|}{l_c} \mel{l_b}{\|C^{(k)}\|}{l_d}\, R^k(ab,cd),
 \end{equation}
-con $k$ restringido por las reglas de selección de los dos elementos de matriz reducidos. El símbolo $6j$ codifica el acoplamiento de los dos momentos angulares al término $L$, y es el único factor que distingue entre términos de una misma pareja de orbitales.
+con $k$ restringido por las reglas de selección de los dos elementos de matriz reducidos. El arreglo entre llaves es un símbolo $6j$ de Wigner, el coeficiente que relaciona las dos maneras de acoplar tres momentos angulares \parencite{Edmonds1957}. Aparece aquí porque el operador actúa sobre los momentos angulares de cada electrón por separado, mientras que los estados los acoplan entre sí al término $L$. Es por ello el único factor que distingue entre términos de una misma pareja de orbitales.
 
 \section{Coeficientes angulares de la configuración \texorpdfstring{$np^2$}{np2}}
 \label{sec:coef_angulares_np2}
 
-Para dos electrones equivalentes de la misma subcapa la fórmula anterior se reduce a un coeficiente por multipolo. El coeficiente de parentesco fraccional de $p^2$ vale uno, porque la configuración parental $p^1$ tiene un único término, $^2P$, y no hay otro estado parental sobre el cual repartir el acoplamiento; en una configuración como $d^3$, donde el par $(L,S)$ se repite, harían falta los coeficientes completos. El coeficiente angular de la interacción coulombiana para un par de electrones equivalentes acoplados al término $L$ es
+Para dos electrones equivalentes de una misma subcapa, $a = b = c = d = nl$, la fórmula de la sección anterior se reduce a un coeficiente por multipolo. Los factores de normalización valen $N_{ab} = N_{cd} = 1/2$, y el término de intercambio coincide con el directo y lo duplica en los términos permitidos, los de $L+S$ par, de modo que el factor global es la unidad. Como además $R^k(nl\,nl, nl\,nl) = F^k(nl,nl)$, la energía de repulsión del término $L$ es $\sum_k c_k(l,L)\,F^k(nl,nl)$, con
 \begin{equation}
     \label{eq:fk_general}
-    c_k(l, l', L) = (-1)^L \begin{Bmatrix} l & l & L \\ l' & l' & k \end{Bmatrix} (2l+1)(2l'+1) \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}^2 ,
+    c_k(l, L) = (-1)^L \begin{Bmatrix} l & l & L \\ l & l & k \end{Bmatrix} (2l+1)^2 \begin{pmatrix} l & k & l \\ 0 & 0 & 0 \end{pmatrix}^2 ,
 \end{equation}
-donde el símbolo $3j$ es un factor común a todos los términos y el $6j$ contiene la geometría del acoplamiento.
+donde el símbolo $3j$ es un factor común a todos los términos y el $6j$ contiene la geometría del acoplamiento. Con solo dos electrones la función acoplada se escribe de forma explícita y la fórmula se aplica directamente; las subcapas con tres o más electrones equivalentes exigen una construcción adicional \parencite[Sección 9-5]{Cowan1981} que este trabajo no necesita.
 
 Para $p^2$ solo sobreviven $k = 0$ y $k = 2$. El monopolo tiene $c_0(L) = 1$ para los tres términos, de modo que desplaza la configuración completa sin separar nada. Para el cuadrupolo, el factor común vale $(3)(3)\,(2/15) = 6/5$, y los tres símbolos $6j$ de los términos permitidos dan
 \begin{align}

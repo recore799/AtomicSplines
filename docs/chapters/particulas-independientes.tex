@@ -3,7 +3,7 @@
 
 \section{El Problema Multielectrónico y la Aproximación del Campo Medio}
 
-El punto de partida de la física atómica computacional es la ecuación de Schrödinger independiente del tiempo para un sistema de \( N \) electrones que interactúan con un núcleo fijo de carga \( Z \). El Hamiltoniano no relativista en unidades atómicas está dado por:
+El punto de partida de la física atómica computacional es la ecuación de Schrödinger independiente del tiempo para un sistema de \( N \) electrones que interactúan con un núcleo fijo de carga \( Z \). El Hamiltoniano no relativista, en las unidades atómicas que define el Apéndice \ref{ap:unidades-atomicas}, está dado por:
 
 \begin{equation}
   \label{eq:hamiltonian-mb}
@@ -119,7 +119,7 @@ La generalización a un sistema de $N$ electrones es directa. Se demuestra \pare
   E_{ee} = \sum_{a=1}^N \sum_{b>a}^N \qty( J_{ab} - K_{ab} ).
 \end{equation}
 
-Para evaluar explícitamente $J_{ab}$ y $K_{ab}$ en un campo con simetría central, aprovechamos la separación de variables \eqref{eq:separacion_variables}, que factoriza cada orbital en su función radial reducida $P_a(r)$ y su parte angular. Recurrimos a la \textbf{Expansión de Laplace} del potencial coulómbico en armónicos esféricos \parencite{Cowan1981}:
+Para evaluar explícitamente $J_{ab}$ y $K_{ab}$ en un campo con simetría central, aprovechamos la separación de variables \eqref{eq:separacion_variables}, que factoriza cada orbital en su función radial reducida $P_a(r)$ y su parte angular. Recurrimos a la \textbf{Expansión de Laplace} del potencial coulómbico en armónicos esféricos \parencite[Sección 3.6]{Jackson1999}:
 \begin{equation}
   \frac{1}{r_{12}} = \sum_{k=0}^{\infty} \sum_{q=-k}^{k} \frac{4\pi}{2k+1} \frac{r_<^{k}}{r_>^{k+1}} Y_{kq}^*(\theta_1, \phi_1) Y_{kq}(\theta_2, \phi_2),
 \end{equation}
@@ -153,14 +153,14 @@ Bajo esta perspectiva, cada electrón satisface una ecuación de Schrödinger ef
   \hat{f} \ket{\phi_a} = \epsilon_a \ket{\phi_a}.
 \end{equation}
 
-En los textos de estructura atómica (por ejemplo \cite[Capítulo 7]{Cowan1981}), las ecuaciones de Hartree-Fock (\ref{eq:hartree-fock-eq}) se derivan minimizando el funcional de energía (\ref{eq:energy-func}) por el método variacional, y las $\epsilon_a$ aparecen como multiplicadores de Lagrange que garantizan la ortonormalidad de los orbitales. En la formulación numérica que adoptamos en este trabajo, basada en el método de elementos finitos con B-splines, abordamos en cambio la Ecuación \ref{eq:hartree-fock-eq} de manera directa, mediante el \textbf{método de residuos ponderados de Galerkin}. Proyectamos la función incógnita sobre un subespacio finito y exigimos, en su forma débil, que el residuo de la ecuación integro-diferencial sea ortogonal a las funciones de prueba.
+En los textos de estructura atómica (por ejemplo \cite[Capítulo 7]{Cowan1981}), las ecuaciones de Hartree-Fock (\ref{eq:hartree-fock-eq}) se derivan minimizando el funcional de energía (\ref{eq:energy-func}) por el método variacional, y las $\epsilon_a$ aparecen como multiplicadores de Lagrange que garantizan la ortonormalidad de los orbitales. En la formulación numérica que adoptamos en este trabajo, basada en el método de elementos finitos con B-splines, abordamos en cambio la Ecuación \ref{eq:hartree-fock-eq} de manera directa, mediante el \textbf{método de residuos ponderados de Galerkin}. Proyectamos la función incógnita sobre un subespacio finito y exigimos que el residuo de la ecuación integro-diferencial sea ortogonal a las funciones de ese subespacio.
 
-Como se demuestra en el Apéndice \ref{ap:galerkin-poisson} (Sección \ref{sec:ritz-galerkin}), por ser $\hat{f}$ un operador hermitiano la formulación débil de Galerkin y la minimización variacional de Ritz son equivalentes. Ambos caminos transforman el problema continuo en uno matricial, y la ecuación integro-diferencial de Hartree-Fock se convierte en un \textbf{problema de eigenvalores generalizado} para las energías orbitales $\epsilon_a$. Como $\hat{f}$ depende de las propias soluciones $\ket{\phi_a}$, a través de $\hat{J}$ y $\hat{K}$, el problema es no lineal y se resuelve de manera iterativa mediante un ciclo de campo autoconsistente (SCF).
+Como se muestra en la Sección \ref{sec:ritz-galerkin}, por ser $\hat{f}$ un operador hermitiano la condición de Galerkin y la minimización variacional de Ritz conducen a las mismas ecuaciones. Ambos caminos transforman el problema continuo en uno matricial, y la ecuación integro-diferencial de Hartree-Fock se convierte en un \textbf{problema de eigenvalores generalizado} para las energías orbitales $\epsilon_a$. Como $\hat{f}$ depende de las propias soluciones $\ket{\phi_a}$, a través de $\hat{J}$ y $\hat{K}$, el problema es no lineal y se resuelve de manera iterativa mediante un ciclo de campo autoconsistente (SCF).
 
 \section{Hartree-Fock Restringido de Capa Abierta y el Promedio de la Configuración}
 \label{sec:rohf}
 
-La aproximación de campo central de la Sección \ref{sec:campo_central} descansa sobre una hipótesis que conviene examinar de cerca. Por el \textbf{teorema de Unsöld}, demostrado en la Sección \ref{sec:unsold} del Apéndice \ref{ap:operadores-tensoriales}, la suma de los módulos cuadrados de los armónicos esféricos sobre todas las proyecciones de una subcapa vale la constante $(2l+1)/4\pi$, de manera que la densidad de carga de una subcapa \textit{llena} es rigurosamente esférica. El campo central no es entonces una aproximación para átomos de capa cerrada, sino una propiedad exacta dentro del esquema de Hartree-Fock. Nuestra secuencia $np^2$, en cambio, tiene dos electrones en una subcapa con capacidad para seis: esa suma queda incompleta, la densidad de valencia es anisótropa y el potencial efectivo deja de depender solo de $r$. Existen dos maneras de reconciliar esta anisotropía con un formalismo radial unidimensional, y ambas intervienen en este trabajo.
+La aproximación de campo central de la Sección \ref{sec:campo_central} descansa sobre una hipótesis que conviene examinar de cerca. Por el \textbf{teorema de Unsöld}, demostrado en la Sección \ref{sec:unsold} del Apéndice \ref{ap:operadores-tensoriales}, la suma de los módulos cuadrados de los armónicos esféricos sobre todas las proyecciones de una subcapa vale la constante $(2l+1)/4\pi$, de manera que la densidad de carga de una subcapa \textit{llena} es completamente esférica. El campo central no es entonces una aproximación para átomos de capa cerrada, sino una propiedad exacta dentro del esquema de Hartree-Fock. Nuestra secuencia $np^2$, en cambio, tiene dos electrones en una subcapa con capacidad para seis: esa suma queda incompleta, la densidad de valencia es anisótropa y el potencial efectivo deja de depender solo de $r$. Existen dos maneras de reconciliar esta anisotropía con un formalismo radial unidimensional, y ambas intervienen en este trabajo.
 
 \subsection{El promedio de la configuración}
 
@@ -171,7 +171,7 @@ Para una subcapa $l^w$ de electrones equivalentes, el promedio admite la forma c
     \label{eq:e_av_general}
     E_{\text{av}}(l^w) = \frac{w(w-1)}{2}\left[ F^0 - \frac{2l+1}{4l+1} \sum_{k>0} \begin{pmatrix} l & k & l \\ 0 & 0 & 0 \end{pmatrix}^2 F^k \right],
 \end{equation}
-que para el caso $p^2$ se reduce a
+donde el arreglo entre paréntesis es un símbolo $3j$ de Wigner, el coeficiente de acoplamiento de dos momentos angulares que se define en la Sección \ref{sec:wigner_eckart}. Para el caso $p^2$ solo contribuye $k=2$, con el símbolo al cuadrado igual a $2/15$, y la expresión se reduce a
 \begin{equation}
     \label{eq:e_av_p2}
     E_{\text{av}}(p^2) = F^0(np,np) - \frac{2}{25}F^2(np,np).
@@ -181,13 +181,15 @@ El factor combinatorio $w(w-1)/2$ determina cómo debe implementarse el promedio
 
 \subsection{Los operadores de Fock diferenciados}
 
-La segunda vía, que es la que adopta el motor de esta tesis, evita el promedio fraccionario y su corrección posterior. El esquema de \textbf{Hartree-Fock Restringido de Capa Abierta} (ROHF) conserva una única función radial por subcapa —de ahí el calificativo de restringido— pero construye un operador de Fock distinto para cada bloque de simetría angular. Para una configuración $[\text{core}]\,np^2$ se resuelven dos problemas de eigenvalores acoplados,
+La segunda vía, que es la que adopta el motor de esta tesis, evita el promedio fraccionario y su corrección posterior. El esquema de \textbf{Hartree-Fock Restringido de Capa Abierta} (ROHF) conserva una única función radial por subcapa —de ahí el calificativo de restringido— pero construye un operador de Fock distinto para cada bloque de simetría angular. Para una configuración $[\text{capas internas}]\,np^2$ se resuelven dos problemas de eigenvalores acoplados,
 \begin{align}
-    \hat{f}_c &= \hat{h} + \hat{J}_{\text{core}} - \hat{K}_{\text{core}} + \hat{J}_{np}^{\text{esf}} - \hat{K}_{np \to c}, \label{eq:fock_cerrada}\\
-    \hat{f}_p &= \hat{h} + \hat{J}_{\text{core}} - \hat{K}_{\text{core}} + (w-1)\qty( \hat{J}_{np}^{\text{intra}} - \hat{K}_{np}^{\text{intra}} ). \label{eq:fock_abierta}
+    \hat{f}_c &= \hat{h} + \hat{J}_{c} - \hat{K}_{c} + \hat{J}_{np}^{\text{esf}} - \hat{K}_{np \to c}, \label{eq:fock_cerrada}\\
+    \hat{f}_p &= \hat{h} + \hat{J}_{c} - \hat{K}_{c} + (w-1)\qty( \hat{J}_{np}^{\text{intra}} - \hat{K}_{np}^{\text{intra}} ). \label{eq:fock_abierta}
 \end{align}
 
-El operador $\hat{f}_c$ actúa sobre los orbitales del core cerrado, que perciben el campo esféricamente promediado de la valencia; al diagonalizarlo sobre una misma base radial queda garantizada de manera automática la ortogonalidad entre orbitales de igual $l$ y distinto $n$, por ser autovectores de un mismo operador hermitiano asociados a autovalores distintos. El operador $\hat{f}_p$ gobierna la subcapa abierta, y en él aparece el factor $(w-1)$ que evita el problema combinatorio descrito arriba: un electrón $np$ interactúa con los $w-1$ electrones \textit{restantes} de su propia subcapa y nunca consigo mismo. Para $np^2$ se tiene $w-1 = 1$ y el operador intracapa entra con peso unitario, sin necesidad de corrección alguna.
+En ambas expresiones $\hat{h}$ es el Hamiltoniano de un cuerpo, y $\hat{J}_{c}$ y $\hat{K}_{c}$ son los operadores de Coulomb y de intercambio de la Sección \ref{sec:fock_operator} sumados sobre las subcapas cerradas. Los dos términos restantes de la Ecuación \eqref{eq:fock_cerrada} describen lo que un orbital interno percibe de la subcapa abierta. El primero, $\hat{J}_{np}^{\text{esf}}$, es el operador de Coulomb de la densidad de los dos electrones $np$ promediada sobre los ángulos, de la que solo sobrevive el monopolo. El segundo, $\hat{K}_{np \to c}$, es el intercambio entre esos dos electrones y el orbital interno sobre el que actúa el operador, promediado sobre las orientaciones de la subcapa abierta; el subíndice indica que es la subcapa $np$ la que actúa sobre las capas internas.
+
+El operador $\hat{f}_c$ actúa así sobre los orbitales de las subcapas cerradas, que perciben el campo esféricamente promediado de la valencia; al diagonalizarlo sobre una misma base radial queda garantizada de manera automática la ortogonalidad entre orbitales de igual $l$ y distinto $n$, por ser autovectores de un mismo operador hermitiano asociados a autovalores distintos. El operador $\hat{f}_p$ gobierna la subcapa abierta, y en él aparece el factor $(w-1)$ que evita el problema combinatorio descrito arriba: un electrón $np$ interactúa con los $w-1$ electrones \textit{restantes} de su propia subcapa y nunca consigo mismo. Para $np^2$ se tiene $w-1 = 1$ y el operador intracapa entra con peso unitario, sin necesidad de corrección alguna.
 
 Las contribuciones intracapa $\hat{J}_{np}^{\text{intra}}$ y $\hat{K}_{np}^{\text{intra}}$ no son escalares. El monopolo $k=0$ entra con peso completo, mientras que el intercambio modula la componente cuadrupolar $k=2$ mediante coeficientes angulares que se obtienen del álgebra de Racah y del teorema de Wigner-Eckart, desarrollados en el Apéndice \ref{ap:operadores-tensoriales}. La construcción numérica de ambos bloques y su acoplamiento dentro del ciclo iterativo se detallan en el Capítulo \ref{ch:ciclo-scf}.
 
@@ -200,7 +202,7 @@ Resuelto el problema radial, los tres términos que la antisimetría permite se 
     E(^1S) &= E_{\text{av}} + \frac{12}{25}F^2(np,np). \label{eq:termino_1S}
 \end{align}
 
-Los coeficientes satisfacen la regla del baricentro, que sirve como verificación inmediata. Pesados por las degeneraciones $(2L+1)(2S+1)$ de cada término —nueve para $^3P$, cinco para $^1D$ y uno para $^1S$— su suma se anula, $9(-3) + 5(3) + 1(12) = 0$, como debe ocurrir si $E_{\text{av}}$ es en efecto el centro de gravedad de la configuración. De estas expresiones se desprende un hecho que el Capítulo \ref{ch:resultados} explota de manera sistemática: tanto el ordenamiento de los términos como la magnitud de sus separaciones quedan determinados por una sola cantidad radial, la integral $F^2(np,np)$.
+Los coeficientes ofrecen una verificación inmediata, la regla del baricentro o del centro de gravedad. Como $E_{\text{av}}$ se definió como la media de las energías de los términos pesada por sus degeneraciones $(2L+1)(2S+1)$, los desplazamientos de los términos respecto a $E_{\text{av}}$, pesados del mismo modo, deben sumar cero. Las degeneraciones son nueve para $^3P$, cinco para $^1D$ y uno para $^1S$, y en efecto $9(-3) + 5(3) + 1(12) = 0$. De estas expresiones se desprende un hecho que el Capítulo \ref{ch:resultados} explota de manera sistemática: tanto el ordenamiento de los términos como la magnitud de sus separaciones quedan determinados por una sola cantidad radial, la integral $F^2(np,np)$.
 
 \section{El Teorema de Koopmans}
 \label{sec:koopmans_theorem}
@@ -212,7 +214,7 @@ Bajo la aproximación de Hartree-Fock, y suponiendo que los orbitales de los ele
 \end{equation}
 \end{theorem}
 
-El teorema da una estimación de primer orden del potencial de ionización, con dos errores de signo opuesto. Al remover un electrón, el resto de la nube electrónica se relaja y la energía del ion desciende, de modo que la aproximación de orbitales congelados sobrestima el potencial de ionización. La correlación electrónica, ausente en Hartree-Fock, estabiliza más al átomo neutro que al ion, porque el neutro tiene más pares de electrones, y su omisión lo subestima. Los dos errores se compensan en parte, y el signo del error neto depende del sistema, como muestra la Tabla \ref{tab:ionizacion}.
+La demostración consiste en restar las energías de los determinantes de $N$ y de $N-1$ electrones construidos con los mismos orbitales, y puede consultarse en \textcite[Sección 3.3]{Szabo1989}. El teorema da una estimación de primer orden del potencial de ionización, con dos errores de signo opuesto. Al remover un electrón, el resto de la nube electrónica se relaja y la energía del ion desciende, de modo que la aproximación de orbitales congelados sobrestima el potencial de ionización. La correlación electrónica, ausente en Hartree-Fock, estabiliza más al átomo neutro que al ion, porque el neutro tiene más pares de electrones, y su omisión lo subestima. Los dos errores se compensan en parte, y el signo del error neto depende del sistema, como muestra la Tabla \ref{tab:ionizacion}.
 
 \section{El Teorema del Virial como Criterio de Convergencia}
 \label{sec:virial}

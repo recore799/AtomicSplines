@@ -1,21 +1,9 @@
-\chapter{Formulación de Galerkin y Ecuación de Poisson}
+\chapter{El Potencial \texorpdfstring{$Y^k$}{Yk} y la Ecuación de Poisson Radial}
 \label{ap:galerkin-poisson}
 
-Este apéndice complementa el Capítulo \ref{ch:bsplines-galerkin} con dos resultados que el texto principal emplea sin demostrar. El primero es la equivalencia entre la proyección de Galerkin y el principio variacional de Ritz, que justifica leer los autovalores del problema discreto como cotas variacionales. El segundo es la ecuación diferencial que satisface el potencial radial $Y^k$, junto con el comportamiento en los extremos del dominio del que se deducen sus condiciones de frontera.
+Este apéndice complementa los Capítulos \ref{ch:bsplines-galerkin} y \ref{ch:ciclo-scf} con una deducción que el texto principal emplea sin demostrar. La primera sección parte de la definición integral del potencial radial $Y^k$ y obtiene la ecuación diferencial local que satisface, la que discretiza la Sección \ref{subsec:poisson-metodo}. La segunda examina su comportamiento en los dos extremos del dominio, del que se deducen las condiciones de frontera que impone el ciclo autoconsistente (Sección \ref{sec:estructura-algebraica}).
 
-\section{Equivalencia entre los métodos de Ritz y Galerkin}
-\label{sec:ritz-galerkin}
-
-El método de Ritz busca los puntos estacionarios del cociente de Rayleigh $E[\tilde{\psi}] = \langle \tilde{\psi} | \hat{H} | \tilde{\psi} \rangle / \langle \tilde{\psi} | \tilde{\psi} \rangle$ dentro del espacio generado por la base. Con $|\tilde{\psi}\rangle = \sum_j c_j |B_j\rangle$, la condición $\partial E/\partial c_i^* = 0$ da
-\begin{equation}
-    \label{eq:ritz_condition}
-    \sum_{j} c_j \langle B_i | \hat{H} - E | B_j \rangle = 0, \qquad i = 1, \dots, N.
-\end{equation}
-El método de Galerkin parte en cambio del residuo $|R\rangle = (\hat{H} - E)|\tilde{\psi}\rangle$ y exige que sea ortogonal a cada función de la base, $\langle B_i | R\rangle = 0$. Por la linealidad del producto interno, esa condición es idéntica a la Ecuación \eqref{eq:ritz_condition}, y los dos caminos conducen al mismo problema generalizado de autovalores $\bm{H}\bm{c} = E\,\bm{S}\bm{c}$.
-
-La equivalencia tiene una consecuencia práctica. Para un operador hermítico acotado inferiormente, los autovalores del problema de Ritz en un subespacio son cotas superiores de los autovalores exactos, ordenados de menor a mayor, y decrecen de manera monótona al ampliar el subespacio. La formulación de Galerkin hereda esa propiedad siempre que el subespacio pertenezca al dominio del operador, es decir, siempre que sus funciones satisfagan las condiciones de frontera; el estado espurio de la Sección \ref{sec:estado_espurio} aparece precisamente cuando una función de la base viola la condición $P(0) = 0$. Otras familias de residuos ponderados, como la colocación o los mínimos cuadrados, emplean funciones de peso distintas de la base y no comparten esta interpretación variacional.
-
-\section{El potencial \texorpdfstring{$Y^k$}{Yk} y la ecuación de Poisson radial}
+\section{De la definición integral a la ecuación diferencial}
 \label{sec:interaccion-electronica}
 
 Al sustituir la expansión multipolar de $1/r_{12}$ (Sección \ref{sec:slater_integrals}) en las integrales de repulsión, toda la dependencia radial queda contenida en el potencial que genera la densidad de par $\rho_{ab}(r) = P_a(r) P_b(r)$. Siguiendo a \textcite{fischer1977}, conviene trabajar con ese potencial multiplicado por $r$,
@@ -44,7 +32,7 @@ El corchete es de nuevo $Y^k$, y se obtiene la \textbf{ecuación de Poisson radi
  \qty( -\dv[2]{r} + \frac{k(k+1)}{r^2} ) Y^k(a,b;r) = \frac{2k+1}{r}\, P_a(r) P_b(r).
 \end{equation}
 
-\subsection{Comportamiento en los extremos y condiciones de frontera}
+\section{Comportamiento en los extremos y condiciones de frontera}
 \label{sec:condiciones-frontera}
 
 Cerca del origen $\rho_{ab} \sim r^{l_a + l_b + 2}$, de modo que el primer término de la Ecuación \eqref{eq:Yk-final} se anula como $r^{l_a+l_b+3}$ mientras que el segundo, con $I_{\text{ext}}(0)$ finito, lo hace como $r^{k+1}$. Como la regla del triángulo impone $k \le l_a + l_b$, domina el segundo y $Y^k \sim r^{k+1}$: el potencial y sus primeras $k$ derivadas se anulan en el origen. En la base de B-splines esa condición se impone eliminando los primeros $k+1$ splines del espacio de prueba (Sección \ref{sec:estructura-algebraica}).
@@ -57,7 +45,8 @@ Lejos del átomo la densidad decae exponencialmente, $I_{\text{ext}} \to 0$ e $I
 En la forma débil, la integración por partes deja en $R_{\text{max}}$ un término de borde que la Ecuación \eqref{eq:bc-robin} convierte en
 \begin{equation}
  -B_i(R_{\text{max}})\, \dv{Y^k}{r}\bigg|_{R_{\text{max}}} = \frac{k}{R_{\text{max}}}\, B_i(R_{\text{max}})\, Y^k(R_{\text{max}}).
-\end{equation} Como solo el último spline es no nulo en $R_{\text{max}}$, la condición suma $k/R_{\text{max}}$ al último elemento diagonal de la matriz del operador, que conserva su simetría y su carácter definido positivo. Para el monopolo la condición se reduce a la de Neumann, $Y^{0\prime}(R_{\text{max}}) = 0$, consistente con el límite constante $Y^0 \to M_0$.
+\end{equation}
+Como solo el último spline es no nulo en $R_{\text{max}}$, la condición suma $k/R_{\text{max}}$ al último elemento diagonal de la matriz del operador, que conserva su simetría y su carácter definido positivo. Para el monopolo la condición se reduce a la de Neumann, $Y^{0\prime}(R_{\text{max}}) = 0$, consistente con el límite constante $Y^0 \to M_0$.
 
 %%% Local Variables:
 %%% mode: LaTeX

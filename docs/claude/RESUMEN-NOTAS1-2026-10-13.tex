@@ -1,0 +1,422 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noquoting,es-tabla]{babel}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{booktabs,longtable,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,urlcolor=teal]{hyperref}
+\spanishdecimal{.}
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlist{itemsep=0.2em,topsep=0.3em}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\tuyo}{\textit{Ejercicio tuyo.}}
+\newcommand{\arch}[1]{\texttt{\small #1}}
+
+\title{Primera revisada de \texttt{observaciones.org}: qué cambió en el manuscrito\\[0.3em]
+\large Partes 1 y 2 y apéndices, antes de revisar la Parte 3}
+\author{}
+\date{13 de octubre de 2026 \quad$\cdot$\quad commit \texttt{4884661} en \texttt{main} (ya en \texttt{origin})}
+
+\begin{document}
+\maketitle
+\vspace{-2.5em}
+
+\section*{Estado}
+
+Todas las observaciones de \arch{docs/revision/observaciones.org} sobre las Partes 1 y 2 y los apéndices están
+aplicadas, confirmadas y subidas. El manuscrito compila sin referencias rotas y con una sola caja
+desbordada, de 0.5 pt, que ya existía. Tiene \textbf{83 páginas} (antes 80; el desglose está en la
+Sección \ref{sec:paginas}). Los 25 resultados \arch{.jld2} siguen coincidiendo con el manifiesto, y
+la etapa 3 regenerada solo cambió un encabezado de tabla y agregó un bloque a
+\arch{valores\_texto.md}.
+
+Los números de sección, ecuación y página de este documento son los del PDF actual
+(\arch{docs/main.pdf}). El orden de lectura que sugiero es la Sección \ref{sec:saber}, que reúne lo
+que no estaba en tus notas o lo que resolví de otra manera, y después la
+Sección \ref{sec:registro}, que recorre tus notas una por una.
+
+\tableofcontents
+
+%======================================================================
+\section{Lo que debes saber antes de revisar}
+\label{sec:saber}
+
+\subsection{El código escala las matrices de Breit-Pauli y el texto no lo decía}
+
+Al verificar de dónde salen los factores de las matrices encontré que la rutina que las ensambla
+(\arch{breit\_pauli\_levels} en \arch{np2\_ci\_full.jl}) no usa $\zeta_{np}$ a secas. Multiplica
+cada elemento de espín-órbita por los coeficientes de la configuración $np^2$ en los términos
+correlacionados que conecta:
+\[
+\bm{H}(J{=}0)=\begin{pmatrix} E(^3P)-\zeta\,C_{^3P}^2 & \sqrt2\,\zeta\,C_{^3P}C_{^1S}\\[2pt]
+\sqrt2\,\zeta\,C_{^3P}C_{^1S} & E(^1S)\end{pmatrix},\qquad
+\bm{H}(J{=}2)=\begin{pmatrix} E(^3P)+\tfrac12\zeta\,C_{^3P}^2 & -\tfrac{1}{\sqrt2}\zeta\,C_{^3P}C_{^1D}\\[2pt]
+-\tfrac{1}{\sqrt2}\zeta\,C_{^3P}C_{^1D} & E(^1D)\end{pmatrix},
+\]
+y $E(^3P_1)=E(^3P)-\tfrac12\zeta\,C_{^3P}^2$. Equivale a evaluar el espín-órbita solo dentro de
+$np^2$ y despreciar el de las configuraciones excitadas.
+
+\begin{center}
+\begin{tabular}{lcccccc}
+\toprule
+ & $C(^3P)$ & $C(^1D)$ & $C(^1S)$ & $C_{^3P}^2$ & $C_{^3P}C_{^1D}$ & $C_{^3P}C_{^1S}$\\
+\midrule
+Carbono & 0.9976 & 0.9942 & 0.9830 & 0.9952 & 0.9918 & 0.9806\\
+Silicio & 0.9950 & 0.9911 & 0.9757 & 0.9901 & 0.9861 & 0.9708\\
+Germanio & 0.9962 & 0.9916 & 0.9778 & 0.9924 & 0.9879 & 0.9741\\
+Germanio ($\alpha_d=0.75$) & 0.9964 & 0.9920 & 0.9787 & 0.9928 & 0.9884 & 0.9751\\
+Estaño & 0.9960 & 0.9906 & 0.9772 & 0.9921 & 0.9867 & 0.9733\\
+Estaño ($\alpha_d=3.0$) & 0.9962 & 0.9911 & 0.9786 & 0.9925 & 0.9874 & 0.9749\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+El efecto es pequeño: la diagonal del triplete se reduce entre un 0.5\,\% y un 1\,\%, y los
+elementos fuera de la diagonal hasta un 3\,\%. \textbf{Qué hice:} un párrafo nuevo en la
+Sección 5.3.1 (pág.~39) que lo dice con esos números, y un bloque nuevo en
+\arch{valores\_texto.md} que los genera la etapa 3. No toqué la física ni ningún resultado. Las
+matrices del Capítulo 3 (Ecuaciones 3.7 a 3.9) siguen escritas con $\zeta_{np}$ sin el factor,
+como forma de la configuración pura; si prefieres que el factor aparezca ya ahí, es un cambio de
+dos líneas.
+
+\subsection{De dónde salen los factores de las matrices (Sección 3.3.1)}
+
+Era la observación que no sabías cómo resolver. La resolví con una identidad, que ahora es la
+Ecuación (3.6):
+\[
+\hat H_{SO}=\zeta_{np}\,(\mathbf l_1\!\cdot\!\mathbf s_1+\mathbf l_2\!\cdot\!\mathbf s_2)
+=\frac{\zeta_{np}}{2}\,\mathbf L\!\cdot\!\mathbf S
++\frac{\zeta_{np}}{2}\,(\mathbf l_1-\mathbf l_2)\!\cdot\!(\mathbf s_1-\mathbf s_2).
+\]
+Se comprueba expandiendo: $(\mathbf l_1+\mathbf l_2)\cdot(\mathbf s_1+\mathbf s_2)+(\mathbf
+l_1-\mathbf l_2)\cdot(\mathbf s_1-\mathbf s_2)=2\,\mathbf l_1\!\cdot\!\mathbf s_1+2\,\mathbf
+l_2\!\cdot\!\mathbf s_2$.
+
+\begin{itemize}
+\item \textbf{Diagonal.} El primer sumando es diagonal en $|LSJ\rangle$, con
+$\mathbf L\cdot\mathbf S=\tfrac12[J(J+1)-L(L+1)-S(S+1)]$. En el $^3P$ ($L=S=1$) vale $-2,-1,+1$
+para $J=0,1,2$, que por $\zeta/2$ da $-\zeta$, $-\zeta/2$ y $+\zeta/2$. En los singletes es cero
+porque $S=0$. De aquí sale también la constante de Landé $A=\zeta/2$.
+\item \textbf{Fuera de la diagonal.} El segundo sumando cambia de signo al intercambiar los
+espines, y también al intercambiar las coordenadas orbitales. Por eso se anula dentro de cada
+término y solo conecta un singlete con un triplete ($^3P_0\leftrightarrow{}^1S_0$ y
+$^3P_2\leftrightarrow{}^1D_2$).
+\item \textbf{Los valores} $\sqrt2\,\zeta$ y $-\zeta/\sqrt2$ los da el álgebra de Racah. Los
+confirmé corriendo \arch{check\_so\_matrix\_elements.jl}, que ya estaba en el repositorio y los
+calcula con símbolos $6j$: salen $-1$, $+1.4142$, $-0.5$, $+0.5$ y $-0.7071$ en unidades de $\zeta$.
+\item \textbf{El signo} de los elementos fuera de la diagonal es convención de fases. Otros textos
+los escriben con el signo contrario; ni los eigenvalores ni los pesos de mezcla cambian.
+\end{itemize}
+
+La verificación con el límite $jj$ que ya estaba en el texto se conserva, y ahora es una
+comprobación independiente de esos valores.
+
+\subsection{Matrices banda y \texttt{LinearAlgebra}: lo que proponías no es cierto}
+
+Sugerías decir que la estructura de banda sigue siendo una ventaja para la biblioteca general
+aunque no se explote. No lo es: el motor guarda las matrices en arreglos densos y llama a rutinas
+densas de LAPACK, que no detectan ni aprovechan la banda. Lo que sí es cierto, y es lo que escribí
+en la Sección 4.1.2, es que la localidad se aprovecha \emph{al construir} las matrices: en cada
+intervalo solo hay $p+1$ funciones no nulas y las integrales se ensamblan intervalo por intervalo,
+con un costo lineal en el número de funciones (lo comprobé en \arch{assemble\_geometry}).
+
+\subsection{Coeficientes angulares sin parentesco fraccional (Apéndice B.5)}
+
+Era la otra observación abierta. El parentesco fraccional no hace falta para dos electrones, así
+que lo quité en vez de explicarlo. La fórmula de la Sección B.4, con $a=b=c=d=nl$, da directamente
+el coeficiente: las normas valen $N_{ab}=N_{cd}=1/2$, el intercambio duplica al término directo
+cuando $L+S$ es par, y el factor global $2\cdot\tfrac14\cdot2$ es la unidad. Queda la
+Ecuación (B.9),
+\[
+c_k(l,L)=(-1)^L\begin{Bmatrix} l&l&L\\ l&l&k\end{Bmatrix}(2l+1)^2
+\begin{pmatrix} l&k&l\\0&0&0\end{pmatrix}^2 ,
+\]
+que antes estaba escrita con $l$ y $l'$ distintos, una generalidad que no se usaba ni se
+justificaba. Las subcapas con tres o más electrones equivalentes quedan en una sola frase, con
+cita a Cowan (Sección 9-5), sin nombrar el parentesco fraccional.
+
+\subsection{El apéndice de Galerkin cambió de nombre y de contenido}
+
+El Apéndice D ahora se llama \emph{El potencial $Y^k$ y la ecuación de Poisson radial} y pasó de
+tres páginas a dos. La equivalencia con Ritz subió al cuerpo, como Sección 4.2.2 nueva (pág.~30),
+porque es donde se usa y ocupa dos párrafos. Ahí queda explicado \emph{acotado inferiormente}
+(el espectro tiene un valor mínimo, como el Hamiltoniano atómico) y van las dos referencias que
+pedías: MacDonald (1933) para las cotas superiores y Finlayson (1972) para los otros métodos de
+residuos ponderados. El apéndice dice ahora que complementa los Capítulos 4 y 5.
+
+\subsection{El estado espurio salió del Apéndice C, pero la limitación sigue en la Sección 6.5.4}
+
+Retiré la sección como pediste y la guardé íntegra en
+\arch{docs/chapters/\_borradores/estado-espurio-ci.tex}, lista para tu documento de detalles.
+Lo que no quité es el párrafo de la Sección 6.5.4 (pág.~56), que dice que los virtuales $s$ del CI
+solapan con los orbitales $s$ internos hasta $3.6\times10^{-2}$ y que eso puede afectar a los
+singletes. Es Parte 3 y es una reserva honesta sobre un resultado; decide al revisarla si se queda.
+Mi recomendación es dejarla: es un párrafo y evita que la pregunta llegue en el examen.
+
+\subsection{Capítulo 5: paginación y figura de C-DIIS}
+
+La secuencia quedó como la describiste: la primera página del capítulo (pág.~33) llena, el
+diagrama SCF solo en la segunda (pág.~34) y \emph{El algoritmo procede de la siguiente manera} al
+inicio de la tercera (pág.~35). Para llenar la primera página agregué un párrafo de tres oraciones
+que presenta el diagrama. El salto se fuerza con un \verb|\clearpage|, y dejé un comentario en el
+\arch{.tex}: si cambia el texto anterior hay que comprobar en el PDF que la primera página siga
+llena.
+
+Subí al cuerpo solo la \emph{figura} de convergencia (ahora Figura 5.2, pág.~37), con tres
+oraciones que describen sus tramos. En tu nota escribiste una vez \emph{tabla E.1}; la Tabla E.1
+(iteraciones con y sin C-DIIS) se quedó en el Apéndice E.4 con su discusión. Si también la quieres
+en la Sección 5.1.2, dímelo.
+
+\subsection{Terminología: capas internas y triplete}
+
+Me pediste cambiar \emph{core} por \emph{núcleo}. Te consulté porque el texto ya usa
+\emph{núcleo} unas 46 veces para el núcleo atómico, y elegiste \textbf{capas internas}. Reescribí
+las cerca de 75 apariciones frase por frase: \emph{capas internas congeladas}, \emph{polarización de las
+capas internas}, \emph{orbitales internos}, \emph{electrones internos}, \emph{capas $p$ internas}.
+La definición está en la Sección 1.2 e incluye la subcapa $ns^2$. \emph{Core} solo sobrevive ahí
+como equivalente en inglés y en el nombre \emph{Core Polarization Potential}. En las fórmulas,
+$\hat J_{\text{core}}$ pasó a $\hat J_c$ y las sumas van sobre \emph{internos}.
+
+También unifiqué \textbf{triplete} (antes convivían 45 \emph{tripleto} con 3 \emph{triplete}).
+Ambos cambios alcanzan a la Parte 3.
+
+\subsection{Lo que toqué en la Parte 3, que aún no revisas}
+
+\begin{itemize}
+\item \textbf{Sección 6.4.1.} La frase decía que las capas internas del carbono y del silicio son
+$1s^2$ y $[\mathrm{Ne}]$, lo que contradice la definición (incluyen $ns^2$). Ahora dice que las del
+germanio y el estaño contienen una subcapa $d^{10}$ polarizable y que las del carbono y el silicio,
+sin subcapas $d$, son compactas.
+\item \textbf{Sección 7.3.} \emph{Declarado en la Sección 1.1} pasó a \emph{declarado en el
+Prólogo}, porque quitaste del planteamiento la oración sobre el propósito formativo.
+\item \textbf{Secciones 6.5.2 y 6.5.4.} Las dos referencias a la sección retirada del estado
+espurio apuntan ahora a la 6.5.4 o desaparecieron.
+\item El resto son solo los reemplazos de terminología.
+\end{itemize}
+
+\subsection{Figura 4.3 regenerada, ahora con generador}
+
+La figura no tenía script. Escribí
+\arch{benchmarks/np2\_sequence/tesis/figura\_comparacion\_mallas.jl}, que dibuja la base que
+construye el propio motor, con $\gamma=4$. Ese es además el valor real de la malla del estaño
+(Tabla C.1), y la leyenda lo dice. Conserva el estilo de la anterior: quince intervalos, splines
+cúbicos, $R=20$.
+
+%======================================================================
+\section{Registro, observación por observación}
+\label{sec:registro}
+
+Sigue el orden de \arch{observaciones.org}. Los ejercicios los dejé como tuyos y no cambié el texto por
+ellos, salvo donde se indica; anoto una pista cuando verifiqué algo al pasar.
+
+\small
+\begin{longtable}{L{4.1cm}L{9.0cm}L{2.1cm}}
+\toprule
+\textbf{Observación} & \textbf{Qué se hizo} & \textbf{Dónde}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+\multicolumn{3}{l}{\textbf{Introducción}}\\
+Oración quitada del planteamiento & Tu cambio se conserva. Corregí una coma que quedó entre verbo y objeto (\emph{conservan, en todos los elementos, errores}). & 1.1, 1.3\\
+¿Qué cinco niveles? ¿El triplete? & La Sección 1.2 nueva enumera los tres términos y los cinco niveles, y define \emph{triplete}, \emph{singletes} e \emph{intervalos del triplete}. La 1.3 remite a ella y aclara \emph{abre el triplete de más}. & 1.2, 1.3\\
+Por qué se divide en partes & Párrafo nuevo: tres preguntas (qué ecuaciones, cómo se resuelven, qué producen), y la división separa la física de su discretización. Los capítulos se presentan agrupados por parte. & 1.4\\
+\midrule
+\multicolumn{3}{l}{\textbf{Parte 1, Capítulo 2}}\\
+Referencia al Apéndice A en unidades atómicas & Hecho. & 2.1\\
+Ej.: cambios de variable del Hamiltoniano & \tuyo{} Pista: el Apéndice A lo resume ($\bm r=a_0\bm r'$; cinética y Coulomb adquieren el mismo factor $E_h$). & --\\
+Notación espectroscópica antes de usarla & Moví la antigua Sección 3.1 al Capítulo 1, que es donde primero se necesita (la 1.3 ya habla de niveles y triplete). Resuelve también tu nota \emph{para pensar} sobre los términos en el Capítulo 2. & 1.2\\
+Ej.: cancelación de la primera derivada & \tuyo{} Pista: la parte radial del laplaciano aplicada a $P/r$ da $P''/r$; la afirmación del texto es correcta. & --\\
+Laplace: citar a Jackson & Hecho, con sección. Entrada nueva en la bibliografía. & 2.5\\
+Ej.: ¿cómo muestro que $\hat f$ es efectivo? & \tuyo{} Pista: al variar $E$ respecto a un orbital con la restricción de ortonormalidad queda $\hat f\phi_a=\epsilon_a\phi_a$ (Cowan, cap.~7; Szabo, sec.~3.2). & --\\
+Primera aparición del símbolo $3j$ & Una frase tras la Ecuación (2.18) dice qué es, remite a B.2 y da el valor para $p^2$ ($k=2$, cuadrado $2/15$). & 2.7.1\\
+Ej.: último párrafo de la sección & \tuyo{} (Es el conteo de pares: $15\times(1/3)^2=5/3$ frente a un par físico.) & --\\
+¿Qué es $\hat K_{np\to c}$ en (2.20)? & Párrafo nuevo que define cada término de (2.20): $\hat J_c$, $\hat K_c$, $\hat J^{\text{esf}}_{np}$ (Coulomb de la densidad $np$ promediada en ángulos; solo el monopolo) y $\hat K_{np\to c}$ (intercambio de la subcapa abierta sobre un orbital interno, promediado sobre orientaciones). Verificado contra \arch{silicon\_rohf.jl}. & 2.7.2\\
+¿Qué es la regla del baricentro? & Reescrito: como $E_{\text{av}}$ es la media pesada por degeneración, los desplazamientos pesados igual deben sumar cero. & 2.7.3\\
+Koopmans: referencia a Szabo & Hecho, con una frase que dice en qué consiste la demostración. & 2.8\\
+Ej.: demostración de Koopmans; del virial & \tuyo{} La del virial por escalamiento ya está completa en la Sección 2.9. & --\\
+\midrule
+\multicolumn{3}{l}{\textbf{Parte 1, Capítulo 3}}\\
+Reglas de Hund sin definir & No fue al apéndice: las tres reglas quedan enunciadas en el mismo párrafo que las usaba, con cita a Cowan. Añadí una precisión: solo garantizan el estado fundamental; el orden $^1D<{}^1S$ sale de las Ecuaciones (2.22) a (2.24). & 3.1\\
+¿En qué parte de Cowan viene la estructura fina? & Sección 3-7 (correcciones relativistas de un electrón), 10-4 (elementos de espín-órbita de dos electrones) y 10-6 (acoplamiento intermedio). Cité las dos primeras. & 3.2, 3.3.1\\
+Referencia al \emph{Zitterbewegung} & Foldy y Wouthuysen (1950). & 3.2\\
+Ej.: por qué sale $\alpha$ & \tuyo{} Pista: en unidades atómicas $c=1/\alpha$ (Apéndice A), así que $(v/c)^2\sim(Z\alpha)^2$. & --\\
+No entiendo cómo deja de ser fiable la serie perturbativa & Reescrito: la serie es en potencias de $\zeta/\Delta$; si $\zeta\ll\Delta$ basta el primer término, y si son comparables los órdenes superiores no son pequeños. Diagonalizar el bloque equivale a sumar la serie. & 3.3\\
+De dónde salen los factores de las matrices & Ver la Sección 1.2 de este documento. & 3.3.1\\
+Ej.: qué significa que un operador conserve algo & Precisado en el texto: conmuta con $\hat J^2$ y no tiene elementos de matriz entre estados de distinto $J$. & 3.3.1\\
+¿Por qué una combinación lineal recupera correlación? & Párrafo nuevo con dos razones: la variacional (HF está en el espacio ampliado, el mínimo no puede subir) y la física (la amplitud pasa a depender de la posición relativa de los electrones). & 3.4\\
+Ej.: por qué $V_{\text{pol}}$ solo en Ge y Sn & \tuyo{} Está en la Sección 6.4.1. & --\\
+\midrule
+\multicolumn{3}{l}{\textbf{Parte 2, Capítulo 4}}\\
+Ej.: soporte compacto topológico & \tuyo{} Sí coinciden: la clausura de $\{B_i\neq0\}$ es $[t_i,t_{i+p+1}]$, cerrado y acotado. & --\\
+Sección de de Boor con Runge & Capítulo II, \emph{Limitations of Polynomial Approximation}. Quité además la mención duplicada del fenómeno. & 4.1.2\\
+Matrices banda y \texttt{LinearAlgebra} & Ver la Sección 1.3 de este documento. & 4.1.2\\
+Ej.: derivadas de los B-splines & \tuyo{} La fórmula está en el Apéndice C.1. & --\\
+Figura 4.3 con $\gamma$ más alto & Regenerada con $\gamma=4$ y con generador. & Fig.~4.3\\
+\midrule
+\multicolumn{3}{l}{\textbf{Parte 2, Capítulo 5}}\\
+\emph{Si difiere de la de la iteración} & No lo toqué, como pediste. No es errata: es \emph{difiere de la [energía] de la iteración anterior}. & 5.1\\
+Ej.: level shifting & \tuyo{} & --\\
+\emph{Emplean} $\to$ \emph{necesitan} & La Sección 5.1.1 dice ahora que en Ge y Sn el ciclo simple no converge, que en tus pruebas oscila indefinidamente y que fue necesario el desplazamiento. En E.4, \emph{requieren}. & 5.1.1, E.4\\
+Ecuación (5.4) \emph{sacada de la manga} & La revisión a fondo queda para después, como dijiste. Agregué una frase que dice de dónde sale; la deducción está en la Sección \ref{sec:respuestas} de este documento. & 5.1.2\\
+Costo cuadrático de Poisson & Reescrito: cada sustitución triangular hace un producto escalar por fila ($\sim N^2$ operaciones); factorizar crece como $N^3$ y se paga una vez por multipolo. & 5.2.1\\
+\emph{Formulación débil} como muletilla & Definida una sola vez en la Sección 4.2.1, por contraste con la forma fuerte. Quité las dos menciones del Capítulo 2, anteriores a la definición. & 4.2.1, 2.6\\
+¿Qué es un canal? & Definido en 5.3.1: el conjunto de orbitales de un mismo $l$. En la Sección 5.1.2, donde significaba otra cosa, ahora dice \emph{bloque}. & 5.3.1, 5.1.2\\
+\midrule
+\multicolumn{3}{l}{\textbf{Notas generales}}\\
+\emph{Core} $\to$ \emph{núcleo} & Quedó \emph{capas internas}, por tu elección. & todo\\
+Para tu asesor: tabla de parámetros de la malla & Sin cambios: sigue en el Apéndice C (Tabla C.1). El Capítulo 4 ya la cita en 4.1.3 y en la leyenda de la Figura 4.3. & C.1\\
+\midrule
+\multicolumn{3}{l}{\textbf{Apéndices}}\\
+B: recalcar que solo reúne resultados & La introducción lo dice: el formalismo ocupa varios capítulos de Cowan y aquí van solo las fórmulas con que se construyó el motor. & B\\
+B: decir qué es cada cosa en (B.3) & Hecho: $|lm\rangle$, $q$, símbolo $3j$ (definido por Clebsch-Gordan en la Ecuación B.5, con Edmonds) y elemento de matriz reducido. También definí el $6j$ en B.4. & B.2, B.4\\
+B: coeficientes angulares & Ver la Sección 1.4 de este documento. & B.5\\
+C.2: redacción y \emph{parámetro de tipo} & \emph{Calcula de una vez los $k$ splines activos en ese intervalo}. El parámetro de tipo va en cursiva con su nombre en inglés, como mecanismo de Julia y decisión de implementación. & C.2\\
+C: estado espurio & Retirado y archivado. Ver la Sección 1.6. & C\\
+D: ¿complementa 4 y 5? & Sí; la introducción lo dice ahora. & D\\
+D: referencias y nombre & Ver la Sección 1.5 de este documento. & D, 4.2.2\\
+E: Gauss-Legendre & \tuyo{} & --\\
+E: figura E.1 al cuerpo y diagrama SCF & Ver la Sección 1.7 de este documento. & 5.1, 5.1.2\\
+¿Qué significa \emph{tiempo de pared}? & Es el calco de \emph{wall-clock time}. Ahora dice \emph{tiempo de ejecución}, aclarado una vez como tiempo real transcurrido; también en el encabezado de la Tabla E.4 (generador de la etapa 3). & E.5\\
+\end{longtable}
+\normalsize
+
+%======================================================================
+\section{Citas nuevas que hay que verificar con el libro a la vista}
+
+\begin{center}
+\begin{tabular}{L{5.6cm}L{5.4cm}L{4.0cm}}
+\toprule
+\textbf{Cita} & \textbf{Para qué} & \textbf{Qué tan firme}\\
+\midrule
+Jackson (1999), Sección 3.6 & Expansión de Laplace (2.5) & Sección de memoria\\
+Szabo y Ostlund, Sección 3.3 & Demostración de Koopmans (2.8) & Sección de memoria\\
+Cowan, Sección 3-7 & Correcciones relativistas de un cuerpo (3.2) & Título en el índice\\
+Cowan, Sección 4-16 & Reglas de Hund (3.1) & Título en el índice\\
+Cowan, Sección 10-4 & Elementos de espín-órbita de dos electrones (3.3.1) & Título en el índice\\
+Cowan, Sección 9-5 & Parentesco fraccional (B.5) & Título en el índice\\
+de Boor, Capítulo II & Fenómeno de Runge (4.1.2) & Título en el índice\\
+Edmonds (1957), sin capítulo & Símbolos $3j$ y $6j$ (B.2, B.4) & Ya estaba en la bibliografía; primera cita\\
+Foldy y Wouthuysen (1950) & \emph{Zitterbewegung} (3.2) & Datos de memoria\\
+MacDonald (1933) & Cotas de Ritz (4.2.2) & Datos de memoria\\
+Finlayson (1972) & Residuos ponderados (4.2.2) & Datos de memoria\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Título en el índice} quiere decir que confirmé el número y el título de la sección contra el
+índice publicado del libro, no contra su contenido. \emph{De memoria} quiere decir que los datos
+bibliográficos o la sección los escribí sin la fuente delante. Siguen pendientes, de la revisión
+del 9 de octubre, Pulay (1980, 1982) y Cowan como respaldo de los términos de dos cuerpos.
+
+Sobre Finlayson: es la referencia clásica para la afirmación, pero probablemente no es el libro
+que viste en la biblioteca, que presentaba cuatro o cinco métodos. Los candidatos más comunes son
+Reddy (\emph{An Introduction to the Finite Element Method}) y Zienkiewicz. Si lo identificas, es
+mejor citar el que consultaste.
+
+%======================================================================
+\section{Respuestas a tus preguntas directas}
+\label{sec:respuestas}
+
+\paragraph{La Ecuación (5.4).} Sale en dos líneas. El autovector cumple
+$\bm F_{np}\bm v=\epsilon\,\bm S\bm v$, y el orbital ortogonalizado es
+$\bm c_{np}=N\big(\bm v-\sum_c s_c\,\bm c_c\big)$ con $s_c=\bm c_c^{T}\bm S\bm v$. Entonces
+\[
+(\bm F_{np}-\epsilon\bm S)\,\bm c_{np}
+=N\underbrace{(\bm F_{np}-\epsilon\bm S)\bm v}_{=\,0}-N\sum_c s_c\,(\bm F_{np}-\epsilon\bm S)\,\bm c_c
+=\sum_c a_c\,(\epsilon\bm S-\bm F_{np})\,\bm c_c ,\qquad a_c=N s_c ,
+\]
+que es la ecuación. Cada $a_c$ es proporcional al solapamiento que Gram-Schmidt elimina, y la suma
+está vacía en el carbono porque no tiene orbitales $p$ internos.
+
+\paragraph{Costo cuadrático.} No es acceso a memoria. Resolver $\bm L\bm z=\bm b$ con $\bm L$
+triangular densa exige, para la fila $i$, un producto escalar de longitud $i$: en total del orden
+de $N^2/2$ multiplicaciones por sustitución. La factorización de Cholesky cuesta del orden de
+$N^3/6$. La comparación del texto era correcta; lo que faltaba era decir por qué.
+
+\paragraph{Operador hermítico acotado inferiormente.} Existe una constante $c$ tal que
+$\langle\psi|\hat H|\psi\rangle\ge c\,\langle\psi|\psi\rangle$ para todo $\psi$ del dominio. Es
+decir, el espectro tiene un mínimo. Hace falta para que los eigenvalores de Ritz sean cotas
+superiores ordenadas; sin esa condición el estado más bajo del subespacio no acota nada.
+
+\paragraph{Soporte compacto.} El soporte topológico es la clausura del conjunto donde la función
+no se anula. Para $B_i^p$ es $[t_i,t_{i+p+1}]$, cerrado y acotado, y por tanto compacto en
+$\mathbb R$. Las dos nociones coinciden; el intervalo semiabierto del texto es solo la convención
+para evaluar en los nudos.
+
+\paragraph{¿Son usuales las referencias en los apéndices?} Sí, se citan igual que en el cuerpo.
+
+\paragraph{Tabla de parámetros de la malla.} Si tu asesor la quiere en el Capítulo 4, es mover el
+entorno \texttt{table} de \arch{appendices/bsplines.tex} a la Sección 4.1.3. Costaría unas seis
+líneas en un capítulo que ya creció una página.
+
+%======================================================================
+\section{Páginas}
+\label{sec:paginas}
+
+\begin{center}
+\begin{tabular}{lccl}
+\toprule
+ & \textbf{Antes} & \textbf{Ahora} & \textbf{Causa}\\
+\midrule
+Preliminares (índices) & 4 & 5 & El índice de figuras desborda tres líneas\\
+Prólogo & 1 & 1 & Sin cambio\\
+Capítulo 1 & 3 & 3 & Recibió la notación; recorté la estructura\\
+Capítulo 2 & 9 & 10 & Definiciones nuevas; la última página tiene 12 líneas\\
+Capítulo 3 & 8 & 8 & Cedió la notación, ganó Hund, matrices y CI\\
+Capítulo 4 & 7 & 8 & Forma débil y equivalencia con Ritz\\
+Capítulo 5 & 8 & 9 & Figura de C-DIIS y página del diagrama\\
+Capítulos 6 y 7 & 17 & 17 & Sin cambio\\
+Apéndices A, B, C & 8 & 8 & Sin cambio\\
+Apéndice D & 3 & 2 & Cedió la equivalencia con Ritz\\
+Apéndice E & 7 & 7 & Cedió la figura; la última página tiene 10 líneas\\
+Partes y bibliografía & 5 & 5 & Sin cambio\\
+\midrule
+\textbf{Total} & \textbf{80} & \textbf{83} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Corrección a lo que te dije en el chat:} escribí que las tres páginas de más venían de los
+Capítulos 2, 4 y 5. La cuenta completa es $+1$ en cada uno de esos tres, $-1$ en el Apéndice D y
+$+1$ en los preliminares.
+
+Hay dos páginas baratas de recuperar si el largo te preocupa:
+\begin{itemize}
+\item \textbf{Índice de figuras.} Desborda por las leyendas largas de las Figuras 4.3 y 5.2, que
+escribí yo. Con una leyenda corta opcional, \verb|\caption[corta]{larga}|, vuelve a una página.
+Es un cambio de dos líneas que no altera el texto.
+\item \textbf{Apéndice E.} Le sobran diez líneas en la última página.
+\end{itemize}
+El Capítulo 2 necesitaría recortar doce líneas de prosa.
+
+%======================================================================
+\section{Pendientes y decisiones tuyas}
+
+\begin{enumerate}
+\item \textbf{Revisar la Parte 3} (Capítulos 6 y 7), con los cambios de la Sección 1.9 a la vista.
+\item \textbf{Sección 6.5.4:} si se queda la limitación de los virtuales $s$ ahora que el
+apéndice ya no la respalda.
+\item \textbf{Matrices del Capítulo 3:} si deben mostrar ya el factor de los coeficientes CI, o si
+basta el párrafo de la Sección 5.3.1.
+\item \textbf{Tabla E.1:} si también sube a la Sección 5.1.2.
+\item \textbf{Citas:} verificar las de la Sección 3 de este documento e identificar el libro de
+elementos finitos.
+\item \textbf{Ecuación (5.4) y Sección 5.1.2:} tu revisión de la extrapolación de Pulay.
+\item \textbf{Páginas:} si recupero las dos baratas.
+\item \textbf{Para tu asesor:} la tabla de parámetros de la malla está en el Apéndice C.
+\end{enumerate}
+
+\subsection*{Archivos del commit}
+
+Catorce \arch{.tex} y la bibliografía en \arch{docs/}; \arch{etapa3\_tablas.jl} (encabezado
+\emph{Tiempo de ejecución} y bloque de coeficientes $np^2$); las dos salidas regeneradas en
+\arch{docs/tablas/}; el generador y el PDF de la Figura 4.3; \arch{benchmarks/README.md}; el
+borrador archivado del estado espurio; y \arch{docs/revision/observaciones.org}.
+
+\end{document}

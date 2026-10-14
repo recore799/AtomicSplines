@@ -254,14 +254,10 @@ El paper de Foldy & Wouthuysen parece que no tiene explicitamente el fenomeno de
 
 **** TODO Reducir la explicación perturbativa del acoplamiento intermedio
 
-Aun no me convence lo de explicar el acoplamiento intermedio usando teoria de perturbaciones. Ese
-parrafo de
+Aun no me convence lo de explicar el acoplamiento intermedio usando teoria de perturbaciones. Ese parrafo de
 
 #+begin_quote
-La teoría de perturbaciones trata esa mezcla como una serie de potencias en el cociente entre el
-elemento de matriz de espín-órbita que conecta los dos términos, del orden de ζnp, y la separación
-de energía ∆ entre ellos: a primer orden el coeficiente de mezcla es proporcional a ζnp/∆, y cada
-orden sucesivo añade una potencia más de ese cociente...
+La teoría de perturbaciones trata esa mezcla como una serie de potencias en el cociente entre el elemento de matriz de espín-órbita que conecta los dos términos, del orden de ζnp, y la separación de energía ∆ entre ellos: a primer orden el coeficiente de mezcla es proporcional a ζnp/∆, y cada orden sucesivo añade una potencia más de ese cociente...
 #+end_quote
 
 sigue estando mal fundamentado dentro de nuestro marco teorico.
@@ -276,13 +272,10 @@ sigue estando mal fundamentado dentro de nuestro marco teorico.
 Mi asesor me habia preguntado sobre la relacion con Moller-Plesset perturbation theory que sale en
 el Szabo, con lo que yo habia hecho.
 
-+ Recuerdo que habia alguna similitud con la ecuacion de Rayleigh-Schrodinger (no recuerdo si se
-  llama ecuacion secular).
-+ Ya no recuerdo ni que corrige MP2 ni a que ecuacion mia se parecia; segun yo era en la parte de
-  spin-orbit, recuerdo haber pensado que tambien era un cambio de base o algo asi.
-+ Las notas de la ultima reunion con Adrian: probablemente [[file:../../notes.org::*Correspondencia con Moller-Pleset y Breit-Pauli][notes.org en la raiz]]; el encabezado
-  existe pero quedo vacio. Ahi mismo esta "Para decirle a adrian".
-
++ Recuerdo que habia alguna similitud con la ecuacion de Rayleigh-Schrodinger (creo que es la ecuacion secular).
++ Ya no recuerdo ni que corrige MP2 ni a que ecuacion mia se parecia; segun yo era en la parte de spin-orbit, recuerdo haber pensado que tambien era un cambio de base o algo asi.
++ Necesito encontrar tambien las notas de la ultima reunion con adrian, no es notes.org porque ahi solo estan las notas disjuntas que iba apuntandos durante el desarrollo; segun yo hice un nuevo archivo donde apunte todo lo que me iba diciendo adrian mientras revisabamos el primer borrador, si acaso aun existe, deberia de tener una fecha de creacion en la primera semana de agosto cuando fue la reunion.
+  
 *** Las matrices de Breit-Pauli para np² (§3.3.1)
 
 **** PREGUNTA ¿Son los mismos elementos de matriz que los de la sección 10.4 del Cowan?
@@ -290,8 +283,7 @@ el Szabo, con lo que yo habia hecho.
 La seccion 10.4 del Cowan si trata sobre los elementos de matriz, pero empieza con
 
 #+begin_quote
-For a configuration involving two (or more) non-equivalent electrons not in closed subshells, the
-spin-orbit matrix elements are easily evaluated if jj-coupled basis functions are used. From (9.80)
+For a configuration involving two (or more) non-equivalent electrons not in closed subshells, the spin-orbit matrix elements are easily evaluated if jj-coupled basis functions are used. From (9.80)
 and (9.87) and/or (9.88),
 #+end_quote
 
@@ -301,28 +293,14 @@ Y luego pone los elementos como
    = \delta_{bb'} \sum_t d_{tb} \zeta_t = \delta_{bb'} \sum_{nl} d_{lj} \zeta_{nl}. \]
 
 #+begin_quote
-where the summations are over the open subshells. Thus the spin-orbit matrix is completely
-diagonal, and the coefficients of £ are given by the expression (10.13). It should be noted
-that t^j has the same value for all basis states of the configuration (but depends on the
-subshell and atom in question through the quantum number n), whereas d;j depends on the
-angular basis state through the quantum number j but is independent of the principal
-quantum number and the particular atom in question.
-If the Coulomb interaction between the two electrons is neglected, the eigenvalues of the
-Hamiltonian matrix are equal to the diagonal matrix elements, and the four energy levels
-are those given in Table 10-1. A weak Coulomb interaction will make additional small
-contributions to the diagonal (and off-diagonal) matrix elements, resulting in eigenvalues
-slightly different from those in the table, and in corresponding energy-level splittings
-according to the possible values of J. An example is shown in Fig. 4-6.
-If the Coulomb interaction is strong, the off-diagonal matrix elements are large and the
-above picture is not valid at all. It is better to consider the level structure primarily from the
-point of view of an LS-coupling scheme, which we consider next.
+where the summations are over the open subshells. Thus the spin-orbit matrix is completely diagonal, and the coefficients of £ are given by the expression (10.13). It should be noted that t^j has the same value for all basis states of the configuration (but depends on the jsubshell and atom in question through the quantum number n), whereas d;j depends on the angular basis state through the quantum number j but is independent of the principal quantum number and the particular atom in question.
+If the Coulomb interaction between the two electrons is neglected, the eigenvalues of the Hamiltonian matrix are equal to the diagonal matrix elements, and the four energy levels are those given in Table 10-1. A weak Coulomb interaction will make additional small contributions to the diagonal (and off-diagonal) matrix elements, resulting in eigenvalues slightly different from those in the table, and in corresponding energy-level splittings according to the possible values of J. An example is shown in Fig. 4-6. If the Coulomb interaction is strong, the off-diagonal matrix elements are large and the above picture is not valid at all. It is better to consider the level structure primarily from the point of view of an LS-coupling scheme, which we consider next.
 #+end_quote
 
 + Creo entender que la discusion que sigue sobre como la base LS reproduce el espectro jj en el
   limite es la prediccion que se toma del Cowan, y el hecho de que si ocurre confirma nuestros
   calculos?
-+ Estamos seguros de que son los mismos elementos de matriz? La siguiente seccion calcula los
-  elementos de matriz para J porque eso es lo que se hace en LS.
++ Estamos seguros de que son los mismos elementos de matriz? La siguiente seccion del cowan dice que calcula los elementos de matriz para J porque eso es lo que se hace en LS.
 
 *** El factor g de Landé como medida de la mezcla (§3.3.2)
 
@@ -331,16 +309,26 @@ point of view of an LS-coupling scheme, which we consider next.
 Para considerarse; no me quiero parar mucho en estas partes de la revision, pero el Cohen esta
 larguisimo y necesito poner una cita mas precisa en esta seccion de Lande.
 
-+ Por como lo entiendo sin haberlo leido muy a fondo: primero muestra el efecto stark en el
-  complemento DVII, y luego en el segundo volumen, en el complemento DX, junto con el teorema de
-  Wigner-Eckart (que quiero estudiar de ahi), viene como aplicacion el calculo de los factores g_J
-  de Lande. Estoy bastante seguro que es la misma derivacion que tu incluiste, partiendo del efecto
-  Zeeman de DVII, pero ahora con J = L+S.
-+ Creo que basta con poner en la referencia el complemento exacto, que creo que seria el DX (aun no
-  se como las haces; en el .tex tienes =\parencite{CohenTannoudji1977}=).
-+ Tal vez valdria la pena incluir este complemento de referencia en el apendice de tensores, para
-  lo del teorema de Wigner-Eckart, para ilustrar que no es solo capricho de poner muchas cosas del
-  Cohen.
++ Por como lo entiendo sin haberlo leido muy a fondo: primero muestra el efecto stark en el  complemento DVII, y luego en el segundo volumen, en el complemento DX, junto con el teorema de  Wigner-Eckart (que quiero estudiar de ahi), viene como aplicacion el calculo de los factores g_J  de Lande. Estoy bastante seguro que es la misma derivacion que tu incluiste, partiendo del efecto Zeeman de DVII, pero ahora con J = L+S.
++ Creo que basta con poner en la referencia el complemento exacto, que creo que seria el DX (aun no se como las haces; en el .tex tienes =\parencite{CohenTannoudji1977}=).
++ Tal vez valdria la pena incluir este complemento de referencia en el apendice de tensores, para lo del teorema de Wigner-Eckart, para ilustrar que no es solo capricho de poner muchas cosas del Cohen.
+  
+
+** Parte 2
+
+*** Del problema continuo al problema matricial
+
+**** TODO Ecuacion debil completa
+
+Esta bien como introducimos la forma debil, solo hace falta poner la ecuacion completa; ya que escribiste
+
+#+begin_quote
+En el resto del documento, forma débil designa siempre esta ecuación proyectada e integrada por partes.
+#+end_quote
+
+Pero nunca escribimos explicitamente la ecuacion (4.4) en su forma debil; parece que el quote se esta refiriendo a que ecuacion (4.8) es dicha forma debil, pero es solo la integracion por partes del termino cinetico. Hay que incluir una nueva ecuacion con todos los terminos colectados, solo hay que tener cuidado con el tamano porque ya se que son muchos terminos, creo que la podemos poner en dos lineas; mi asesor me pidio que mostrara explicitamente este tipo de expresiones.
+
++ Nota: La idea es escribirla como la ecuacion de poisson debil (4.15)
 
 ** Parte 3: Resultados (primera lectura)
 
@@ -348,26 +336,93 @@ larguisimo y necesito poner una cita mas precisa en esta seccion de Lande.
 
 **** TODO Definir E_h en las tablas 6.1 y 6.2
 
-En las tablas 6.1 y 6.2 dice \( E(E_h) \), sin definir que es \( E_h \); hace falta dicho
-comentario.
+En las tablas 6.1 y 6.2 dice \( E(E_h) \), sin definir que es \( E_h \); hace falta dicho comentario.
 
 *** Parámetros radiales de la valencia (§6.1.1)
 
 **** ESTUDIAR Por qué la energía, por ser estacionaria, se desvía a segundo orden
 
-Me van a preguntar por que a segundo orden en: "La energia, por ser estacionaria, se desvia a
-segundo orden".
+Me van a preguntar por que a segundo orden en: "La energia, por ser estacionaria, se desvia a segundo orden".
 
-*** El espectro de la configuración np² (§6.2)
+
+*** Convergencia del espacio de configuraciones (§6.2.1)
+
+**** TODO Tablas
+
+No estoy muy seguro si es buena idea dejar las dos tablas E.2 y E.3 en el apendice; es dificil leer el analisis
+
+#+begin_quote
+La estabilidad de los intervalos del triplete es el resultado más nítido del análisis. A
+lo largo de toda la curva del carbono, entre m= 4 y m= 40, el intervalo 3P2 se mueve
+0.13 cm−1 y el 3P1 apenas 0.03; en el silicio ambos se mantienen dentro de 0.2 cm−1
+.
+En el germanio y el estaño el movimiento es mayor, de 8.9 y 40.8 cm−1 en el 3P1, pero
+sigue siendo un orden de magnitud menor que la discrepancia con el experimento, que
+en el estaño supera los 300 cm−1. Los errores del triplete no proceden, por tanto, del
+truncamiento del espacio activo.
+#+end_quote
+
+Sin tener la tabla a la mano. Creo que si vale la pena ponerlas en la misma seccion y el apendice no pierde su proposito ya que se dejaria documentado el proceso de convergencia y el analisis de computo. Como ya casi termino la revision y no hay mucho mas que agregar (o quitar), creo que tenemos buen margen para anadir estas cosas.
+
++ Ademas, se leeria mejor asi porque actualmente, justo despues del parrafo ese, se ve en el pdf la figura 6.3; prefiero que se vea hasta la siguiente pagina, despues de que el lector lea
+
+  #+begin_quote
+Los singletes sí dependen del tamaño del espacio (Figura 6.3). Ambos descienden de maneramonótona al ampliar la base,y en el carbono el 1S0 bajade28 259 a23 894 cm−1...
+  #+end_quote
+
+
+**** ESTUDIAR Extrapolacion geometrica
+
+Me gusta el analisis, pero creo que deberia de intentar convencerme mas de por que es valido hacer esto. Deberia de dejar en borradores alguna explicacion que puda estudiar, junto con los calculos de por medio que se dan aqui como conclusiones; por ejemplo dice
+
+#+begin_quote
+la geometrica lo situaria un 2.6% por debajo del valor medido, cuando en m=20 queda un 1.1% por encima...
+#+end_quote
+
+Claramente eso fue algo que se calculó, entonces quiero tener disponibles todos estos calculos implicitos en los documentos auxiliares de los que hablamos (borradores)
+
+
+**** TODO Del acoplamiento LS al intermedio (§6.3)
+
++ De nuevo, un calculo implicito cuando dices que
+
+  #+begin_quote
+  Un ajuste de loy de potencias sobre los cuatro elementos le asigna un exponente de 1.82 frente a la carga nuclear, y el mismo ajuste da 0.69 para <r^-3> y 1.69 para la cota de nucleo desnudo...
+  #+end_quote
+
+  Este ajuste es incluso mas importante de documentar que el anterior, pero de igual manera, no cabe en el manuscrito, asi que va al borrador
+
 
 *** Trabajo futuro (§7.2)
 
 **** TODO Proponer una continuación con valor publicable
 
-Aun no lo leo, pero deberia de incluir algo que tenga valor cientifico para ser publicable, de
-seguir trabajando en esto.
+Aun no lo leo, pero deberia de incluir algo que tenga valor cientifico para ser publicable, de seguir trabajando en esto; por ejemplo si fuera a perseguir la misma investigacion en la maestria, ahora tendria que aportar algo nuevo al cuerpo de conocimiento cientifico, no solo seguir extendiendo el modelo.
+
++ Nota: no es mi intencion la de continuar con esta investigacion hasta ese punto, solo es un ejemplo de lo que un trabajo futuro deberia de conyevar; como saltar la brecha del caracter exploratorio al de investigacion cientifica
+
+
+
+
+* Tercera revisada
+
+** Parte 1
+
+*** Capitulo 3
+
++ Simplemente hay que quitar lo del Zittterbewegung, no añade nada a la discusion; lo unico importante aqui es mostrar explicitamente por que los terminos de masa velocidad y de darwin no fueron considerados
+
+
+*** ESTUDIAR Matrices de breit-pauli (§3.3.1)
+
+Se podria decir que es evidente que H_SO conmuta con J^2, pero no con L^2 y S^2? Deberia de documentar un ejercicio mostrandolo
+
+
++ Creo que aunque dificil de seguir, la explicacion ya quedo bien, pero la tengo que estudiar; es seguro que me preguntaran de eso en el examen. Por ahora vamos a dejarlo tentativo; ensename como es el calculo directo con simbolos 6j que da los mismos valores, tal vez vale mas la pena hacerlo de manera directa. Si se puede "sacar" de manera directa, seria mucho mejor dejar la forma directa en la tesis y hacer la deduccion a partir del cowan como ejercicio
 
 * Cosas extra
+
+
 
 ** PREGUNTA ¿Mencionar las series de los espectros, como la de Balmer?
 
@@ -378,3 +433,23 @@ Va en [[file:../chapters/_borradores/][docs/chapters/_borradores/]], no en el ma
 ** ESTUDIAR El teorema de Wigner-Eckart en el complemento DX del Cohen-Tannoudji
 
 Ver [[*Citar el complemento exacto del Cohen-Tannoudji]].
+
+** TODO add dois
+
++ Edmons: https://doi.org/10.1515/9781400884186
+
++ Finlayson: DOI:10.1016/0009-2509(65)80052-5
+
++ Garza: doi:10.1088/0953-4075/45/1/015002
+
++ Roothaan: DOI: 10.1103/RevModPhys.32.179
+
++ Saunders & Hiller:  https://doi.org/10.1002/qua.560070407Digital
+
++ Shi & Li: 10.1088/0253-6102/35/2/195
+
+
+
+** ESTUDIAR Simetrias
+
+Checar si en mecanica clasica, en el formalismo de noether, tal vez en dinamica hamiltoniana, hay sistemas dinamicos en los cuales pasa algo analogo a lo que sucede con el acoplamiento LS hacia el jj, es decir, que bajo alguna estructura simplectica (tal vez), los parametros del sistema admiten distintos generadores o algo asi. Para tener un mejor entendimiento de como "L y S dejan de ser constantes de movimiento estrictas", en la seccion 3.3 del esquema de acoplamiento

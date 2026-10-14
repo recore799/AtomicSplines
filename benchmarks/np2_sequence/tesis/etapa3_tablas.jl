@@ -132,13 +132,15 @@ end
 err_rel(v, ref) = (v === nothing || ref == 0.0) ? "--" : @sprintf("\$%+.1f\$\\%%", 100 * (v - ref) / ref)
 
 """Energía de ionización de los cuatro elementos: Koopmans, + CI de valencia, + V_pol, NIST."""
-function tabla_ionizacion(HF)
+# Desde el 2026-10-14 la tesis no lleva la correccion de V_pol: ionizacion.tex y lande.tex salen sin
+# su columna, e ionizacion_vpol.tex y lande_vpol.tex la conservan para docs/chapters/_borradores/.
+function tabla_ionizacion(HF; vpol::Bool = false)
     io = IOBuffer(); proc = String[]
     celda(x, nist) = x === nothing ? "--" : "$(fmt(x, 2)) ($(err_rel(x, nist)))"
-    println(io, raw"\begin{tabular}{lcccc}")
+    println(io, vpol ? raw"\begin{tabular}{lcccc}" : raw"\begin{tabular}{lccc}")
     println(io, raw"    \toprule")
     linea(io, raw"\textbf{Elemento}", raw"\textbf{Koopmans}", raw"\textbf{HF+CI}",
-          raw"\textbf{CI+$V_{\text{pol}}$}", raw"\textbf{NIST}")
+          (vpol ? [raw"\textbf{CI+$V_{\text{pol}}$}"] : String[])..., raw"\textbf{NIST}")
     println(io, raw"    \midrule")
     for el in ELEMENTOS
         h, e0, nist = HF[el], ci_de(el, ESTADO, 0.0), NIST_IONIZACION[el]
@@ -147,7 +149,7 @@ function tabla_ionizacion(HF)
         push!(proc, proc_scf(h.archivo))
         e0 === nothing || push!(proc, proc_ci(e0))
         ip_vp = nothing
-        if haskey(BARRIDO_ALPHA, el)
+        if vpol && haskey(BARRIDO_ALPHA, el)
             sel = alpha_elegido(el)
             if sel !== nothing
                 a, ev = sel
@@ -156,7 +158,8 @@ function tabla_ionizacion(HF)
                 push!(proc, proc_scf(ev["archivo"]), proc_ci(ev) * @sprintf(" <- alpha_d = %.2f", a))
             end
         end
-        linea(io, INFO[el].etiqueta, celda(ip_hf, nist), celda(ip_ci, nist), celda(ip_vp, nist), fmt(nist, 2))
+        linea(io, INFO[el].etiqueta, celda(ip_hf, nist), celda(ip_ci, nist),
+              (vpol ? [celda(ip_vp, nist)] : String[])..., fmt(nist, 2))
     end
     println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
     push!(proc, "En eV, con el error relativo frente al NIST entre parentesis. HF+CI = -eps_np - E_corr: " *
@@ -413,24 +416,28 @@ function g_real(e)
     return G_3P2 * (1 - c2) + G_1D2 * c2
 end
 
-function tabla_lande()
+function tabla_lande(; vpol::Bool = false)
     io = IOBuffer(); proc = String[]
     pct(x) = x === nothing ? "--" : @sprintf("%.2f", 100 * x)
-    println(io, raw"\begin{tabular}{lcccccc}")
+    nc = vpol ? 3 : 2
+    println(io, raw"\begin{tabular}{l", "c"^(2nc), "}")
     println(io, raw"    \toprule")
-    linea(io, "", raw"\multicolumn{3}{c}{\textbf{Factor $g$ del $^3P_2$}}", raw"\multicolumn{3}{c}{\textbf{Peso de $^1D_2$ (\%)}}")
-    println(io, raw"    \cmidrule(lr){2-4} \cmidrule(lr){5-7}")
-    linea(io, raw"\textbf{Elemento}", "HF+CI", raw"CI+$V_{\text{pol}}$", "NIST", "HF+CI", raw"CI+$V_{\text{pol}}$", "NIST")
+    linea(io, "", "\\multicolumn{$nc}{c}{\\textbf{Factor \$g\$ del \$^3P_2\$}}", "\\multicolumn{$nc}{c}{\\textbf{Peso de \$^1D_2\$ (\\%)}}")
+    println(io, "    \\cmidrule(lr){2-$(1 + nc)} \\cmidrule(lr){$(2 + nc)-$(1 + 2nc)}")
+    cols = vpol ? ["HF+CI", raw"CI+$V_{\text{pol}}$", "NIST"] : ["HF+CI", "NIST"]
+    linea(io, raw"\textbf{Elemento}", cols..., cols...)
     println(io, raw"    \midrule")
     for el in ELEMENTOS
         e0 = ci_de(el, ESTADO, 0.0)
-        sel = haskey(BARRIDO_ALPHA, el) ? alpha_elegido(el) : nothing
+        sel = vpol && haskey(BARRIDO_ALPHA, el) ? alpha_elegido(el) : nothing
         g0 = e0 === nothing ? nothing : g_real(e0)
         gv = sel === nothing ? nothing : g_real(sel[2])
         gn = NIST_LANDE_3P2[el]
-        linea(io, INFO[el].etiqueta, fmt(g0, 5), fmt(gv, 5), gn === nothing ? "--" : string(gn),
-              pct(g0 === nothing ? nothing : peso_1D(g0)), pct(gv === nothing ? nothing : peso_1D(gv)),
-              pct(gn === nothing ? nothing : peso_1D(gn)))
+        gs = [fmt(g0, 5), (vpol ? [fmt(gv, 5)] : String[])..., gn === nothing ? "--" : string(gn)]
+        ws = [pct(g0 === nothing ? nothing : peso_1D(g0)),
+              (vpol ? [pct(gv === nothing ? nothing : peso_1D(gv))] : String[])...,
+              pct(gn === nothing ? nothing : peso_1D(gn))]
+        linea(io, INFO[el].etiqueta, gs..., ws...)
         e0 === nothing || push!(proc, proc_ci(e0))
         sel === nothing || push!(proc, proc_ci(sel[2]))
     end
@@ -474,6 +481,28 @@ function extrap_potencia(m, y)
     p = (lo + hi) / 2
     A = (y[3] - y[2]) / (m[3]^-p - m[2]^-p)
     return (lim = y[3] - A * m[3]^-p, p = p)
+end
+
+"""Intervalos del triplete en el primer y el ultimo m de cada curva de convergencia, frente al NIST."""
+function tabla_estabilidad_triplete()
+    io = IOBuffer(); proc = String[]
+    println(io, raw"\begin{tabular}{llrr}")
+    println(io, raw"    \toprule")
+    linea(io, raw"\textbf{Elemento}", "", raw"$^3P_1$", raw"$^3P_2$")
+    for el in ELEMENTOS
+        c = curva_convergencia(el)
+        length(c) >= 2 || (push!(FALTAS, "curva de convergencia de $(INFO[el].prefijo)"); continue)
+        println(io, raw"    \midrule")
+        filas = [("\$m = $(c[1]["m"])\$", c[1]["niveles_cm"]), ("\$m = $(c[end]["m"])\$", c[end]["niveles_cm"]),
+                 ("NIST", NIST_NIVELES[el])]
+        for (k, (nombre, n)) in enumerate(filas)
+            linea(io, k == 1 ? "\\multirow{3}{*}{$(INFO[el].etiqueta)}" : "", nombre, fmt(n[2], 2), fmt(n[3], 2))
+        end
+        push!(proc, proc_ci(c[1]), proc_ci(c[end]))
+    end
+    println(io, raw"    \bottomrule", "\n", raw"\end{tabular}")
+    push!(proc, "Niveles 3P_1 y 3P_2 en cm^-1 desde 3P_0, primer y ultimo tamano de cada curva (3P, alpha_d = 0, lmax = $(LMAX_CI)).")
+    return String(take!(io)), proc
 end
 
 function tabla_convergencia_singletes()
@@ -750,6 +779,7 @@ function main_etapa3()
     escribir_tabla("energia_global.tex", tabla_energia(HF)...; dir = SALIDA)
     escribir_tabla("parametros_radiales.tex", tabla_radiales(HF)...; dir = SALIDA)
     escribir_tabla("ionizacion.tex", tabla_ionizacion(HF)...; dir = SALIDA)
+    escribir_tabla("ionizacion_vpol.tex", tabla_ionizacion(HF; vpol = true)...; dir = SALIDA)
     escribir_tabla("niveles.tex", tabla_niveles(ELEMENTOS, false)...; dir = SALIDA)
     escribir_tabla("niveles_vpol.tex", tabla_niveles([el for el in ELEMENTOS if haskey(BARRIDO_ALPHA, el)], true)...;
                    dir = SALIDA)
@@ -758,11 +788,13 @@ function main_etapa3()
     escribir_tabla("convergencia_ci.tex", conv, proc; dir = SALIDA)
     escribir_tabla("convergencia_ci_costo.tex", costo, proc; dir = SALIDA)
     escribir_tabla("convergencia_singletes.tex", tabla_convergencia_singletes()...; dir = SALIDA)
+    escribir_tabla("estabilidad_triplete.tex", tabla_estabilidad_triplete()...; dir = SALIDA)
     escribir_tabla("cdiis.tex", tabla_cdiis()...; dir = SALIDA)
     escribir_tabla("parametros_base.tex", tabla_parametros_base()...; dir = SALIDA)
     escribir_tabla("zeta.tex", tabla_zeta(HF, ZETA_SENS)...; dir = SALIDA)
     escribir_tabla("acoplamiento.tex", tabla_acoplamiento(HF)...; dir = SALIDA)
     escribir_tabla("lande.tex", tabla_lande()...; dir = SALIDA)
+    escribir_tabla("lande_vpol.tex", tabla_lande(; vpol = true)...; dir = SALIDA)
     write(joinpath(SALIDA, "valores_texto.md"), valores_texto(HF, ZETA_SENS))
     println("  valores -> ", joinpath(SALIDA, "valores_texto.md"))
 

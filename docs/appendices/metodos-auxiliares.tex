@@ -4,7 +4,7 @@
 \section{Ortogonalización de Gram-Schmidt}
 \label{sec:gram-schmidt}
 
-En un Hartree-Fock de capa cerrada, los orbitales radiales con el mismo $l$ y distinto $n$ son autovectores de un mismo operador hermítico con autovalores distintos y resultan ortogonales de manera automática. En el esquema ROHF de este trabajo (Sección \ref{sec:rohf}) el orbital de valencia se obtiene de su propio operador de Fock, distinto del que produce los orbitales internos, y esa garantía se pierde: el orbital de valencia deja de ser exactamente ortogonal a los orbitales internos con su mismo momento angular. El motor restituye la ortogonalidad después de cada diagonalización proyectando el orbital de valencia fuera del espacio de los orbitales internos, en la métrica de la base,
+En un Hartree-Fock de capa cerrada, los orbitales radiales con el mismo $l$ y distinto $n$ son eigenvectores de un mismo operador hermítico con eigenvalores distintos y resultan ortogonales de manera automática. En el esquema ROHF de este trabajo (Sección \ref{sec:rohf}) el orbital de valencia se obtiene de su propio operador de Fock, distinto del que produce los orbitales internos, y esa garantía se pierde: el orbital de valencia deja de ser exactamente ortogonal a los orbitales internos con su mismo momento angular. El motor restituye la ortogonalidad después de cada diagonalización proyectando el orbital de valencia fuera del espacio de los orbitales internos, en la métrica de la base,
 \begin{equation}
     \mathbf{c}_v \leftarrow \mathbf{c}_v - \sum_{i \,\in\, \text{internos}} \left( \mathbf{c}_v^T \mathbf{S}\, \mathbf{c}_{c_i} \right) \mathbf{c}_{c_i},
     \qquad
@@ -18,7 +18,7 @@ La proyección impone la ortogonalidad pero no la incorpora al problema variacio
 
 Los elementos matriciales de Galerkin $\int B_i(r)\,\mathcal{L}\,B_j(r)\,dr$ del Hamiltoniano y de la ecuación de Poisson se evalúan por cuadratura de Gauss-Legendre sobre cada intervalo de la malla \parencite{Bachau2001}. Una regla gaussiana de $N_q$ puntos integra exactamente cualquier polinomio de grado hasta $2N_q - 1$. Como los B-splines de orden $k$ son polinomios por partes de grado $k-1$, los integrandos de las matrices de solapamiento y cinética son polinomios de grado a lo sumo $2k-2$ en cada intervalo, y el motor emplea $N_q = k+6$ puntos, de modo que esas dos matrices se obtienen sin error de cuadratura.
 
-Los demás integrandos contienen factores $1/r$, $1/r^2$ o $r^{-4}$, o productos de tres funciones base con un factor $1/r$, y no son polinómicos. Para ellos la cuadratura no es exacta. Los seis puntos adicionales reducen su error, y la malla exponencial, que concentra intervalos cortos cerca del origen, donde esos factores varían más rápido, contribuye a mantenerlo pequeño.
+Los demás integrandos contienen factores $1/r$, $1/r^2$ o $1/r^3$, o productos de tres funciones base con un factor $1/r$, y no son polinómicos. Para ellos la cuadratura no es exacta. Los seis puntos adicionales reducen su error, y la malla exponencial, que concentra intervalos cortos cerca del origen, donde esos factores varían más rápido, contribuye a mantenerlo pequeño.
 
 Las reglas de cuadratura están definidas sobre el intervalo estándar $[-1, 1]$:
 \begin{equation}
@@ -40,66 +40,6 @@ Con el jacobiano $J_i = \frac{t_{i+1} - t_i}{2}$, la integral sobre cada interva
 
 con igualdad exacta cuando $f$ es un polinomio de grado a lo sumo $2N_q - 1$. Los valores de la base y de sus derivadas en los puntos $r(x_q)$ forman los tensores de colocación de la Sección \ref{sec:tensores_geometria}.
 
-\section{Reducción del Potencial de Polarización al Caso Atómico}
-\label{sec:cpp-muller}
-
-El potencial de polarización empleado en el Capítulo \ref{ch:correlacion-estructura-fina} se presenta allí a partir de un argumento electrostático elemental: un electrón de valencia induce un dipolo en las capas internas y se estabiliza al interactuar con él. Esa derivación es suficiente para justificar la forma $-\alpha_d/2r^4$, pero conviene mostrar que coincide con la formulación general del \textit{Core Polarization Potential} (CPP) de \textcite{Muller1984}, concebida para moléculas y agregados, cuando se le imponen las condiciones de un átomo aislado. El ejercicio deja explícito, además, un término de dos cuerpos que la derivación elemental no hace visible.
-
-\subsection{La formulación general}
-
-En su forma original, el potencial de polarización del sistema completo se escribe como una suma sobre centros polarizables $c$,
-\begin{equation}
-    \label{eq:cpp_general}
-    V_{\text{CPP}} = -\frac{1}{2}\sum_c \left( \alpha_c\, \bm{f}_c \cdot \bm{f}_c - 2\,\bm{f}_c \cdot \bm{\mu}_c^{\circ} + \bm{f}_c^{\circ}\cdot\bm{\mu}_c^{\circ} \right),
-\end{equation}
-donde el campo eléctrico efectivo que actúa sobre el centro $c$ recibe contribuciones de todos los electrones y de todos los demás núcleos,
-\begin{equation}
-    \label{eq:cpp_campo}
-    \bm{f}_c = \sum_i \frac{\bm{r}_{ci}}{r_{ci}^3}\,C(r_{ci}, \rho_c) - \sum_{c' \neq c} \frac{\bm{R}_{cc'}}{R_{cc'}^3}\,Z_{c'} .
-\end{equation}
-Aquí $\alpha_c$ es el tensor de polarizabilidad del centro, $\bm{\mu}_c^{\circ}$ su momento dipolar estático, y $C(r,\rho)$ una función de corte que regulariza el campo a distancias cortas.
-
-\subsection{Imposición de la simetría atómica}
-
-Tres condiciones reducen \eqref{eq:cpp_general} al caso que nos interesa.
-
-En primer lugar, un átomo aislado posee un solo centro polarizable, de modo que la suma externa sobre $c$ desaparece y el segundo sumando de \eqref{eq:cpp_campo}, que representa el campo generado por los demás núcleos, se anula de manera idéntica. El vector $\bm{r}_{ci}$ se reduce al radio vector del electrón medido desde el núcleo, y el campo efectivo queda
-\begin{equation}
-    \label{eq:cpp_campo_atomico}
-    \bm{f} = \sum_i \frac{\bm{r}_i}{r_i^3}\,W(r_i),
-\end{equation}
-donde $W(r)$ es la función de corte del campo, que se anula en el interior de las capas internas y tiende a la unidad fuera de ellas.
-
-En segundo lugar, las capas internas de nuestros sistemas son cerradas y por tanto esféricamente simétricas, según el teorema de Unsöld de la Sección \ref{sec:unsold}. Una distribución de carga esférica no admite momento dipolar permanente, de manera que $\bm{\mu}^{\circ} = \bm{0}$ y los dos últimos términos de \eqref{eq:cpp_general} se desvanecen. Esta es la diferencia esencial con el caso molecular, donde los enlaces deforman la nube electrónica de forma permanente.
-
-En tercer lugar, la isotropía de una distribución esférica reduce el tensor de polarizabilidad a un escalar, $\alpha_c \to \alpha_d$. Con estas tres condiciones,
-\begin{equation}
-    \label{eq:cpp_colapsado}
-    V_{\text{pol}} = -\frac{1}{2}\alpha_d \,(\bm{f}\cdot\bm{f}).
-\end{equation}
-
-\subsection{Los términos de uno y de dos cuerpos}
-
-Sustituir \eqref{eq:cpp_campo_atomico} en \eqref{eq:cpp_colapsado} produce un producto de dos sumatorias que conviene separar según los índices coincidan o no,
-\begin{equation}
-    V_{\text{pol}} = -\frac{1}{2}\alpha_d \left( \sum_i \frac{\bm{r}_i}{r_i^3}W(r_i) \right)\cdot\left( \sum_j \frac{\bm{r}_j}{r_j^3}W(r_j) \right).
-\end{equation}
-
-Los términos diagonales, con $i=j$, involucran el producto de un vector consigo mismo. Usando $\bm{r}_i\cdot\bm{r}_i = r_i^2$, la potencia se simplifica a $r_i^2/r_i^6 = 1/r_i^4$ y queda un operador estrictamente de un cuerpo,
-\begin{equation}
-    \label{eq:cpp_un_cuerpo}
-    V_{\text{pol}}^{(1)} = -\frac{1}{2}\alpha_d \sum_i \frac{W^2(r_i)}{r_i^4},
-\end{equation}
-En nuestra implementación el cuadrado $W^2(r)$ se toma como $W_6(r/r_c) = 1 - e^{-(r/r_c)^6}$, de modo que \eqref{eq:cpp_un_cuerpo} coincide con la forma \eqref{eq:vpol_cutoff} del Capítulo \ref{ch:correlacion-estructura-fina} y con el potencial central que se suma a la atracción nuclear en la Ecuación \eqref{eq:vpol_efectivo}, que es el que interviene en el ciclo SCF. Con esa elección el corte del campo es $W = W_6^{1/2}$, y es este el que aparecería en el término de dos cuerpos. La dependencia $r^{-4}$, introducida en el Capítulo \ref{ch:correlacion-estructura-fina} por vía electrostática, emerge aquí como consecuencia puramente algebraica del producto punto.
-
-Los términos cruzados, con $i \neq j$, sobreviven en cambio como un operador de dos cuerpos. Para la capa de valencia $np^2$ solo hay dos electrones y por tanto dos combinaciones cruzadas, $(1,2)$ y $(2,1)$, que al ser el producto punto conmutativo se suman y cancelan el factor $1/2$ frontal:
-\begin{equation}
-    \label{eq:cpp_dos_cuerpos}
-    V_{\text{pol}}^{(2)} = -\alpha_d\,\frac{\bm{r}_1 \cdot \bm{r}_2}{r_1^3 r_2^3}\,W(r_1)W(r_2).
-\end{equation}
-
-Este término tiene una interpretación física propia: describe el apantallamiento dieléctrico que las capas internas interponen entre los dos electrones de valencia, ya que el dipolo inducido por uno de ellos es sentido por el otro. Se suma al operador de repulsión $1/r_{12}$ y tiene la dependencia angular de un multipolo de orden uno, de modo que dentro de la configuración $np^2$ su valor esperado se anula por la regla de paridad de la Sección \ref{sec:wigner_eckart} y solo contribuye a través de la mezcla con otras configuraciones. Este trabajo retiene únicamente \eqref{eq:cpp_un_cuerpo}, y el efecto del término de dos cuerpos sobre los niveles queda sin evaluar.
-
 \section{Aceleración con C-DIIS}
 \label{sec:cdiis_resultados}
 
@@ -108,7 +48,7 @@ Esta sección documenta el efecto de la extrapolación C-DIIS de la Sección \re
 \begin{table}[htbp]
     \centering
     \input{tablas/cdiis}
-    \caption{Iteraciones necesarias para alcanzar $|\Delta E| < 10^{-10}$ Hartree con y sin C-DIIS, desde el mismo punto inicial y en el estado $^3P$. La última columna es la diferencia entre las dos energías convergidas.}
+    \caption[Iteraciones del ciclo autoconsistente con y sin C-DIIS]{Iteraciones necesarias para alcanzar $|\Delta E| < 10^{-10}$ Hartree con y sin C-DIIS, desde el mismo punto inicial y en el estado $^3P$. La última columna es la diferencia entre las dos energías convergidas.}
     \label{tab:cdiis}
 \end{table}
 
@@ -119,34 +59,17 @@ El dato decisivo es la última columna. Las energías obtenidas con y sin aceler
 \section{Convergencia y Costo del Cálculo CI}
 \label{sec:costo_ci}
 
-Las Tablas \ref{tab:convergencia_ci} y \ref{tab:convergencia_singletes} recogen las curvas de convergencia que discute la Sección \ref{sec:convergencia_ci}: la energía de correlación de valencia y los términos singlete en función del número $m$ de orbitales por canal, con $l_{\max}=3$. El número de orbitales es $4m$, y el de configuraciones es común a los cuatro elementos por depender solo de $m$. Las extrapolaciones que cita el texto se hacen sobre los tres últimos tamaños de cada curva.
-
-\begin{table}[htbp]
-    \centering
-    \input{tablas/convergencia_ci}
-    \caption{Energía de correlación de valencia en función del número $m$ de orbitales por canal, con $l_{\max}=3$, y número de configuraciones del término $^3P$.}
-    \label{tab:convergencia_ci}
-\end{table}
-
-\begin{table}[htbp]
-    \centering
-    \small
-    \input{tablas/convergencia_singletes}
-    \caption{Términos singlete (cm$^{-1}$, referidos al $^3P_0$) en función del número $m$ de orbitales por canal. La última fila reproduce los valores del NIST.}
-    \label{tab:convergencia_singletes}
-\end{table}
-
-Estas curvas exigen repetir el cálculo de interacción de configuraciones para tamaños crecientes del espacio activo, y el resto de esta sección documenta qué recurso limita ese barrido. El costo no lo domina la diagonalización, cuyo espacio es de unas pocas miles de configuraciones, sino el ensamblado previo de las integrales de Slater $R^k$ entre orbitales virtuales. Su número crece como la cuarta potencia del tamaño de la base de virtuales, de modo que es este ensamblado el que fija tanto el tiempo de ejecución, medido como tiempo real transcurrido, como la huella de memoria.
+Las curvas de convergencia de la Sección \ref{sec:convergencia_ci} (Tablas \ref{tab:convergencia_ci} a \ref{tab:convergencia_singletes}) exigen repetir el cálculo de interacción de configuraciones para tamaños crecientes del espacio activo, y esta sección documenta qué recurso limita ese barrido. El costo no lo domina la diagonalización, cuyo espacio es de unas pocas miles de configuraciones, sino el ensamblado previo de las integrales de Slater $R^k$ entre orbitales virtuales. Su número crece como la cuarta potencia del tamaño de la base de virtuales, de modo que es este ensamblado el que fija tanto el tiempo de ejecución, medido como tiempo real transcurrido, como la huella de memoria.
 
 \begin{table}[htbp]
     \centering
     \small
     \input{tablas/convergencia_ci_costo}
-    \caption{Número de integrales $R^k$ almacenadas en caché y tiempo de ejecución por tamaño del espacio activo, para los cuatro elementos de la secuencia. Los tiempos son incrementales: cada tamaño reutiliza las integrales calculadas para el anterior, salvo en el primer punto de cada curva y en las corridas reanudadas.}
+    \caption[Integrales $R^k$ y tiempo de ejecución del cálculo CI]{Número de integrales $R^k$ almacenadas en caché y tiempo de ejecución por tamaño del espacio activo, para los cuatro elementos de la secuencia. Los tiempos son incrementales: cada tamaño reutiliza las integrales calculadas para el anterior, salvo en el primer punto de cada curva y en las corridas reanudadas.}
     \label{tab:convergencia_ci_costo}
 \end{table}
 
-La Tabla \ref{tab:convergencia_ci_costo} cuantifica ambos recursos. El conteo de integrales es prácticamente el mismo para los cuatro elementos, ya que depende del tamaño de la base y no de la carga nuclear, y pasa de unos cuatro mil quinientos valores en $m=4$ a treinta y ocho millones en $m=40$. Con un ocupamiento medido de unos diecisiete bytes por casilla, el caso extremo del carbono requiere del orden de $1.1$ gigabytes de memoria residente, que llegan a $1.7$ durante los redimensionamientos de la tabla asociativa. El tiempo de ejecución del mismo punto es de unos quince minutos, y la curva completa del carbono hasta $m=40$ tomó cerca de cuarenta y un minutos.
+La Tabla \ref{tab:convergencia_ci_costo} cuantifica ambos recursos. El conteo de integrales es prácticamente el mismo para los cuatro elementos, ya que depende del tamaño de la base y no de la carga nuclear, y pasa de unos cuatro mil quinientos valores en $m=4$ a treinta y ocho millones en $m=40$. Con un consumo medido de unos diecisiete bytes por casilla, el caso extremo del carbono requiere del orden de $1.1$ gigabytes de memoria residente, que llegan a $1.7$ durante los redimensionamientos de la tabla asociativa. El tiempo de ejecución del mismo punto es de unos quince minutos, y la curva completa del carbono hasta $m=40$ tomó cerca de cuarenta y un minutos.
 
 La comparación entre elementos muestra que el tiempo sí depende de $Z$, aunque el número de integrales no. A $m=20$ el silicio emplea sesenta y ocho segundos y el estaño quinientos noventa y ocho, casi nueve veces más, pese a evaluar una cantidad de integrales que difiere en menos del uno por ciento. La razón es el número de puntos de la malla radial, que debe crecer con $Z$ para resolver la contracción de las capas internas: cada integral $R^k$ se evalúa sobre esa malla, de modo que el costo por integral escala con la discretización y no con el espacio activo. Como el espacio activo de cada tamaño contiene al del anterior, las integrales ya calculadas se reutilizan, y eso es lo que hace viable el barrido completo.
 

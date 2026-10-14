@@ -1,10 +1,10 @@
-\documentclass[12pt, a4paper, oneside, spanish]{book}
+\documentclass[11pt, a4paper, oneside, spanish]{book}
 
 % Import Configuration
 \input{config/preamble}
 
 % Metadata
-\title{\textbf{Cálculo Ab-initio de la Estructura Fina en la Secuencia np² mediante B-splines}}
+\title{\textbf{Cálculo \textit{ab-initio} de la Estructura Fina en la Secuencia np² mediante B-splines}}
 \author{Rafael Obed Egurrola Corella}
 \date{\today}
 
@@ -12,8 +12,11 @@
 
 \frontmatter
 \maketitle
+% Resumen
+\include{chapters/resumen}
 \tableofcontents
 \listoffigures
+\listoftables
 
 \mainmatter
 % Prólogo
@@ -63,7 +66,7 @@
 \include{appendices/metodos-auxiliares}
 
 \backmatter
-\printbibliography[heading=bibintoc]
+{\setlength{\emergencystretch}{2em}\printbibliography[heading=bibintoc]}
 
 \end{document}
 

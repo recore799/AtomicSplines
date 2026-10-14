@@ -1,7 +1,7 @@
 \chapter{Operadores Tensoriales y Coeficientes Angulares}
 \label{ap:operadores-tensoriales}
 
-Este apéndice reúne los resultados del álgebra angular que el texto principal emplea, sin desarrollar el formalismo del que proceden. La teoría de los operadores tensoriales irreducibles y el álgebra de Racah ocupan varios capítulos del texto de \textcite{Cowan1981}, y reproducirlas excedería el alcance de este trabajo. Aquí se recogen únicamente las fórmulas con las que se construyó el motor, en el orden en que intervienen: la escritura de la repulsión coulombiana en términos de operadores tensoriales, el teorema de Wigner-Eckart con las reglas de selección que de él se siguen, el teorema de Unsöld, los elementos de matriz del cálculo de interacción de configuraciones de parejas y la evaluación explícita de los coeficientes angulares de la configuración $np^2$. En todos los casos la parte angular se resuelve de forma analítica y la física del átomo queda contenida en integrales radiales.
+Este apéndice reúne los resultados del álgebra angular que el texto principal emplea, sin desarrollar el formalismo del que proceden. La teoría de los operadores tensoriales irreducibles y el álgebra de Racah ocupan varios capítulos del texto de \textcite{Cowan1981}, y reproducirlas excedería el alcance de este trabajo. Aquí se recogen únicamente las fórmulas con las que se construyó el motor, en el orden en que intervienen: la escritura de la repulsión coulombiana en términos de operadores tensoriales, el teorema de Wigner-Eckart con las reglas de selección que de él se siguen, el teorema de Unsöld, los elementos de matriz del cálculo de interacción de configuraciones de parejas la evaluación explícita de los coeficientes angulares de la configuración $np^2$ y los elementos de matriz del espín-órbita en esa misma configuración. En todos los casos la parte angular se resuelve de forma analítica y la física del átomo queda contenida en integrales radiales.
 
 \section{Operadores tensoriales y expansión de Laplace}
 
@@ -18,7 +18,7 @@ Sobre orbitales de la forma $\frac{P(r)}{r} Y_{lm}(\Omega)$, cada término de la
 \section{El teorema de Wigner-Eckart y las reglas de selección}
 \label{sec:wigner_eckart}
 
-Por ser $C^{(k)}$ un operador tensorial irreducible, sus elementos de matriz entre armónicos esféricos obedecen el teorema de Wigner-Eckart,
+Por ser $C^{(k)}$ un operador tensorial irreducible, sus elementos de matriz entre armónicos esféricos obedecen el teorema de Wigner-Eckart, cuya forma para operadores vectoriales demuestra \textcite[Complemento D\textsubscript{X}]{CohenTannoudji1977} y cuya forma general está en \textcite{Edmonds1957},
 \begin{align}
   \mel{lm}{C_{q}^{(k)}}{l'm'} &= (-1)^{l-m} \begin{pmatrix} l & k & l' \\ -m & q & m' \end{pmatrix} \mel{l}{\|C^{(k)}\|}{l'}, \label{eq:wigner_eckart}\\
   \mel{l}{\|C^{(k)}\|}{l'} &= (-1)^l \sqrt{(2l+1)(2l'+1)} \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}. \label{eq:reducido_Ck}
@@ -38,7 +38,7 @@ La densidad angular de una subcapa llena es esféricamente simétrica:
 \begin{equation}
     \sum_{m=-l}^{l} |Y_l^m(\theta, \phi)|^2 = \frac{2l+1}{4\pi}.
 \end{equation}
-La demostración sigue del teorema de adición, $P_l(\cos \gamma) = \frac{4\pi}{2l+1} \sum_{m} Y_l^{m*}(\Omega_1) Y_l^m(\Omega_2)$, evaluado en direcciones coincidentes: con $\Omega_1 = \Omega_2$ el ángulo entre ellas es $\gamma = 0$, y como $P_l(1) = 1$ para todo $l$, la suma de los módulos al cuadrado es la constante indicada. Esta es la propiedad que hace exacta la aproximación de campo central para las capas cerradas (Sección \ref{sec:rohf}) y la que anula el momento dipolar permanente de las capas internas en el potencial de polarización (Sección \ref{sec:cpp-muller}).
+La demostración sigue del teorema de adición, $P_l(\cos \gamma) = \frac{4\pi}{2l+1} \sum_{m} Y_l^{m*}(\Omega_1) Y_l^m(\Omega_2)$, evaluado en direcciones coincidentes: con $\Omega_1 = \Omega_2$ el ángulo entre ellas es $\gamma = 0$, y como $P_l(1) = 1$ para todo $l$, la suma de los módulos al cuadrado es la constante indicada. Esta es la propiedad que hace exacta la aproximación de campo central para las capas cerradas (Sección \ref{sec:rohf}).
 
 \section{Elementos de matriz del cálculo de interacción de configuraciones}
 \label{sec:ci_racah}
@@ -85,6 +85,43 @@ de donde $E_{\text{av}}(p^2) = F^0 - \frac{2}{25}F^2$, como en la Ecuación \eqr
     E(^{2S+1}L) = F^0 + c_2(L)\,F^2 = E_{\text{av}} + \left[c_2(L) - \overline{c_2}\right] F^2,
 \end{equation}
 que reproduce los valores $-3/25$, $+3/25$ y $+12/25$ del texto principal, cuyo promedio ponderado se anula.
+
+\section{Elementos de matriz del espín-órbita en la configuración \texorpdfstring{$np^2$}{np2}}
+\label{sec:so_racah}
+
+Dentro de la configuración, el operador de espín-órbita es $\hat{H}_{SO} = \zeta_{np}\sum_{i=1,2}\mathbf{l}_i\cdot\mathbf{s}_i$, una suma de productos escalares entre un tensor de rango uno que actúa sobre las coordenadas orbitales de un electrón y otro de rango uno que actúa sobre su espín. En una función antisimétrica los dos electrones contribuyen lo mismo, de modo que basta calcular el término del electrón 1 y multiplicarlo por dos. Como el momento orbital y el de espín pertenecen a espacios distintos, el producto escalar se separa en la base $\ket{LSJ}$ \parencite[Capítulo 7]{Edmonds1957},
+\begin{equation}
+  \label{eq:so_racah}
+  \mel{LSJ}{\hat{H}_{SO}}{L'S'J} = 2\zeta_{np}\,(-1)^{L'+S+J}
+  \begin{Bmatrix} L & S & J \\ S' & L' & 1 \end{Bmatrix}
+  \mel{L}{\|\mathbf{l}_1\|}{L'}\,\mel{S}{\|\mathbf{s}_1\|}{S'} ,
+\end{equation}
+y el elemento de matriz reducido de un operador que actúa solo sobre el electrón 1, en un estado acoplado $J_{12}$ de dos partículas con el mismo momento angular $j$, es
+\begin{equation}
+  \label{eq:reducido_un_electron}
+  \mel{J_{12}}{\|\mathbf{j}_1\|}{J'_{12}} = (-1)^{2j+J'_{12}+1}\sqrt{(2J_{12}+1)(2J'_{12}+1)}
+  \begin{Bmatrix} j & J_{12} & j \\ J'_{12} & j & 1 \end{Bmatrix}\sqrt{j(j+1)(2j+1)} ,
+\end{equation}
+con $j = l = 1$ y $J_{12} = L$ para la parte orbital, y $j = s = 1/2$ y $J_{12} = S$ para la de espín.
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{lccccc}
+        \toprule
+        \textbf{Elemento} & \textbf{Fase} & $6j$ & $\mel{L}{\|\mathbf{l}_1\|}{L'}$ & $\mel{S}{\|\mathbf{s}_1\|}{S'}$ & \textbf{Valor}$/\zeta_{np}$ \\
+        \midrule
+        $^3P_0$--$^3P_0$ & $+1$ & $-1/3$ & $\sqrt{3/2}$ & $\sqrt{3/2}$ & $-1$ \\
+        $^3P_1$--$^3P_1$ & $-1$ & $1/6$ & $\sqrt{3/2}$ & $\sqrt{3/2}$ & $-1/2$ \\
+        $^3P_2$--$^3P_2$ & $+1$ & $1/6$ & $\sqrt{3/2}$ & $\sqrt{3/2}$ & $+1/2$ \\
+        $^3P_0$--$^1S_0$ & $-1$ & $1/\sqrt{3}$ & $\sqrt{2}$ & $\sqrt{3}/2$ & $-\sqrt{2}$ \\
+        $^3P_2$--$^1D_2$ & $-1$ & $1/\sqrt{15}$ & $-\sqrt{5/2}$ & $\sqrt{3}/2$ & $+1/\sqrt{2}$ \\
+        \bottomrule
+    \end{tabular}
+    \caption[Elementos de matriz del espín-órbita en la configuración $np^2$]{Factores de la Ecuación \eqref{eq:so_racah} para los elementos de las matrices de Breit-Pauli de la configuración $np^2$: la fase $(-1)^{L'+S+J}$, el símbolo $6j$ del acoplamiento, los dos elementos reducidos de la Ecuación \eqref{eq:reducido_un_electron} y el elemento de matriz resultante.}
+    \label{tab:so_racah}
+\end{table}
+
+La Tabla \ref{tab:so_racah} evalúa los factores para los elementos que necesitan las matrices de la Sección \ref{sec:matrices_bp}. En la diagonal del $^3P$ se recuperan $-\zeta_{np}$, $-\tfrac{1}{2}\zeta_{np}$ y $+\tfrac{1}{2}\zeta_{np}$, y los elementos de un singlete consigo mismo se anulan, porque el elemento reducido del espín entre dos estados con $S=0$ es cero. Entre singlete y triplete resultan $-\sqrt{2}\,\zeta_{np}$ y $+\zeta_{np}/\sqrt{2}$, con el signo contrario al de las Ecuaciones \eqref{eq:bp_j0} y \eqref{eq:bp_j2}, que siguen la convención de fases del motor. Cambiar la fase de un estado singlete invierte el signo de sus elementos con el triplete y no altera ni los eigenvalores ni los pesos de mezcla.
 
 %%% Local Variables:
 %%% mode: LaTeX

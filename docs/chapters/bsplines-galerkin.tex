@@ -27,7 +27,7 @@ Esta formulación solo combina cantidades no negativas, y evita así las cancela
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\textwidth]{figura_evolucion_splines.pdf}
-    \caption{Evolución de las funciones base B-spline generadas mediante la fórmula de recurrencia de Cox-de Boor. \textbf{a)} Paso base ($p=0$) mostrando funciones escalón ortogonales. \textbf{b-d)} Aumento progresivo del grado ($p=1, 2, 3$) y de la regularidad $C^{p-1}$.}
+    \caption[Funciones base B-spline de grado 0 a 3]{Evolución de las funciones base B-spline generadas mediante la fórmula de recurrencia de Cox-de Boor. \textbf{a)} Paso base ($p=0$) mostrando funciones escalón ortogonales. \textbf{b-d)} Aumento progresivo del grado ($p=1, 2, 3$) y de la regularidad $C^{p-1}$.}
     \label{fig:bspline-evolucion}
 \end{figure}
 
@@ -37,7 +37,7 @@ La propiedad que distingue a los B-splines es su \textbf{soporte compacto}. A di
 
 Esta localidad tiene dos consecuencias:
 \begin{enumerate}
-    \item \textbf{Matrices Banda:} Al integrar el producto de dos funciones base, $\int B_i(r) B_j(r) dr$, el resultado es distinto de cero solo si sus soportes se intersectan ($|i-j| \leq p$). Las matrices resultantes (solapamiento, energía cinética) son matrices de banda (\textit{banded matrices}), con un ancho fijado por el orden del spline. Un solucionador que aproveche esa estructura resuelve un sistema lineal con costo $O(N)$ en lugar de $O(N^3)$. Nuestro motor no la explota en el álgebra lineal: almacena las matrices en formato denso y las entrega a rutinas densas, por las razones que se discuten en la Sección \ref{sec:repositorio}. La localidad se aprovecha, en cambio, al construirlas, porque en cada intervalo de la malla solo hay $p+1$ funciones no nulas y las integrales se ensamblan intervalo por intervalo, con un costo que crece linealmente con el número de funciones (Sección \ref{sec:tensores_geometria}).
+    \item \textbf{Matrices Banda:} Al integrar el producto de dos funciones base, $\int B_i(r) B_j(r) dr$, el resultado es distinto de cero solo si sus soportes se intersecan ($|i-j| \leq p$). Las matrices resultantes (solapamiento, energía cinética) son matrices de banda (\textit{banded matrices}), con un ancho fijado por el orden del spline. Un solucionador que aproveche esa estructura resuelve un sistema lineal con costo $O(N)$ en lugar de $O(N^3)$. Nuestro motor no la explota en el álgebra lineal: almacena las matrices en formato denso y las entrega a rutinas densas, por las razones que se discuten en la Sección \ref{sec:repositorio}. La localidad se aprovecha, en cambio, al construirlas, porque en cada intervalo de la malla solo hay $p+1$ funciones no nulas y las integrales se ensamblan intervalo por intervalo, con un costo que crece linealmente con el número de funciones (Sección \ref{sec:tensores_geometria}).
     \item \textbf{Control Local:} La alteración de un coeficiente $c_k$ en la expansión de la función de onda altera la curva \textit{exclusivamente} dentro de su región de influencia local $[t_k, t_{k+p+1})$. Esto permite resolver detalles finos, como el comportamiento cerca del núcleo, refinando la malla solo donde hace falta y sin introducir oscilaciones en el resto del dominio (Figura \ref{fig:control_local_fem}).
 \end{enumerate}
 
@@ -46,7 +46,7 @@ Ambas propiedades son las que motivan el uso de esta base en física atómica, y
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth]{figura_control_local_fem.pdf}
-    \caption{Ilustración de la propiedad de control local en B-splines. La perturbación de un coeficiente $\Delta c_k$ altera la curva solución exclusivamente dentro de la \textbf{Región de Influencia Local} (área sombreada correspondiente al soporte compacto de $B_k^p$). Fuera de este intervalo, la curva no se ve afectada.}
+    \caption[Control local de los B-splines]{Ilustración de la propiedad de control local en B-splines. La perturbación de un coeficiente $\Delta c_k$ altera la curva solución exclusivamente dentro de la \textbf{Región de Influencia Local} (área sombreada correspondiente al soporte compacto de $B_k^p$). Fuera de este intervalo, la curva no se ve afectada.}
     \label{fig:control_local_fem}
 \end{figure}
 
@@ -62,7 +62,7 @@ donde $\gamma$ controla cuánto se concentran los nudos cerca del origen. El jac
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.85\textwidth]{figura_comparacion_mallas.pdf}
-    \caption{\textbf{Comparación de distribuciones de nudos B-spline.} a) Distribución uniforme, ineficiente para orbitales atómicos. b) Distribución exponencial con $\gamma=4$, el valor empleado para el estaño (Tabla \ref{tab:parametros_base}), que concentra las funciones cerca del origen. Ambos paneles usan el mismo número de intervalos y el mismo orden; las marcas del eje señalan los nudos.}
+    \caption[Distribuciones uniforme y exponencial de nudos]{\textbf{Comparación de distribuciones de nudos B-spline.} a) Distribución uniforme, ineficiente para orbitales atómicos. b) Distribución exponencial con $\gamma=4$, el valor empleado para el estaño (Tabla \ref{tab:parametros_base}), que concentra las funciones cerca del origen. Ambos paneles usan el mismo número de intervalos y el mismo orden; las marcas del eje señalan los nudos.}
     \label{fig:grid_comparison}
 \end{figure}
 
@@ -110,9 +110,15 @@ El término cinético de (\ref{eq:galerkin-condition}) contiene una segunda deri
   \int_{0}^{R_{\text{max}}} B_i(r) \dv[2]{\tilde{P}}{r} \dd{r} = \underbrace{\eval{ B_i(r) \dv{\tilde{P}}{r} }_{0}^{R_{\text{max}}}}_{=\,0} - \int_{0}^{R_{\text{max}}} \dv{B_i}{r} \dv{\tilde{P}}{r} \dd{r},
 \end{equation}
 
-donde el término de borde se anula porque las funciones de prueba $B_i$ que se retienen se anulan en ambos extremos, la misma condición $P(0) = P(R_{\text{max}}) = 0$ que cumple la solución. La ecuación que resulta es la \textbf{forma débil} del problema, por contraste con la forma fuerte \eqref{eq:strong-form}: ya no se exige que la ecuación diferencial se cumpla punto a punto, sino solo en promedio contra cada función de prueba, y en ella aparecen únicamente primeras derivadas. El paso cumple así dos funciones: rebaja el requisito de regularidad sobre la base, a la que basta con ser derivable una vez, y simetriza el operador, lo cual garantiza que la matriz resultante sea hermitiana. En el resto del documento, forma débil designa siempre esta ecuación proyectada e integrada por partes.
+donde el término de borde se anula porque las funciones de prueba $B_i$ que se retienen se anulan en ambos extremos, la misma condición $P(0) = P(R_{\text{max}}) = 0$ que cumple la solución. Al llevar este resultado a la condición \eqref{eq:galerkin-condition} y sustituir la expansión \eqref{eq:expansion-metodo}, la condición de Galerkin queda, para cada $i = 1, \dots, N$,
+\begin{multline}
+\label{eq:weak-form}
+  \sum_{j=1}^{N} \qty[ \frac{1}{2}\int_{0}^{R_{\text{max}}} \dv{B_i}{r} \dv{B_j}{r} \dd{r} + \int_{0}^{R_{\text{max}}} B_i(r)\, V_{\text{eff}}(r)\, B_j(r) \dd{r} ] c_j \\
+  = \epsilon \sum_{j=1}^{N} \qty[ \int_{0}^{R_{\text{max}}} B_i(r) B_j(r) \dd{r} ] c_j .
+\end{multline}
+Esta es la \textbf{forma débil} del problema, por contraste con la forma fuerte \eqref{eq:strong-form}: ya no se exige que la ecuación diferencial se cumpla punto a punto, sino solo en promedio contra cada función de prueba, y en ella aparecen únicamente primeras derivadas. El paso cumple así dos funciones: rebaja el requisito de regularidad sobre la base, a la que basta con ser derivable una vez, y simetriza el operador, lo cual garantiza que la matriz resultante sea hermítica. En el resto del documento, forma débil designa siempre una ecuación de este tipo, proyectada sobre la base e integrada por partes.
 
-Sustituyendo la expansión (\ref{eq:expansion-metodo}) y factorizando los coeficientes, cada integral se convierte en un elemento de matriz:
+Cada integral entre corchetes es un elemento de matriz:
 
 \begin{align}
   \label{eq:matrix-elements}
@@ -121,7 +127,7 @@ Sustituyendo la expansión (\ref{eq:expansion-metodo}) y factorizando los coefic
   S_{ij} = \int_{0}^{R_{\text{max}}} & B_i(r) B_j(r) \dd{r}.
 \end{align}
 
-La condición de Galerkin para todo $i$ produce entonces el sistema $\sum_j (T_{ij} + V_{ij}) c_j = \epsilon \sum_j S_{ij} c_j$. Definiendo la matriz Hamiltoniana $H_{ij} = T_{ij} + V_{ij}$, el problema continuo se convierte en un \textbf{problema de eigenvalores generalizado}:
+Con ellos la Ecuación \eqref{eq:weak-form} se escribe $\sum_j (T_{ij} + V_{ij}) c_j = \epsilon \sum_j S_{ij} c_j$. Definiendo la matriz Hamiltoniana $H_{ij} = T_{ij} + V_{ij}$, el problema continuo se convierte en un \textbf{problema de eigenvalores generalizado}:
 
 \begin{equation}
 \label{eq:eigen-metodo}
@@ -140,7 +146,7 @@ El sistema \eqref{eq:eigen-metodo} puede obtenerse también por un camino variac
 \end{equation}
 y la condición $\partial E/\partial c_i = 0$ da $\sum_j (H_{ij} - E\,S_{ij})\,c_j = 0$, que es la condición de Galerkin \eqref{eq:galerkin-condition} escrita en forma matricial. La coincidencia requiere dos cosas: que el operador sea hermítico, de modo que $\bm{H}$ sea simétrica, y que las funciones de peso sean las mismas funciones de la base. Los dos caminos conducen entonces al mismo problema generalizado de eigenvalores.
 
-La equivalencia tiene una consecuencia práctica. Un operador hermítico está acotado inferiormente cuando su espectro tiene un valor mínimo, como ocurre con el Hamiltoniano atómico, cuyo estado fundamental tiene energía finita. Para un operador así, los eigenvalores del problema de Ritz en un subespacio, ordenados de menor a mayor, son cotas superiores de los eigenvalores exactos correspondientes y decrecen de manera monótona al ampliar el subespacio \parencite{MacDonald1933}. La formulación de Galerkin hereda esa propiedad siempre que las funciones de la base satisfagan las condiciones de frontera del problema. Otras familias de residuos ponderados, como la colocación o los mínimos cuadrados, emplean funciones de peso distintas de la base y no comparten esta interpretación variacional \parencite{Finlayson1972}.
+La equivalencia tiene una consecuencia práctica. Un operador hermítico está acotado inferiormente cuando su espectro tiene un valor mínimo, como ocurre con el Hamiltoniano atómico, cuyo estado fundamental tiene energía finita. Para un operador así, los eigenvalores del problema de Ritz en un subespacio, ordenados de menor a mayor, son cotas superiores de los eigenvalores exactos correspondientes y decrecen de manera monótona al ampliar el subespacio \parencite{MacDonald1933}. La formulación de Galerkin hereda esa propiedad siempre que las funciones de la base satisfagan las condiciones de frontera del problema. Otras familias de residuos ponderados, como la colocación o los mínimos cuadrados, emplean funciones de peso distintas de la base y no comparten esta interpretación variacional \parencite{Finlayson1965}.
 
 \subsection{Aplicación: la ecuación de Poisson radial}
 \label{subsec:poisson-metodo}

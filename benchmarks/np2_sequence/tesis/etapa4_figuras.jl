@@ -85,7 +85,7 @@ function figuras_orbitales(D)
     # sobre el mismo eje en sqrt(r).
     rt = [0.0, 0.1, 0.5, 1.0, 2.0, 4.0, 8.0, 12.0]
     p1 = plot(; comun..., xticks = (sqrt.(rt), ["0", "0.1", "0.5", "1", "2", "4", "8", "12"]),
-              xlabel = "r (a₀), eje en escala √r", ylabel = "P_np(r)", legend = :topright)
+              xlabel = "r (a₀), eje en escala √r", ylabel = raw"$P_{np}(r)$", legend = :topright)
     p2 = plot(; comun..., title = "Potenciales Centrales Efectivos (Secuencia np²)",
               ylabel = "V_eff(r) (Ha)", legend = :bottomright,
               yticks = (plog.(yv), string.(yv)), ylims = (plog(-3600), plog(2)))
@@ -109,7 +109,7 @@ function figuras_orbitales(D)
         # menos, y evaluaba los coeficientes sobre una malla de nudos que no era la suya.
         basis = generate_basis(R_MAX, i.N, Val(i.K); γ = i.gamma)
         eje_x = el == last(ELEMENTOS) ? "r (u.a.)" : ""
-        po = plot(title = etiqueta_Z(el), ylabel = "P_nl(r)", xlabel = eje_x, xticks = XTICKS,
+        po = plot(title = etiqueta_Z(el), ylabel = raw"$P_{nl}(r)$", xlabel = eje_x, xticks = XTICKS,
                   xlims = (0, sqrt(R_PLOT)), legend = :topright, margin = 3Plots.mm, left_margin = 8Plots.mm)
         dens = zeros(length(idx))
         for o in D[el]["orbitals"]
@@ -143,7 +143,7 @@ function figuras_zeta(HFV)
     dLS = [6 / 25 * HFV[el].F2 * HA2CM for el in ELEMENTOS]
 
     p = plot(Zs, zc; xscale = :log10, yscale = :log10, xticks = xt, marker = :circle, lw = 2,
-             color = :red, label = "ζ_np calculado", xlabel = "Z", ylabel = "Energía (cm⁻¹)",
+             color = :red, label = raw"$\zeta_{np}$ calculado", xlabel = "Z", ylabel = "Energía (cm⁻¹)",
              legend = :bottomright, size = (850, 500), margin = 5Plots.mm)
     scatter!(p, Zs, zn; marker = :diamond, color = :black, label = "ζ que pide el NIST")
     plot!(p, Zs, dLS; marker = :square, lw = 2, color = :blue, label = "E(¹D) − E(³P) = 6F²/25 (HF)")
@@ -158,17 +158,18 @@ function figuras_zeta(HFV)
     guardar(q, "zeta_razon.pdf")
 end
 
-function figura_niveles()
+# Desde el 2026-10-14 la tesis no lleva la columna con V_pol; con_vpol = true la recupera.
+function figura_niveles(; con_vpol::Bool = false)
     paneles = []
     for el in ELEMENTOS
         e = ci_fig(el, ESTADO, 0.0)
-        sel = haskey(BARRIDO_ALPHA, el) ? alpha_elegido(el) : nothing
+        sel = con_vpol && haskey(BARRIDO_ALPHA, el) ? alpha_elegido(el) : nothing
         columnas = Any[("HF+CI", e === nothing ? nothing : e["niveles_cm"], :blue)]
-        sel === nothing || push!(columnas, ("+V_pol", sel[2]["niveles_cm"], :red))
+        sel === nothing || push!(columnas, (raw"+$V_{\mathrm{pol}}$", sel[2]["niveles_cm"], :red))
         push!(columnas, ("NIST", NIST_NIVELES[el], :black))
         x0s = 1.3 .* collect(0:length(columnas) - 1)
         # El alpha_d va en el titulo: como etiqueta del eje se encimaba con las columnas vecinas.
-        titulo = sel === nothing ? etiqueta_Z(el) : @sprintf("%s, α_d = %.2g", etiqueta_Z(el), sel[1])
+        titulo = sel === nothing ? etiqueta_Z(el) : @sprintf("%s, \$\\alpha_d\$ = %.2g", etiqueta_Z(el), sel[1])
         p = plot(title = titulo, titlefontsize = 11, legend = false, xticks = (x0s .+ 0.5, [c[1] for c in columnas]),
                  xlims = (-0.2, last(x0s) + 1.6), ylabel = "Energía (cm⁻¹)")
         for (x0, (_, niv, color)) in zip(x0s, columnas)
@@ -255,7 +256,7 @@ function figura_barrido()
             push!(e1, 100 * (n[2] - ref[2]) / ref[2])
             push!(e2, 100 * (n[3] - ref[3]) / ref[3])
         end
-        p = plot(title = INFO[el].etiqueta, xlabel = "α_d (u.a.)", ylabel = "error frente al NIST (%)",
+        p = plot(title = INFO[el].etiqueta, xlabel = raw"$\alpha_d$ (u.a.)", ylabel = "error frente al NIST (%)",
                  legend = :topleft)
         if !isempty(as)
             plot!(p, as, e1; marker = :circle, lw = 2, label = "³P₁")

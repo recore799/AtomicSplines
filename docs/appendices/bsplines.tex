@@ -12,7 +12,7 @@ Los parámetros de la base con que se obtuvieron los resultados del Capítulo \r
 \begin{table}[htbp]
     \centering
     \input{tablas/parametros_base}
-    \caption{Base de B-splines de cada elemento en los cálculos de este trabajo: radio de la caja, número de intervalos de la malla exponencial, orden $k$ del spline (grado $k-1$), parámetro $\gamma$ de la Ecuación \eqref{eq:exp-grid} y número de funciones de la base.}
+    \caption[Parámetros de la base de B-splines de cada elemento]{Base de B-splines de cada elemento en los cálculos de este trabajo: radio de la caja, número de intervalos de la malla exponencial, orden $k$ del spline (grado $k-1$), parámetro $\gamma$ de la Ecuación \eqref{eq:exp-grid} y número de funciones de la base.}
     \label{tab:parametros_base}
 \end{table}
 
@@ -39,7 +39,7 @@ Cualquier operador local de un cuerpo con valor $\Omega(r)$ se obtiene entonces 
 \label{eq:one-body-contraction}
   O_{ij} = \sum_{q} w_q\, E_{iq}\, \Omega(r_q)\, E_{jq},
 \end{equation}
-de modo que las matrices de solapamiento, nuclear, centrífuga y de polarización son el mismo objeto con distinto peso local, y la cinética usa $\bm{E}'$ en lugar de $\bm{E}$, como corresponde a la forma débil.
+de modo que las matrices de solapamiento, nuclear y centrífuga son el mismo objeto con distinto peso local, y la cinética usa $\bm{E}'$ en lugar de $\bm{E}$, como corresponde a la forma débil.
 
 El caso que depende del estado es el término fuente de la ecuación de Poisson. Con la densidad de par expandida en la misma base a través de una matriz de densidad, $\rho(r) = \sum_{\alpha\beta} D_{\alpha\beta} B_\alpha(r) B_\beta(r)$, su proyección sobre la función de prueba $B_\mu$ es
 \begin{equation}

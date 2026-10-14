@@ -1,0 +1,176 @@
+% Material retirado del manuscrito el 2026-10-14, a pedido del autor: la corrección semiempírica
+% de polarización de las capas internas. Se conserva tal como estaba en la tesis (commit 4884661 y
+% cambios del 2026-10-14), con los encabezados bajados un nivel. Las tablas y la figura siguen
+% generándose en las etapas 3 y 4; los .jld2 con alpha_d siguen registrados en RESULTS.toml.
+
+\section{La polarización de las capas internas}
+\label{det:vpol}
+
+Esta sección reúne el modelo semiempírico de polarización de las capas internas que formó parte de
+la tesis hasta el 14 de octubre de 2026 y que se retiró para que el modelo del manuscrito quedara
+sin parámetros ajustados. Se conserva tal como estaba: la deducción del potencial, su
+implementación, la calibración de la polarizabilidad, su efecto sobre los niveles y la energía de
+ionización, la limitación que de ahí se sigue y la reducción de la formulación general de
+\textcite{Muller1984} al caso atómico. Las referencias a secciones que siguen en la tesis apuntan a
+su numeración actual.
+
+\subsection{Polarización de las Capas Internas y Efectos de Muchos Cuerpos}
+\label{sec:core_polarization}
+
+La aproximación de capas internas congeladas deja fuera un efecto físico: los electrones de valencia no solo interactúan entre sí, sino que polarizan la nube electrónica de las capas internas. Cuando un electrón de valencia se encuentra a una distancia $r$ del núcleo, su campo eléctrico, de magnitud $\mathcal{E} = 1/r^2$ en unidades atómicas, distorsiona la distribución esférica de carga de las capas internas. Esa distorsión induce en ellas un momento dipolar eléctrico proporcional al campo, $\mathbf{p} = \alpha_d \mathcal{\bm{E}}$, donde $\alpha_d$ es la \textbf{polarizabilidad dipolar estática} de las capas internas.
+
+La energía de interacción entre una carga puntual y el dipolo que induce es $V_{\text{pol}} = -\frac{1}{2} \mathbf{p} \cdot \mathcal{\bm{E}}$, y al sustituir el campo del electrón se obtiene la dependencia asintótica
+\begin{equation}
+    V_{\text{pol}}(r \to \infty) = -\frac{\alpha_d}{2 r^4}.
+\end{equation}
+
+Esta interacción de largo alcance es atractiva y acerca a los electrones de valencia hacia el núcleo. Para $r \to 0$, en cambio, la expresión deja de ser válida: el electrón de valencia penetra en las capas internas, y la divergencia $1/r^4$ carece de sentido físico.
+
+Para eliminar esa singularidad se introducen funciones de corte empíricas $W(r)$ que suprimen el potencial dentro del radio $r_c$ de las capas internas, como en el potencial de polarización de \textcite{Muller1984} para átomos alcalinos y alcalinotérreos. Ese trabajo emplea cortes de la forma $(1 - \exp(-r^2/r_c^2))^n$; en nuestra implementación adoptamos una función de orden más alto, que se aproxima a un escalón en $r = r_c$:
+\begin{equation}
+    \label{eq:vpol_cutoff}
+    V_{\text{pol}}(r) = -\frac{\alpha_d}{2 r^4} W_6\left(\frac{r}{r_c}\right), \quad \text{donde} \quad W_6(x) = 1 - e^{-x^6}.
+\end{equation}
+El parámetro empírico $r_c$ es el radio por debajo del cual el electrón ha penetrado en las capas internas y la imagen de un dipolo inducido deja de aplicarse.
+
+La inclusión de $V_{\text{pol}}$ altera la estructura de los propios orbitales de valencia, y conviene precisar en qué sentido lo hace. El término de la Ecuación \eqref{eq:vpol_cutoff} es estrictamente negativo, de modo que se suma a la atracción nuclear en lugar de apantallarla: liga con más fuerza al electrón de valencia y contrae su distribución de probabilidad hacia el núcleo. Esa contracción aumenta el \textbf{momento radial de orden inverso cúbico}
+\begin{equation}
+    \left\langle \frac{1}{r^3} \right\rangle_{nl} = \int_0^\infty P_{nl}^2(r) \frac{1}{r^3} \dd{r},
+\end{equation}
+cuyo integrando está fuertemente pesado hacia el origen y responde por ello de manera desproporcionada a un cambio pequeño de la densidad en esa región.
+
+La consecuencia espectroscópica es directa. Como el parámetro de estructura fina $\zeta_{nl}$ sigue de cerca a $\langle 1/r^3 \rangle$ (Sección \ref{sec:spin_orbita}), incorporar la polarización de las capas internas \textit{aumenta} el acoplamiento espín-órbita y abre los intervalos del término fundamental. El modelo de Hartree-Fock puro, que omite esta contribución, subestima entonces el desdoblamiento en los átomos donde las capas internas son apreciablemente polarizables. El Capítulo \ref{ch:resultados} confirma este comportamiento en el germanio y el estaño, cuantifica el déficit de $\zeta$ respecto al que exigen los niveles medidos, y muestra que con $\alpha_d$ ajustado la corrección reproduce los intervalos del triplete dentro del dos por ciento en ambos elementos.
+
+\subsubsection{Implementación Empírica del Potencial de Polarización}
+\label{sec:impl_polarizacion}
+
+El cálculo con capas internas congeladas omite la correlación entre la valencia y esas capas, que la Sección \ref{sec:core_polarization} describe como su polarización. Tratarla desde primeros principios exigiría ampliar el cálculo de correlación con excitaciones de las capas internas o recurrir a la teoría de perturbaciones de muchos cuerpos, ambos fuera del alcance de este trabajo. En su lugar la representamos mediante el potencial semiempírico $V_{\text{pol}}(r)$ de la Ecuación \eqref{eq:vpol_cutoff}, que por ser local y depender solo de $r$ se suma a la atracción nuclear $-Z/r$ para formar un \textbf{potencial central efectivo}:
+
+\begin{equation}
+    \label{eq:vpol_efectivo}
+    V_{\text{eff}}(r) = -\frac{Z}{r} - \frac{\alpha_d}{2 r^4} \left( 1 - e^{-(r/r_c)^6} \right).
+\end{equation}
+
+Este potencial sustituye a la atracción nuclear en la matriz del Hamiltoniano de un cuerpo $\hat{h}$:
+\begin{equation}
+    h_{ij} = \int_0^{R_{\text{max}}} B_i(r) \left[ -\frac{1}{2}\frac{d^2}{dr^2} + \frac{l(l+1)}{2r^2} + V_{\text{eff}}(r) \right] B_j(r) \dd{r}.
+\end{equation}
+
+En consecuencia, el ciclo SCF converge hacia una solución distinta, en la que los orbitales sienten la atracción adicional de las capas internas polarizadas. Como el término entra en $\hat{h}$, actúa sobre todos los orbitales y no solo sobre los de valencia, que es donde lo sitúa el modelo de \textcite{Muller1984}: los propios orbitales internos también lo perciben. El corte $W_6$ lo suprime en las capas más internas, pero no en la subcapa $ns^2$, cuya densidad se concentra fuera de $r_c$, y solo en parte en la $(n-1)d^{10}$ que la precede; esta aproximación de la implementación se suma a las limitaciones del parámetro $\alpha_d$ que se discuten en la Sección \ref{sec:limitaciones}.
+
+Para operar este modelo hay que fijar los dos parámetros empíricos. El radio de corte $r_c$ representa el tamaño de las capas internas y evita la divergencia no física de $1/r^4$ cerca del núcleo. No lo ajustamos: lo mantenemos fijo en $r_c = 1.0\,a_0$ para el germanio y el estaño, de modo que la calibración recae sobre un solo grado de libertad.
+
+La polarizabilidad $\alpha_d$ se extrae idealmente de mediciones sobre el ion de capas cerradas análogo o de cálculos independientes de alta precisión. Para las capas internas de $\mathrm{Ge}$ y $\mathrm{Sn}$ no dispusimos de un valor de referencia verificable, de manera que la determinamos por ajuste espectroscópico: se repite el ciclo autoconsistente completo, y con él el cálculo CI posterior, para una rejilla de valores de $\alpha_d$, y se retiene el que minimiza el error cuadrático medio de los dos intervalos del término $^3P$ frente a los niveles del NIST. El barrido resultante y el valor adoptado en cada elemento se presentan en la Sección \ref{sec:vpol_resultados}. Un parámetro obtenido de este modo no es una polarizabilidad medida sino una cantidad efectiva, y que el Capítulo \ref{ch:resultados} documenta en qué sentido absorbe física ajena a la polarización de las capas internas.
+
+\subsubsection{La corrección de polarización de las capas internas}
+\label{sec:vpol_resultados}
+
+El potencial $V_{\text{pol}}$ de la Ecuación \eqref{eq:vpol_cutoff}, implementado según la Sección \ref{sec:impl_polarizacion}, es un término atractivo que actúa fuera del radio de corte $r_c$, de modo que liga con más fuerza al electrón de valencia y lo contrae. Con la contracción crecen $\langle r^{-3}\rangle$ y $\zeta_{np}$, y la corrección abre el triplete, que es lo que el déficit de la Tabla \ref{tab:zeta} reclama. Con $r_c = 1.0\,a_0$ fijo, la polarizabilidad $\alpha_d$ se calibró contra los dos intervalos del triplete, y la Tabla \ref{tab:barrido_vpol} y la Figura \ref{fig:barrido_vpol} recorren el parámetro.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/barrido_vpol}
+    \caption[Barrido de la polarizabilidad de las capas internas]{Barrido de la polarizabilidad dipolar de las capas internas con $r_c = 1.0\,a_0$, con $\zeta_{np}$ y los intervalos en cm$^{-1}$. El asterisco marca el valor adoptado, el que minimiza el error cuadrático medio de los dos intervalos frente al NIST.}
+    \label{tab:barrido_vpol}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/barrido_vpol.pdf}
+    \caption[Barrido de la polarizabilidad de las capas internas]{Error de los intervalos del término $^3P$ del germanio y del estaño frente al NIST en función de la polarizabilidad dipolar de las capas internas.}
+    \label{fig:barrido_vpol}
+\end{figure}
+
+La columna de $\zeta_{np}$ crece de manera monótona con $\alpha_d$ en ambos elementos, y con ella los dos intervalos. En el germanio los valores de $\alpha_d$ que igualan al NIST el $^3P_1$ y el $^3P_2$ son $0.67$ y $0.66$, prácticamente el mismo; el valor adoptado, $0.75$, deja los dos niveles a $+1.6\%$ y $+1.5\%$ del experimento, y no coincide con los cruces porque el criterio elige el mejor punto de la rejilla del barrido, sin interpolar. En el estaño los cruces son $3.22$ y $2.87$, y el valor adoptado de $3.0$ deja el $^3P_1$ a $-1.9\%$ y el $^3P_2$ a $+0.8\%$, de modo que la tensión entre ambos intervalos existe pero es pequeña. Con el $\alpha_d$ adoptado, el $\zeta_{np}$ del germanio y del estaño queda a menos de un $2\%$ del $\zeta_{\text{NIST}}$ de la Tabla \ref{tab:zeta}.
+
+Que la corrección se aplique solo a los dos elementos pesados tiene una justificación estructural. Las capas internas del germanio contienen una subcapa $3d^{10}$ llena, extensa y fácilmente polarizable, y las del estaño una $4d^{10}$, mientras que las del carbono y del silicio, sin subcapas $d$, son compactas y mucho menos polarizables. En el carbono, además, $\zeta$ ya sobra en un $46\%$, y una corrección que lo aumenta agravaría el error en lugar de corregirlo; en el silicio el déficit es del $5\%$ y no se intentó corregirlo.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/niveles_vpol}
+    \caption[Niveles del germanio y del estaño con polarización de las capas internas]{Niveles (cm$^{-1}$) del germanio y del estaño sin y con la corrección de polarización de las capas internas, con el $\alpha_d$ adoptado ($0.75$ y $3.0$) y $r_c = 1.0\,a_0$, frente al NIST.}
+    \label{tab:niveles_vpol}
+\end{table}
+
+La corrección no se limita al triplete (Tabla \ref{tab:niveles_vpol}). El $^1S_0$ mejora en ambos elementos, hasta un $+0.6\%$ en el germanio, pero el $^1D_2$ empeora: pasa de $+10.2\%$ a $+15.3\%$ en el germanio y de $+1.1\%$ a $+12.3\%$ en el estaño. La mezcla del $^3P_2$ se mueve en la dirección correcta, hasta un $0.94\%$ y un $6.69\%$ (Tabla~\ref{det:tab_lande_vpol}), pero no cierra la brecha, porque con $\zeta$ ya corregido lo que sigue faltando procede de la separación $\Delta_{J=2}$, que el $^1D_2$ alto agranda. Un $\alpha_d$ ajustado contra el triplete no tiene por qué mejorar la separación electrostática, y de hecho no lo hace.
+
+\subsubsection{La energía de ionización con la corrección}
+
+\begin{table}[htbp]
+  \centering
+  \input{tablas/ionizacion_vpol}
+  \caption{La Tabla~\ref{tab:ionizacion} de la tesis con la columna CI+$V_{\text{pol}}$, que usa el $\alpha_d$ adoptado.}
+  \label{det:tab_ionizacion_vpol}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \input{tablas/lande_vpol}
+  \caption{La Tabla~\ref{tab:lande} de la tesis con la columna CI+$V_{\text{pol}}$.}
+  \label{det:tab_lande_vpol}
+\end{table}
+
+La Tabla~\ref{det:tab_ionizacion_vpol} es la de la tesis con la tercera etapa del modelo. 
+El resultado con $V_{\text{pol}}$ es desfavorable. En el germanio el error crece del $+1.4\%$ al $+4.8\%$ y en el estaño del $+0.5\%$ al $+8.4\%$, de modo que la corrección que lleva el triplete a menos del $2\%$ liga en exceso al átomo. El $\alpha_d$ obtenido por ajuste espectroscópico no debe interpretarse, por tanto, como la polarizabilidad dipolar de las capas internas, sino como un parámetro efectivo que absorbe cualquier carencia del modelo que se manifieste como un déficit de $\zeta$, entre ellas la contracción relativista que la Tabla \ref{tab:zeta} hace plausible. Un parámetro que reproduce el triplete y a la vez empeora la energía de ionización no representa solo la polarización de las capas internas.
+
+\subsubsection{La polarizabilidad efectiva}
+
+El parámetro $\alpha_d$ se determinó por ajuste contra los intervalos del triplete, y la prueba cruzada de la energía de ionización mostró que absorbe más física que la respuesta dipolar de las capas internas; el candidato más probable son los efectos relativistas que contraen los orbitales y que un tratamiento de Breit-Pauli a primer orden sobre orbitales no relativistas no incorpora. La comparación de los valores ajustados con polarizabilidades de referencia habría permitido acotar esa contaminación, pero no dispusimos de valores primarios verificables para las capas internas del germanio y el estaño. A esa ambigüedad se suma una aproximación de la implementación: el potencial actúa también sobre los propios orbitales internos, y no solo sobre los de valencia como en el modelo de Müller (Sección \ref{sec:impl_polarizacion}), y el efecto de esa elección sobre los observables no se cuantificó.
+
+\subsection{Reducción del Potencial de Polarización al Caso Atómico}
+\label{sec:cpp-muller}
+
+El potencial de polarización empleado en la Sección~\ref{sec:core_polarization} se presenta allí a partir de un argumento electrostático elemental: un electrón de valencia induce un dipolo en las capas internas y se estabiliza al interactuar con él. Esa derivación es suficiente para justificar la forma $-\alpha_d/2r^4$, pero conviene mostrar que coincide con la formulación general del \textit{Core Polarization Potential} (CPP) de \textcite{Muller1984}, concebida para moléculas y agregados, cuando se le imponen las condiciones de un átomo aislado. El ejercicio deja explícito, además, un término de dos cuerpos que la derivación elemental no hace visible.
+
+\subsubsection{La formulación general}
+
+En su forma original, el potencial de polarización del sistema completo se escribe como una suma sobre centros polarizables $c$,
+\begin{equation}
+    \label{eq:cpp_general}
+    V_{\text{CPP}} = -\frac{1}{2}\sum_c \left( \alpha_c\, \bm{f}_c \cdot \bm{f}_c - 2\,\bm{f}_c \cdot \bm{\mu}_c^{\circ} + \bm{f}_c^{\circ}\cdot\bm{\mu}_c^{\circ} \right),
+\end{equation}
+donde el campo eléctrico efectivo que actúa sobre el centro $c$ recibe contribuciones de todos los electrones y de todos los demás núcleos,
+\begin{equation}
+    \label{eq:cpp_campo}
+    \bm{f}_c = \sum_i \frac{\bm{r}_{ci}}{r_{ci}^3}\,C(r_{ci}, \rho_c) - \sum_{c' \neq c} \frac{\bm{R}_{cc'}}{R_{cc'}^3}\,Z_{c'} .
+\end{equation}
+Aquí $\alpha_c$ es el tensor de polarizabilidad del centro, $\bm{\mu}_c^{\circ}$ su momento dipolar estático, y $C(r,\rho)$ una función de corte que regulariza el campo a distancias cortas.
+
+\subsubsection{Imposición de la simetría atómica}
+
+Tres condiciones reducen \eqref{eq:cpp_general} al caso que nos interesa. En primer lugar, un átomo aislado posee un solo centro polarizable, de modo que la suma externa sobre $c$ desaparece y el segundo sumando de \eqref{eq:cpp_campo}, que representa el campo generado por los demás núcleos, se anula de manera idéntica. El vector $\bm{r}_{ci}$ se reduce al radio vector del electrón medido desde el núcleo, y el campo efectivo queda
+\begin{equation}
+    \label{eq:cpp_campo_atomico}
+    \bm{f} = \sum_i \frac{\bm{r}_i}{r_i^3}\,W(r_i),
+\end{equation}
+donde $W(r)$ es la función de corte del campo, que se anula en el interior de las capas internas y tiende a la unidad fuera de ellas.
+
+En segundo lugar, las capas internas de nuestros sistemas son cerradas y por tanto esféricamente simétricas, según el teorema de Unsöld de la Sección \ref{sec:unsold}. Una distribución de carga esférica no admite momento dipolar permanente, de manera que $\bm{\mu}^{\circ} = \bm{0}$ y los dos últimos términos de \eqref{eq:cpp_general} se desvanecen. Esta es la diferencia esencial con el caso molecular, donde los enlaces deforman la nube electrónica de forma permanente.
+
+En tercer lugar, la isotropía de una distribución esférica reduce el tensor de polarizabilidad a un escalar, $\alpha_c \to \alpha_d$. Con estas tres condiciones,
+\begin{equation}
+    \label{eq:cpp_colapsado}
+    V_{\text{pol}} = -\frac{1}{2}\alpha_d \,(\bm{f}\cdot\bm{f}).
+\end{equation}
+
+\subsubsection{Los términos de uno y de dos cuerpos}
+
+Sustituir \eqref{eq:cpp_campo_atomico} en \eqref{eq:cpp_colapsado} produce un producto de dos sumatorias que conviene separar según los índices coincidan o no,
+\begin{equation}
+    V_{\text{pol}} = -\frac{1}{2}\alpha_d \left( \sum_i \frac{\bm{r}_i}{r_i^3}W(r_i) \right)\cdot\left( \sum_j \frac{\bm{r}_j}{r_j^3}W(r_j) \right).
+\end{equation}
+
+Los términos diagonales, con $i=j$, involucran el producto de un vector consigo mismo. Usando $\bm{r}_i\cdot\bm{r}_i = r_i^2$, la potencia se simplifica a $r_i^2/r_i^6 = 1/r_i^4$ y queda un operador estrictamente de un cuerpo,
+\begin{equation}
+    \label{eq:cpp_un_cuerpo}
+    V_{\text{pol}}^{(1)} = -\frac{1}{2}\alpha_d \sum_i \frac{W^2(r_i)}{r_i^4},
+\end{equation}
+En nuestra implementación el cuadrado $W^2(r)$ se toma como $W_6(r/r_c) = 1 - e^{-(r/r_c)^6}$, de modo que \eqref{eq:cpp_un_cuerpo} coincide con la forma \eqref{eq:vpol_cutoff} de la Sección~\ref{sec:core_polarization} y con el potencial central que se suma a la atracción nuclear en la Ecuación \eqref{eq:vpol_efectivo}, que es el que interviene en el ciclo SCF. Con esa elección el corte del campo es $W = W_6^{1/2}$, y es este el que aparecería en el término de dos cuerpos. La dependencia $r^{-4}$, introducida en la Sección~\ref{sec:core_polarization} por vía electrostática, emerge aquí como consecuencia puramente algebraica del producto punto.
+
+Los términos cruzados, con $i \neq j$, sobreviven en cambio como un operador de dos cuerpos. Para la capa de valencia $np^2$ solo hay dos electrones y por tanto dos combinaciones cruzadas, $(1,2)$ y $(2,1)$, que al ser el producto punto conmutativo se suman y cancelan el factor $1/2$ frontal:
+\begin{equation}
+    \label{eq:cpp_dos_cuerpos}
+    V_{\text{pol}}^{(2)} = -\alpha_d\,\frac{\bm{r}_1 \cdot \bm{r}_2}{r_1^3 r_2^3}\,W(r_1)W(r_2).
+\end{equation}
+
+Este término tiene una interpretación física propia: describe el apantallamiento dieléctrico que las capas internas interponen entre los dos electrones de valencia, ya que el dipolo inducido por uno de ellos es sentido por el otro. Se suma al operador de repulsión $1/r_{12}$ y tiene la dependencia angular de un multipolo de orden uno, de modo que dentro de la configuración $np^2$ su valor esperado se anula por la regla de paridad de la Sección \ref{sec:wigner_eckart} y solo contribuye a través de la mezcla con otras configuraciones. Este trabajo retiene únicamente \eqref{eq:cpp_un_cuerpo}, y el efecto del término de dos cuerpos sobre los niveles queda sin evaluar.

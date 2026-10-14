@@ -1,0 +1,296 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noquoting,es-tabla]{babel}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,longtable,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,urlcolor=teal]{hyperref}
+\spanishdecimal{.}
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlist{itemsep=0.15em,topsep=0.3em}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\arch}[1]{\texttt{\small #1}}
+\newcommand{\ok}{\textcolor{green!45!black}{\textbf{verificada}}}
+\newcommand{\indice}{\textcolor{orange!80!black}{\textbf{por índice}}}
+\newcommand{\memoria}{\textcolor{red!70!black}{\textbf{de memoria}}}
+
+\title{Estado del manuscrito al 14 de octubre de 2026\\[0.3em]
+\large Qué hicimos en dos días, qué tan bien quedó y qué revisar antes de enviarlo}
+\author{}
+\date{Commit \texttt{30b87c9} en \texttt{main} (sin subir a \texttt{origin})}
+
+\begin{document}
+\maketitle
+\vspace{-2.5em}
+
+\section*{Veredicto}
+
+\textbf{Sí, estuvo bien, con tres matices.} El manuscrito está en un estado mejor que el de cualquier
+versión anterior. Es más corto que el del 9 de octubre (74 páginas frente a 80), a pesar de tener
+ahora resumen, índice de tablas, la forma débil escrita y un apéndice nuevo. Su modelo ya no tiene
+parámetros ajustados, cada número de la Parte 3 fue cotejado contra las tablas que genera el código,
+y compila sin referencias rotas ni cajas desbordadas. Los 25 resultados registrados no cambiaron.
+
+Los matices son estos:
+
+\begin{enumerate}
+\item \textbf{Mucha prosa física nueva la escribí yo en dos días} y tú solo la has leído en parte.
+La Sección~\ref{sec:prosa} la enumera con páginas. No creo que tenga errores, pero es el texto que
+el jurado leerá con más atención y el que menos ojos ha tenido.
+\item \textbf{Algunas citas solo las pude confirmar contra el índice del libro}, no contra su
+contenido (Sección~\ref{sec:citas}).
+\item \textbf{Retirar $V_{\text{pol}}$ fue un cambio estructural de último momento.} Quedó
+coherente y es la decisión correcta, pero toca los capítulos 1, 3, 5, 6 y 7, el resumen y dos
+apéndices. Tu revisión de la Parte 3 es la que lo confirma (Secciones~\ref{sec:vpol} y \ref{sec:parte3}).
+\end{enumerate}
+
+Los números de página de este reporte son los impresos en el PDF de la tesis: romanos en los
+preliminares y arábigos desde el Prólogo.
+
+\tableofcontents
+
+%======================================================================
+\section{Qué hicimos}
+
+\begin{longtable}{L{2.3cm}L{10.7cm}L{2.0cm}}
+\toprule
+\textbf{Cuándo} & \textbf{Qué} & \textbf{Commit}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+13 oct & Primera revisada (\arch{notas1.org}): notación movida a la Sección 1.2, matrices de Breit-Pauli explicadas, equivalencia de Ritz al Capítulo 4, estado espurio fuera del Apéndice C, figura de C-DIIS al cuerpo, terminología \emph{capas internas} y \emph{triplete}. & \texttt{4884661}\\
+14 oct & Segunda revisada: Darwin, acoplamiento intermedio reducido, Cohen-Tannoudji D$_\text{X}$, forma débil completa, $E_h$, tablas de convergencia al Capítulo 6, trabajo futuro publicable. Documento de borradores con los cálculos intermedios. & \texttt{30b87c9}\\
+14 oct & Tercera revisada: sin \emph{Zitterbewegung}; masa-velocidad y Darwin justificados; elementos de espín-órbita por cálculo directo con $6j$ (Apéndice B.6); ejercicios y análogo clásico en borradores; DOIs. & \texttt{30b87c9}\\
+14 oct & Auditoría: números de los capítulos 5 a 7 contra las tablas; un error corregido; terminología unificada; etiquetas de figuras; ortografía. & \texttt{30b87c9}\\
+14 oct & Preliminares: resumen e índice de tablas. & \texttt{30b87c9}\\
+14 oct & Retiro de la corrección de polarización de las capas internas. & \texttt{30b87c9}\\
+\end{longtable}
+
+%======================================================================
+\section{Lo que creo que mejoró sin duda}
+
+\begin{itemize}
+\item \textbf{El modelo es ahora \emph{ab initio} de verdad.} Con $V_{\text{pol}}$ había un parámetro
+ajustado a los niveles medidos, y la propia tesis concluía que no era una polarizabilidad física. Sin
+él, el título describe el trabajo y la discusión se apoya en diagnósticos, no en un ajuste.
+\item \textbf{La Parte 3 se puede leer sin ir al apéndice.} Las tablas de convergencia están junto al
+análisis, y la Tabla 6.5 nueva da los números del triplete que el texto citaba sin respaldo visible.
+\item \textbf{Los números cuadran.} Cotejé uno por uno los de los capítulos 5, 6 y 7 y del
+Apéndice E contra \arch{docs/tablas/} y \arch{valores\_texto.md}. Hubo un solo error real: las
+conclusiones decían que el número de electrones crece «más de cuatro» veces del carbono al estaño,
+cuando crece igual que $Z$, más de ocho. Dos cifras sin registro (la prueba de malla del silicio y la
+diferencia autovalor--Rayleigh) las recalculé con sus diagnósticos y coinciden.
+\item \textbf{Las matrices de Breit-Pauli tienen una deducción que se puede seguir.} La identidad
+(3.6) explica la estructura, la Tabla B.1 da cada factor del cálculo directo con $6j$, y el límite
+$jj$ queda como verificación independiente.
+\item \textbf{Hay menos flancos abiertos para el examen:} sin ajuste de $\alpha_d$, sin corte $W_6$
+que defender, sin estado espurio que explicar en el apéndice.
+\item \textbf{Forma:} resumen, índice de tablas, leyendas cortas en los índices, figuras con
+símbolos bien escritos, terminología unificada y ninguna caja desbordada.
+\end{itemize}
+
+%======================================================================
+\section{Prosa nueva que conviene que leas}
+\label{sec:prosa}
+
+Lo siguiente lo redacté yo en estos dos días. Lo marqué en dos grupos según lo que me preocuparía
+si fuera sinodal.
+
+\subsection*{Prioridad alta: física que podrían preguntarte}
+
+\begin{longtable}{L{1.6cm}L{1.2cm}L{12.0cm}}
+\toprule
+\textbf{Sección} & \textbf{Pág.} & \textbf{Qué contiene}\\
+\midrule
+\endhead
+3.2 & 16 & Por qué masa-velocidad y Darwin no separan los niveles (operadores de un cuerpo escalares) y por qué sí afectarían a $\zeta_{np}$ a través de la contracción de los orbitales.\\
+3.3.1 & 18 & La identidad (3.6), los valores fuera de la diagonal remitidos al Apéndice B.6 y el límite $jj$ como verificación.\\
+B.6 & 57 & Fórmulas (B.15) y (B.16) de Edmonds y la Tabla B.1. Ya confirmaste la fuente; falta que leas el texto.\\
+3.4 & 20 & Por qué una combinación lineal recupera correlación (variacional y física).\\
+4.2.2 & 28 & Equivalencia Ritz--Galerkin y \emph{acotado inferiormente}.\\
+5.3 & 35 & Que el motor multiplica los elementos de espín-órbita por los coeficientes CI de $np^2$ (0.976 a 0.998).\\
+6.4 & 47 & El segundo mecanismo del déficit de $\zeta$: la polarización de las capas internas, y por qué un parámetro ajustado no lo separaría de la contracción relativista.\\
+6.6.3 & 49 & Limitación nueva: las capas internas congeladas.\\
+\end{longtable}
+
+\subsection*{Prioridad media: redacción y estructura}
+
+\begin{longtable}{L{1.6cm}L{1.2cm}L{12.0cm}}
+\toprule
+\textbf{Sección} & \textbf{Pág.} & \textbf{Qué contiene}\\
+\midrule
+\endhead
+Resumen & i & Todo. Cada número coincide con la Parte 3.\\
+1.2--1.4 & 3--4 & Notación, las dos correcciones y la división en partes.\\
+2.7.2 & 11 & Definición de los términos de (2.20), incluido $\hat{K}_{np\to c}$.\\
+3.1 & 15 & Reglas de Hund enunciadas.\\
+4.1.2, 4.2.1 & 24--28 & Matrices banda (qué se aprovecha) y forma débil (4.9).\\
+5.1--5.2.1 & 30--35 & Párrafo del diagrama, \emph{necesitan} el level shift, la Ec. (5.4), la Figura 5.2 y el costo de Cholesky.\\
+6.5 & 47 & La energía de ionización como sección propia.\\
+7.1--7.2 & 50--52 & Resultados 3 y 4 reescritos, la polarización como trabajo futuro y el párrafo de la continuación publicable.\\
+\end{longtable}
+
+%======================================================================
+\section{Estado de las citas}
+\label{sec:citas}
+
+\emph{Verificada} quiere decir que la confirmaste tú con la fuente o que comprobé sus datos en
+Crossref. \emph{Por índice}: el número y el título de la sección salen del índice publicado del libro,
+no de su contenido. \emph{De memoria}: no pude comprobarla.
+
+\begin{longtable}{L{5.6cm}L{6.3cm}L{2.6cm}}
+\toprule
+\textbf{Cita} & \textbf{Uso} & \textbf{Estado}\\
+\midrule
+\endhead
+Edmonds (1957), Capítulo 7 & Ecs. (B.15)--(B.16) & \ok{} (tú)\\
+Edmonds (1957), sin capítulo & Definiciones de $3j$ y $6j$ & \ok{} (tú)\\
+Cohen-Tannoudji, Complemento D$_\text{X}$ & Factor $g$ (3.3.2) y Wigner-Eckart (B.2) & \indice{}\\
+Cowan, Sección 3-7 & Correcciones relativistas (3.2) & \indice{}\\
+Cowan, Sección 4-16 & Reglas de Hund (3.1) & \indice{}\\
+Cowan, Sección 9-5 & Parentesco fraccional (B.5) & \indice{}\\
+Cowan, Sección 10-4 & Energías $jj$ (3.3.1) & \indice{} (tú leíste el texto)\\
+de Boor, Capítulo II & Fenómeno de Runge (4.1.2) & \indice{}\\
+Jackson (1999), Sección 3.6 & Expansión de Laplace (2.5) & \memoria{}\\
+Szabo y Ostlund, Sección 3.3 & Koopmans (2.8) & \memoria{}\\
+Foldy y Wouthuysen (1950) & Deducción del término de Darwin (3.2) & \ok{} (Crossref)\\
+MacDonald (1933) & Cotas de Ritz (4.2.2) & \ok{} (Crossref)\\
+Finlayson y Scriven (1965) & Residuos ponderados (4.2.2) & \ok{} (Crossref)\\
+Garza, Roothaan, Saunders, Ting-Yun, Fischer y Guo & Varias & \ok{} (Crossref)\\
+Pulay (1980, 1982); Cowan para los términos de dos cuerpos & 5.1.2; 3.2 & pendientes desde el 9 oct\\
+\end{longtable}
+
+Dos notas:
+
+\begin{itemize}
+\item \textbf{Finlayson.} El DOI que encontraste es del artículo de Finlayson y Scriven (1965), no del
+libro de 1972. Cambié la cita al artículo porque trata justo la relación entre residuos ponderados y
+principios variacionales. Si preferías el libro, se revierte en una línea.
+\item \textbf{Foldy y Wouthuysen} se cita ahora solo para la deducción del término de Darwin, que el
+artículo sí contiene.
+\end{itemize}
+
+Si tienes diez minutos con los libros, lo más rentable es Jackson 3.6 y Szabo 3.3; son de
+memoria, aunque son citas muy estándar.
+
+%======================================================================
+\section{Verificación de que no quedó \texorpdfstring{$V_{\text{pol}}$}{V\_pol}}
+\label{sec:vpol}
+
+\subsection*{Lo que salió del manuscrito}
+
+La Sección 3.5 (teoría), la Sección 5.3.2 (implementación), la Sección 6.4.1 (calibración, con las
+Tablas de barrido y de niveles con $V_{\text{pol}}$ y la figura del barrido), el párrafo de
+$V_{\text{pol}}$ en la energía de ionización, la limitación \emph{La polarizabilidad efectiva} y el
+Apéndice E.3 (reducción del CPP). También perdieron su columna de $V_{\text{pol}}$ la Tabla 6.8
+(Landé), la Tabla 6.10 (ionización) y la Figura 6.2 (niveles). Todo está intacto en
+\arch{docs/chapters/\_borradores/polarizacion-capas-internas.tex}, que es la Sección 6 del documento
+de borradores.
+
+\subsection*{Lo que queda, y por qué es correcto que quede}
+
+Busqué en el texto extraído del PDF \emph{polariz}, \emph{pol}, $\alpha_d$, \emph{Müller},
+\emph{CPP}, \emph{semiempírico} y \emph{ajustado}. Las únicas apariciones son estas:
+
+\begin{longtable}{L{2.6cm}L{1.2cm}L{11.0cm}}
+\toprule
+\textbf{Dónde} & \textbf{Pág.} & \textbf{Por qué está}\\
+\midrule
+\endhead
+Resumen & i & Candidato al déficit de $\zeta$ que el modelo no incluye.\\
+2.4 & 7 & \emph{Polarización de masa}: otro efecto, el de núcleo finito. No tiene relación.\\
+3, introducción & 15 & El capítulo dice que deja fuera la respuesta de las capas internas y remite a 6.4.\\
+3.4, final & 21 & Lo que el CI con capas internas congeladas no contiene.\\
+6.4 & 47 & El segundo mecanismo del déficit; cita a Müller como forma posible, sin implementarla.\\
+6.6.3 & 49 & Limitación nueva.\\
+7.1 & 50 & \emph{Sin ningún parámetro ajustado}.\\
+7.2 & 51 & Trabajo futuro con polarizabilidad independiente.\\
+Bibliografía & 67 & Müller et al. (1984), citado en 6.4 y 7.2.\\
+\end{longtable}
+
+En tu revisión basta confirmar que estas apariciones te parecen bien y que la Figura 6.2 y las Tablas
+6.8 y 6.10 no tienen columna de $V_{\text{pol}}$.
+
+%======================================================================
+\section{Guía para leer la Parte 3}
+\label{sec:parte3}
+
+Lo que cambió desde tu primera lectura (notas de la segunda revisada) está marcado por sección.
+
+\begin{longtable}{L{1.4cm}L{1.3cm}L{12.0cm}}
+\toprule
+\textbf{Secc.} & \textbf{Pág.} & \textbf{Qué cambió}\\
+\midrule
+\endhead
+6 & 38 & La introducción enumera ahora la Sección 6.5, energía de ionización.\\
+6.1 & 38--40 & $E_h$ definido en las leyendas de las Tablas 6.1 y 6.2; la desviación de $\langle r^{-3}\rangle$ unificada como 0.17--0.34\,\%.\\
+6.2 & 41--44 & Figura 6.2 sin $V_{\text{pol}}$. En 6.2.1 están las Tablas 6.4 a 6.6 (la 6.5 es nueva) y la Figura 6.3 después del párrafo de los singletes.\\
+6.3 & 44--46 & Sin cambios de contenido. En 6.3.1, la Tabla 6.8 sin $V_{\text{pol}}$ y una oración sobre el silicio sin factor $g$.\\
+6.4 & 46--47 & Título nuevo; el segundo mecanismo reescrito. La antigua 6.4.1 de calibración ya no existe.\\
+6.5 & 47--48 & La energía de ionización como sección propia, con dos etapas en la Tabla 6.10.\\
+6.6 & 48--49 & La limitación de la polarizabilidad cambia por \emph{Las capas internas congeladas} (6.6.3); se quitó una cláusula de $V_{\text{pol}}$ en 6.6.5.\\
+7.1 & 50--51 & Corregido el conteo de electrones; resultados 3 y 4 reescritos sin la polarizabilidad.\\
+7.2 & 51--52 & Párrafo de polarización reescrito como trabajo futuro y párrafo nuevo de continuación publicable (confinamiento).\\
+7.3 & 52 & \emph{Declarado en el Prólogo} (desde el 13 oct).\\
+\end{longtable}
+
+Tus notas \textsc{estudiar} de la Parte 3 (por qué la energía se desvía a segundo orden, las
+extrapolaciones y el ajuste en $Z$) tienen su desarrollo, con todos los números intermedios, en el
+documento de borradores.
+
+%======================================================================
+\section{Lo que no cambiamos y alguien podría preguntar}
+
+\begin{itemize}
+\item \textbf{El título dice «Ab-initio»}, con guion y mayúscula, y el texto usa \emph{ab initio} en
+cursiva. Si el título ya está registrado, puede quedarse.
+\item \textbf{La Figura 5.1} dice «$\Delta\epsilon, \Delta c <$ tol» dentro del dibujo, mientras que el
+criterio real es la energía total. La leyenda lo aclara, pero el dibujo no tiene fuente para editarlo.
+\item \textbf{«De la de la»} en el paso 4 del SCF sigue ahí a propósito. Es gramatical.
+\item \textbf{Algunas afirmaciones dependen de tu testimonio}, sin un registro en el repositorio: que Ge
+y Sn oscilan sin level shift (5.1.1), y los diecisiete bytes por casilla y el 1.1 GB de memoria del
+cálculo CI (E.4).
+\item \textbf{La limitación 6.6.4} habla del solapamiento de los virtuales $s$ con los orbitales
+internos, y su explicación detallada ya no está en el Apéndice C. Es autocontenida; recomiendo dejarla.
+\item \textbf{No hay agradecimientos ni resumen en inglés.} Si tu facultad los pide, son una página cada uno.
+\end{itemize}
+
+%======================================================================
+\section{Código: qué se tocó}
+
+Solo presentación y diagnósticos de solo lectura. No se modificó \arch{config.jl}, ningún
+\arch{.jld2} ni \arch{resultados\_ci.toml}, y \arch{verificar\_resultados.jl} reporta 25 de 25.
+
+\begin{itemize}
+\item \arch{etapa3\_tablas.jl}: encabezado \emph{Tiempo de ejecución}, tabla nueva de estabilidad del
+triplete, coeficientes $np^2$ en \arch{valores\_texto.md}, y Tablas de Landé e ionización sin
+$V_{\text{pol}}$ (más las variantes \arch{\_vpol} para el borrador).
+\item \arch{etapa4\_figuras.jl}: etiquetas en LaTeX y la figura de niveles sin $V_{\text{pol}}$
+(\arch{con\_vpol = true} la recupera).
+\item Nuevos: \arch{figura\_comparacion\_mallas.jl} (Figura 4.3) y \arch{detalles\_calculos.jl}
+(tablas del documento de borradores).
+\end{itemize}
+
+%======================================================================
+\section{Antes de enviar}
+
+\begin{enumerate}
+\item Tu lectura de la Parte 3 con la Sección~\ref{sec:parte3} a la mano, y la verificación de
+$V_{\text{pol}}$ de la Sección~\ref{sec:vpol}.
+\item Si hay tiempo, la prosa de prioridad alta de la Sección~\ref{sec:prosa} y las dos citas de
+memoria.
+\item Decidir el título.
+\item \arch{git push}: el commit \texttt{30b87c9} está solo en tu máquina. \arch{docs/auto/main.el}
+quedó fuera porque lo modificó Emacs.
+\item Para el correo a Adrián, un renglón posible: \emph{Quité la corrección semiempírica de
+polarización de las capas internas: era el único parámetro ajustado a los datos y el análisis
+mostraba que no correspondía a una polarizabilidad física. El modelo queda sin parámetros
+ajustables, y la polarización aparece como limitación y trabajo futuro.}
+\end{enumerate}
+
+\end{document}

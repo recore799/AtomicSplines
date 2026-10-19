@@ -126,8 +126,10 @@ En un clon nuevo hay que correr la etapa 4 antes de compilar `docs/main.tex`: se
 las diez figuras del manuscrito salen de ella. Las otras cuatro
 (`figura_evolucion_splines.pdf`, `figura_control_local_fem.pdf`,
 `figura_comparacion_mallas.pdf` y `scf.pdf`) sí están versionadas, como excepción en
-`.gitignore`: tres no las regenera ningún script, y `figura_comparacion_mallas.pdf` sale
-de `tesis/figura_comparacion_mallas.jl`, una ilustración que no depende de ningún resultado.
+`.gitignore`: dos no las regenera ningún script, `figura_comparacion_mallas.pdf` sale
+de `tesis/figura_comparacion_mallas.jl`, una ilustración que no depende de ningún resultado,
+y `scf.pdf` es el diagrama del cartel que usaba la Figura 5.1 hasta el 2026-10-14. Desde
+entonces la figura es TikZ, en `docs/figures/scf_diagrama.tex`, y `scf.pdf` ya no se usa.
 
 Tres reglas sostienen la procedencia:
 

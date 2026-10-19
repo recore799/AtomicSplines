@@ -20,12 +20,12 @@ La transición desde la ecuación diferencial analítica de Hartree-Fock hacia l
 
 y la matriz de solapamiento $\bm{S}$ es la ya definida en la Ec. (\ref{eq:matrix-elements}). La diferencia esencial respecto al problema de un cuerpo de la Ec. (\ref{eq:eigen-metodo}) es que $\hat{f}$ depende de los orbitales que precisamente buscamos: lo que en el Capítulo \ref{ch:bsplines-galerkin} era un problema lineal de eigenvalores se convierte aquí en uno no lineal, que solo puede resolverse por iteración.
 
-La Figura \ref{fig:scf-cycle} resume el ciclo en un diagrama de flujo. El diagrama muestra solo el esqueleto de la iteración, con una sola matriz de Fock y sin las técnicas de estabilización, que se introducen en las secciones siguientes. La lista que le sigue precisa cada paso tal como lo ejecuta el motor.
+La Figura \ref{fig:scf-cycle} resume el ciclo tal como lo ejecuta el motor: lo que se calcula una sola vez, los pasos de cada iteración y los cálculos que siguen a la convergencia. Cada recuadro remite a la sección que lo desarrolla. La lista que le sigue describe el esqueleto de la iteración, y las secciones siguientes, su estabilización y su estructura algebraica.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=1.0\textwidth]{scf}
-  \caption[Diagrama de flujo del ciclo autoconsistente]{Diagrama de flujo del ciclo de campo autoconsistente (SCF). El proceso comienza con los orbitales del problema hidrogenoide, sin repulsión entre electrones, y avanza cíclicamente por la formación de los operadores de Coulomb e intercambio y la diagonalización de la matriz de Fock. El ciclo concluye cuando el cambio entre iteraciones cae por debajo de la tolerancia; en la implementación el criterio se aplica a la energía total.}
+  \input{figures/scf_diagrama}
+  \caption[Diagrama de flujo del ciclo autoconsistente]{Diagrama de flujo del ciclo autoconsistente tal como lo ejecuta el motor. Cada iteración construye los operadores de Fock por bloque, los estabiliza, los diagonaliza y ortogonaliza el orbital de valencia, hasta que el cambio de la energía total cae por debajo de la tolerancia; los orbitales convergidos alimentan la correlación y la estructura fina.}
   \label{fig:scf-cycle}
 \end{figure}
 

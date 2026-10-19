@@ -1,0 +1,77 @@
+% Diagrama de flujo del ciclo autoconsistente (Figura 5.1). Sustituye a scf.pdf, que se hizo para un
+% cartel antes del proyecto y no tenia fuente. Requiere las bibliotecas de TikZ cargadas en
+% config/preamble.tex. Cada recuadro remite a la seccion o ecuacion que lo desarrolla.
+\definecolor{diagUnaVez}{HTML}{5B6770}
+\definecolor{diagCiclo}{HTML}{1F4E79}
+\definecolor{diagPost}{HTML}{2E6B30}
+\definecolor{diagDecision}{HTML}{8C2D19}
+\begin{tikzpicture}[
+    node distance = 3.4mm,
+    base/.style = {rectangle, rounded corners = 2pt, thick, text width = 10.4cm, align = left,
+                   inner xsep = 6pt, inner ysep = 3.6pt, font = \small},
+    unavez/.style = {base, draw = diagUnaVez, fill = diagUnaVez!7},
+    paso/.style = {base, draw = diagCiclo, fill = diagCiclo!6},
+    post/.style = {base, draw = diagPost, fill = diagPost!7},
+    decision/.style = {diamond, aspect = 3.2, thick, draw = diagDecision, fill = diagDecision!6,
+                       align = center, font = \small, inner sep = 1.5pt},
+    flecha/.style = {-{Stealth[length = 2.4mm]}, thick, draw = black!70},
+    marco/.style = {rectangle, rounded corners = 4pt, dashed, draw = #1!60, inner sep = 7pt},
+    titulo/.style = {font = \footnotesize\bfseries, text = #1, anchor = south west, inner sep = 2pt},
+    ref/.style = {font = \footnotesize, text = black!55}
+]
+
+% --- Una sola vez -------------------------------------------------------------
+\node[unavez] (geo) {\textbf{Geometría de la base} \hfill {\footnotesize\color{black!55}Sección \ref{sec:estructura-algebraica}}\\[1pt]
+    Malla exponencial y B-splines; matrices de un cuerpo ($\bm{S}$, $\bm{T}$, nuclear y centrífuga),
+    tensor de interacción $\mathbf{W}$ y factorización de Cholesky de cada $\bm{A}^{(k)}$.};
+\node[unavez, below = of geo] (ini) {\textbf{Estimación inicial}\\[1pt]
+    Diagonalizar el Hamiltoniano del núcleo desnudo sobre la base: orbitales hidrogenoides de
+    carga $Z$ y densidad $\bm{D}^{(0)}$.};
+
+% --- Cada iteración -----------------------------------------------------------
+\node[paso, below = 9.5mm of ini] (poi) {\textbf{Potenciales de interacción} \hfill {\footnotesize\color{black!55}Sección \ref{subsec:poisson-metodo}}\\[1pt]
+    Contraer $\mathbf{W}$ con $\bm{D}$ y resolver $\bm{A}^{(k)}\bm{y} = \bm{b}$ por sustitución
+    triangular: potenciales $Y^k$ de Coulomb e intercambio.};
+\node[paso, below = of poi] (fock) {\textbf{Operadores de Fock por bloque} \hfill {\footnotesize\color{black!55}Ecs.~\eqref{eq:fock_cerrada}--\eqref{eq:fock_abierta}}\\[1pt]
+    Uno por cada momento angular de las capas internas y uno para la subcapa abierta $np$.};
+\node[paso, below = of fock] (est) {\textbf{Estabilización} \hfill {\footnotesize\color{black!55}Secciones \ref{sec:level_shifting} y \ref{sec:cdiis_metodo}}\\[1pt]
+    En Ge y Sn, desplazamiento de nivel mientras el residual proyectado supera $10^{-2}$; después,
+    extrapolación C-DIIS hasta que el residual se estanca.};
+\node[paso, below = of est] (diag) {\textbf{Diagonalización}\\[1pt]
+    $\bm{F}\bm{c} = \epsilon\,\bm{S}\bm{c}$ en cada bloque; se ocupan los eigenvectores de menor
+    energía.};
+\node[paso, below = of diag] (gs) {\textbf{Ortogonalización} \hfill {\footnotesize\color{black!55}Sección \ref{sec:gram-schmidt}}\\[1pt]
+    Gram-Schmidt del orbital $np$ contra los orbitales $p$ internos.};
+\node[paso, below = of gs] (ene) {\textbf{Energía total} $E^{(n)}$ y densidad nueva $\bm{D}^{(n)}$.};
+\node[decision, below = 4mm of ene] (conv) {$|E^{(n)} - E^{(n-1)}| < \text{tol}\,$?};
+
+% --- Después del ciclo --------------------------------------------------------
+\node[post, below = 10mm of conv] (ci) {\textbf{Correlación de valencia} \hfill {\footnotesize\color{black!55}Sección \ref{sec:ci_method}}\\[1pt]
+    CI de la pareja $np^2$ sobre las capas internas congeladas: $E(^3P)$, $E(^1D)$ y $E(^1S)$.};
+\node[post, below = of ci] (bp) {\textbf{Estructura fina} \hfill {\footnotesize\color{black!55}Sección \ref{sec:matrices_bp}}\\[1pt]
+    $\zeta_{np}$ y matrices de Breit-Pauli por bloque de $J$: los cinco niveles y sus pesos de mezcla.};
+
+% --- Flechas ------------------------------------------------------------------
+\draw[flecha] (geo) -- (ini);
+\draw[flecha] (ini) -- (poi);
+\draw[flecha] (poi) -- (fock);
+\draw[flecha] (fock) -- (est);
+\draw[flecha] (est) -- (diag);
+\draw[flecha] (diag) -- (gs);
+\draw[flecha] (gs) -- (ene);
+\draw[flecha] (ene) -- (conv);
+\draw[flecha] (conv) -- node[right, font = \footnotesize] {sí} (ci);
+\draw[flecha] (ci) -- (bp);
+\coordinate (vuelta) at ($(conv.east -| ene.east) + (6mm, 0)$);
+\draw[flecha] (conv.east) -- (vuelta) |- node[pos = 0.25, right, font = \footnotesize, align = left] {no:\\$n \to n+1$} (poi.east);
+
+% --- Marcos -------------------------------------------------------------------
+\begin{scope}[on background layer]
+    \node[marco = diagUnaVez, fit = (geo) (ini)] (m1) {};
+    \node[marco = diagCiclo, fit = (poi) (conv) (ene) (vuelta)] (m2) {};
+    \node[marco = diagPost, fit = (ci) (bp)] (m3) {};
+\end{scope}
+\node[titulo = diagUnaVez] at (m1.north west) {Una sola vez};
+\node[titulo = diagCiclo] at (m2.north west) {Cada iteración $n$};
+\node[titulo = diagPost] at (m3.north west) {Después del ciclo};
+\end{tikzpicture}

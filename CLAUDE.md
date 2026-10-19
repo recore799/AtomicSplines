@@ -30,7 +30,7 @@ trabajo está en `docs/claude/SIGUIENTES-PASOS.md`.
 **Se puede sin preguntar:**
 
 - editar los valores de literatura de `benchmarks/np2_sequence/tesis/config.jl` y regenerar la
-  etapa 3 (segundos);
+  etapa 3 (un minuto, casi todo la prueba de malla del silicio);
 - agregar a `valores_texto.md` una salida nueva que el texto necesite citar;
 - escribir diagnósticos de solo lectura, con nombre propio, que no toquen los resultados.
 
@@ -47,7 +47,7 @@ código. Las que ya están diagnosticadas viven en `docs/claude/REVISION-RESULTA
 julia benchmarks/verificar_resultados.jl                              # los .jld2 siguen siendo los registrados
 julia --project=. benchmarks/np2_sequence/tesis/etapa1_scf.jl         # qué SCF faltan (--correr los corre)
 julia --project=. benchmarks/np2_sequence/tesis/etapa2_ci.jl --lista  # qué CI faltan (sin --lista, ~2.5 h)
-julia --project=. benchmarks/np2_sequence/tesis/etapa3_tablas.jl      # docs/tablas/, segundos
+julia --project=. benchmarks/np2_sequence/tesis/etapa3_tablas.jl      # docs/tablas/, ~1 min
 julia --project=. benchmarks/np2_sequence/tesis/etapa4_figuras.jl     # docs/figures/, ~1 min
 julia --project=. benchmarks/np2_sequence/np2_ci_full.jl              # CI general, prueba sobre carbono
 ```

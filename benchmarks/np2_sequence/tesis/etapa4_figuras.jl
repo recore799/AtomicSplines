@@ -170,22 +170,25 @@ function figura_niveles(; con_vpol::Bool = false)
         x0s = 1.3 .* collect(0:length(columnas) - 1)
         # El alpha_d va en el titulo: como etiqueta del eje se encimaba con las columnas vecinas.
         titulo = sel === nothing ? etiqueta_Z(el) : @sprintf("%s, \$\\alpha_d\$ = %.2g", etiqueta_Z(el), sel[1])
-        p = plot(title = titulo, titlefontsize = 11, legend = false, xticks = (x0s .+ 0.5, [c[1] for c in columnas]),
-                 xlims = (-0.2, last(x0s) + 1.6), ylabel = "Energía (cm⁻¹)")
+        # Energias en 10^3 cm^-1 y dos filas de paneles: en una sola fila, a lo ancho de la pagina,
+        # los numeros de los ejes y las etiquetas de los niveles quedaban en unos 4 pt.
+        p = plot(title = titulo, titlefontsize = 14, tickfontsize = 12, guidefontsize = 13, legend = false,
+                 xticks = (x0s .+ 0.5, [c[1] for c in columnas]), xlims = (-0.2, last(x0s) + 1.75),
+                 ylabel = "Energía (10³ cm⁻¹)")
         for (x0, (_, niv, color)) in zip(x0s, columnas)
             niv === nothing && continue
             for E in niv
-                plot!(p, [x0, x0 + 1.0], [E, E]; lw = 2, color = color)
+                plot!(p, [x0, x0 + 1.0], [E, E] ./ 1e3; lw = 2, color = color)
             end
         end
         for (t, E) in enumerate(NIST_NIVELES[el])
             t in (2, 3) && continue          # 3P_1 y 3P_2 se encimarian con 3P_0 a esta escala
-            annotate!(p, last(x0s) + 1.05, E, text(NOMBRES_NIVELES[t] * (t == 1 ? "," * NOMBRES_NIVELES[2][end:end] *
-                                                               "," * NOMBRES_NIVELES[3][end:end] : ""), 8, :left))
+            annotate!(p, last(x0s) + 1.05, E / 1e3, text(NOMBRES_NIVELES[t] * (t == 1 ? "," * NOMBRES_NIVELES[2][end:end] *
+                                                                     "," * NOMBRES_NIVELES[3][end:end] : ""), 12, :left))
         end
         push!(paneles, p)
     end
-    guardar(plot(paneles...; layout = (1, 4), size = (1500, 500), margin = 5Plots.mm, left_margin = 10Plots.mm),
+    guardar(plot(paneles...; layout = (2, 2), size = (1000, 760), margin = 4Plots.mm, left_margin = 6Plots.mm),
             "np2_energy_levels.pdf")
 end
 
@@ -231,7 +234,7 @@ function figura_cdiis()
             isfile(ruta) || continue
             filas = [parse.(Float64, split(l, ",")) for l in readlines(ruta) if !isempty(strip(l)) && !startswith(l, "#") && !startswith(l, "iter")]
             it = [f[1] for f in filas]
-            for (col, estilo, que) in ((3, :solid, "|ΔE| (Ha)"), (4, :dash, "residual proyectado"))
+            for (col, estilo, que) in ((3, :solid, raw"$|\Delta E|$ ($E_h$)"), (4, :dash, "error proyectado"))
                 y = [f[col] for f in filas]
                 ok = isfinite.(y) .& (y .> 0)
                 any(ok) && plot!(p, it[ok], y[ok]; lw = 2, color = color, linestyle = estilo,

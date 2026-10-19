@@ -19,6 +19,7 @@ include(joinpath(@__DIR__, "diagnostico_rayleigh.jl"))
 include(joinpath(@__DIR__, "analisis_zeta.jl"))
 include(joinpath(@__DIR__, "diagnostico_casi_degeneracion.jl"))
 include(joinpath(@__DIR__, "diagnostico_estados_espurios.jl"))
+include(joinpath(@__DIR__, "diagnostico_malla_silicio.jl"))
 
 const CI     = leer_ci(argumento("--ci", RESULTADOS_CI))
 # --m fuerza un mismo tamano para todo (pruebas). Sin el, cada elemento usa su m de produccion y
@@ -250,7 +251,7 @@ function tabla_convergencia()
     nel = length(ELEMENTOS)
     println(io, raw"\begin{tabular}{rr", "r"^nel, "}")
     println(io, raw"    \toprule")
-    linea(io, "", "", "\\multicolumn{$nel}{c}{\$E_{\\text{corr}}\$ (mHa)}")
+    linea(io, "", "", "\\multicolumn{$nel}{c}{\$E_{\\text{corr}}\$ (m\$E_h\$)}")
     println(io, "    \\cmidrule(lr){3-$(2 + nel)}")
     linea(io, raw"$m$", raw"CSF $^3P$", [el for el in ELEMENTOS]...)
     println(io, raw"    \midrule")
@@ -294,7 +295,7 @@ function tabla_cdiis()
     println(io, raw"    \toprule")
     linea(io, "", raw"\multicolumn{2}{c}{\textbf{Iteraciones}}", "", "")
     println(io, raw"    \cmidrule(lr){2-3}")
-    linea(io, raw"\textbf{Elemento}", raw"sin C-DIIS", raw"con C-DIIS", raw"\textbf{Factor}", raw"$|\Delta E|$ (Ha)")
+    linea(io, raw"\textbf{Elemento}", raw"sin C-DIIS", raw"con C-DIIS", raw"\textbf{Factor}", raw"$|\Delta E|$ ($E_h$)")
     println(io, raw"    \midrule")
     for el in ELEMENTOS
         s, c = traza_diis(el, "sin_diis"), traza_diis(el, "con_diis")
@@ -765,7 +766,81 @@ function valores_texto(HF, ZETA_SENS)
                 INFO[el].etiqueta, dD, 6F2 / 25, dD / (6F2 / 25), dS, 15F2 / 25, dS / (15F2 / 25), 15F2 / 25 - dS)
     end
 
+    println(io, "\n## Energia ROHF: autovalores frente a cociente de Rayleigh (3P, alpha_d = 0)\n")
+    println(io, "E_ray - E_eps de diagnostico_rayleigh.jl sobre los .jld2 registrados. En Ha.\n")
+    for el in ELEMENTOS
+        e = energias_rohf(workspace(el), load(ruta_np2(archivo_scf(el, ESTADO, 0.0))), ESTADO)
+        @printf(io, "- %s: E_ray - E_eps = %.2e Ha\n", INFO[el].etiqueta, e.E_ray - e.E_eps)
+    end
+
+    println(io, "\n## Prueba de malla del silicio (SCF 3P sin C-DIIS, diagnostico_malla_silicio.jl)\n")
+    println(io, "Froese Fischer: E = $(FF["Si"].E) Ha, <r^-3> = $(FF["Si"].r3) a0^-3.\n")
+    filas = malla_silicio()
+    for (k, f) in enumerate(filas)
+        @printf(io, "- %d intervalos: E = %.8f Ha, <r^-3> = %.6f a0^-3", f.N, f.E, f.r3)
+        k == 1 ? println(io) : @printf(io, " | frente a %d: dE = %.1e Ha, d<r^-3> = %+.1e a0^-3\n",
+                                       filas[k - 1].N, f.E - filas[k - 1].E, f.r3 - filas[k - 1].r3)
+    end
+
+    println(io, "\n## Autoapantallamiento en zeta: potencial sin la densidad de un electron de valencia\n")
+    println(io, "zeta con el potencial de la densidad total (el del texto) y con el que excluye un electron np, ",
+            "que es el que siente cada electron de valencia sin interactuar consigo mismo. En cm^-1.\n")
+    for el in ELEMENTOS
+        z = zeta_sin_autoapantallamiento(el)
+        @printf(io, "- %s: zeta total = %.3f, sin un electron np = %.3f (%+.2f%%); control V recalculado - V guardado: %.1e\n",
+                INFO[el].etiqueta, z.total * HA2CM, z.sin_propio * HA2CM, 100 * (z.sin_propio / z.total - 1), z.control)
+    end
+
+    println(io, "\n## Memoria de la cache de R^k del carbono (m = $(maximum(TAMANOS_CONVERGENCIA["C"])))\n")
+    let n = maximum(e["n_rk"] for e in CI if e["archivo"] == archivo_scf("C", ESTADO, 0.0))
+        m = memoria_cache_rk(n)
+        @printf(io, "Dict{UInt64,Float64}: %d bytes por casilla (clave %d, valor %d, control 1). ", m.bytes,
+                sizeof(UInt64), sizeof(Float64))
+        @printf(io, "Con %d integrales la tabla termina con %d casillas: %.2f GB; durante el ultimo ", n, m.casillas,
+                m.final / 1e9)
+        @printf(io, "redimensionamiento conviven las de %d y %d casillas: %.2f GB.\n", m.previas, m.casillas, m.pico / 1e9)
+    end
+
     return String(take!(io))
+end
+
+"""
+    zeta_sin_autoapantallamiento(el) -> (total, sin_propio, control)
+
+zeta de la valencia con el potencial de la densidad total y con el que resulta de quitar un
+electron np. `control` es el maximo |V recalculado - V_eff guardado| con todas las ocupaciones,
+que tiene que ser chico para que la comparacion valga.
+"""
+function zeta_sin_autoapantallamiento(el)
+    data = load(ruta_np2(archivo_scf(el, ESTADO, 0.0)))
+    ws = workspace(el)
+    R, P, Z = data["R_grid"], data["P_$(INFO[el].n_val)p"], Float64(INFO[el].Z)
+    orbs = deepcopy(data["orbitals"])
+    V = compute_effective_central_potential(ws, orbs, R, Z)
+    dentro = R .> 1e-12
+    control = maximum(abs.(V[dentro] .- data["V_eff"][dentro]))
+    orbs[end].occ -= 1.0
+    V1 = compute_effective_central_potential(ws, orbs, R, Z)
+    return (total = compute_zeta(R, data["V_eff"], P), sin_propio = compute_zeta(R, V1, P), control = control)
+end
+
+"""
+    memoria_cache_rk(n) -> (bytes, casillas, previas, final, pico)
+
+Memoria de un Dict{UInt64,Float64} con `n` entradas segun la regla de crecimiento de Base.Dict
+(dict.jl: al pasar de 2/3 de ocupacion se rehace con nextpow(2, 2 count) casillas si count > 64000,
+o nextpow(2, 4 count) si no). Cada casilla guarda clave, valor y un byte de control. `pico` es la
+memoria del ultimo redimensionamiento, cuando conviven la tabla vieja y la nueva.
+"""
+function memoria_cache_rk(n)
+    bytes = sizeof(UInt64) + sizeof(Float64) + 1
+    sz, previas = 16, 16
+    while true
+        umbral = fld(2sz, 3) + 1            # primer count con count*3 > 2*sz
+        umbral > n && break
+        previas, sz = sz, nextpow(2, umbral > 64000 ? 2umbral : 4umbral)
+    end
+    return (bytes = bytes, casillas = sz, previas = previas, final = bytes * sz, pico = bytes * (sz + previas))
 end
 
 function main_etapa3()

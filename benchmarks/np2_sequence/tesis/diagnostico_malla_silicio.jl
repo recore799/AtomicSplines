@@ -10,18 +10,26 @@
 #  Resultado (2026-09-13): convergido desde N = 200, y <r^-3> se aleja 2e-5 de Froese Fischer. No
 #  es la malla (docs/claude/REVISION-RESULTADOS-2026-09-13.md, seccion 8).
 #
+#  La etapa 3 llama a `malla_silicio` y copia el resultado a docs/tablas/valores_texto.md.
+#
 #  Uso: julia --project=. benchmarks/np2_sequence/tesis/diagnostico_malla_silicio.jl   (~30 s)
 # =============================================================================
 
 isdefined(Main, :CABECERA_CI) || include(joinpath(@__DIR__, "comun.jl"))
 isdefined(Main, :DIISState) || include(joinpath(NP2, "rohf_diis.jl"))
 
-function main_malla_silicio(Ns = (100, 200, 300))
+"""
+    malla_silicio(Ns) -> Vector de NamedTuple
+
+Repite el SCF 3P del silicio con cada numero de intervalos de `Ns` y devuelve, para cada uno,
+E, T, el cociente del virial, <r^-3>, F0 y F2 de la valencia. Lo usan este script y la etapa 3,
+que copia el resultado a valores_texto.md.
+"""
+function malla_silicio(Ns = (100, 200, 300))
     src = read(joinpath(NP2, "silicon_rohf.jl"), String)
     occursin("N_elems = 100", src) || error("silicon_rohf.jl ya no tiene 'N_elems = 100'.")
     i = INFO["Si"]
-    ff = FF["Si"]
-    @printf("\n%-8s %16s %14s %14s %10s %12s %12s\n", "malla", "E (Ha)", "T (Ha)", "virial", "<r^-3>", "F0", "F2")
+    filas = []
     for N in Ns
         code = replace(src, "N_elems = 100" => "N_elems = $N",
                        "function solve_silicon_rohf(" => "function solve_silicon_rohf_N$(N)(")
@@ -35,8 +43,19 @@ function main_malla_silicio(Ns = (100, 200, 300))
         T = sum(o.occ * dot(o.coeffs, (ws.T .+ (o.l * (o.l + 1) / 2) .* ws.R_inv2) * o.coeffs)
                 for o in orbs if o.occ > 0)
         v = orbs[end]
-        @printf("N = %-4d %16.8f %14.6f %14.9f %10.6f %12.8f %12.8f\n", N, r.E_total, T, -(r.E_total - T) / T,
-                dot(v.coeffs, ws.R_inv3 * v.coeffs), compute_Rk(ws, v, v, v, v, 0), compute_Rk(ws, v, v, v, v, 2))
+        push!(filas, (N = N, E = r.E_total, T = T, virial = -(r.E_total - T) / T,
+                      r3 = dot(v.coeffs, ws.R_inv3 * v.coeffs),
+                      F0 = compute_Rk(ws, v, v, v, v, 0), F2 = compute_Rk(ws, v, v, v, v, 2)))
+    end
+    return filas
+end
+
+function main_malla_silicio(Ns = (100, 200, 300))
+    ff = FF["Si"]
+    filas = malla_silicio(Ns)
+    @printf("\n%-8s %16s %14s %14s %10s %12s %12s\n", "malla", "E (Ha)", "T (Ha)", "virial", "<r^-3>", "F0", "F2")
+    for f in filas
+        @printf("N = %-4d %16.8f %14.6f %14.9f %10.6f %12.8f %12.8f\n", f.N, f.E, f.T, f.virial, f.r3, f.F0, f.F2)
     end
     @printf("%-8s %16s %14s %14s %10s %12s %12s\n", "F.F.", ff.E, ff.T, ff.virial, ff.r3, ff.F0, ff.F2)
 end

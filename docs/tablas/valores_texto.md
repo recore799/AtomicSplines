@@ -162,3 +162,33 @@ Separaciones entre terminos del CI, sin espin-orbita, frente a las de Hartree-Fo
 - Silicio: 1D - 3P = 7142 (HF 8741, razon 0.82); 1S - 3P = 14530 (HF 21853, razon 0.66, baja 7323)
 - Germanio: 1D - 3P = 6902 (HF 8571, razon 0.81); 1S - 3P = 14799 (HF 21428, razon 0.69, baja 6630)
 - Estaño: 1D - 3P = 6091 (HF 7755, razon 0.79); 1S - 3P = 13311 (HF 19388, razon 0.69, baja 6077)
+
+## Energia ROHF: autovalores frente a cociente de Rayleigh (3P, alpha_d = 0)
+
+E_ray - E_eps de diagnostico_rayleigh.jl sobre los .jld2 registrados. En Ha.
+
+- Carbono: E_ray - E_eps = 5.29e-12 Ha
+- Silicio: E_ray - E_eps = -1.72e-06 Ha
+- Germanio: E_ray - E_eps = -4.34e-07 Ha
+- Estaño: E_ray - E_eps = -5.85e-07 Ha
+
+## Prueba de malla del silicio (SCF 3P sin C-DIIS, diagnostico_malla_silicio.jl)
+
+Froese Fischer: E = -288.85436 Ha, <r^-3> = 2.05423 a0^-3.
+
+- 100 intervalos: E = -288.85435715 Ha, <r^-3> = 2.047231 a0^-3
+- 200 intervalos: E = -288.85435887 Ha, <r^-3> = 2.047210 a0^-3 | frente a 100: dE = -1.7e-06 Ha, d<r^-3> = -2.1e-05 a0^-3
+- 300 intervalos: E = -288.85435887 Ha, <r^-3> = 2.047210 a0^-3 | frente a 200: dE = 5.1e-09 Ha, d<r^-3> = -2.2e-07 a0^-3
+
+## Autoapantallamiento en zeta: potencial sin la densidad de un electron de valencia
+
+zeta con el potencial de la densidad total (el del texto) y con el que excluye un electron np, que es el que siente cada electron de valencia sin interactuar consigo mismo. En cm^-1.
+
+- Carbono: zeta total = 42.216, sin un electron np = 43.022 (+1.91%); control V recalculado - V guardado: 0.0e+00
+- Silicio: zeta total = 140.992, sin un electron np = 141.165 (+0.12%); control V recalculado - V guardado: 0.0e+00
+- Germanio: zeta total = 823.671, sin un electron np = 823.811 (+0.02%); control V recalculado - V guardado: 0.0e+00
+- Estaño: zeta total = 1885.936, sin un electron np = 1886.029 (+0.00%); control V recalculado - V guardado: 0.0e+00
+
+## Memoria de la cache de R^k del carbono (m = 40)
+
+Dict{UInt64,Float64}: 17 bytes por casilla (clave 8, valor 8, control 1). Con 38812422 integrales la tabla termina con 67108864 casillas: 1.14 GB; durante el ultimo redimensionamiento conviven las de 33554432 y 67108864 casillas: 1.71 GB.

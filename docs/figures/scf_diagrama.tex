@@ -25,7 +25,7 @@
     Malla exponencial y B-splines; matrices de un cuerpo ($\bm{S}$, $\bm{T}$, nuclear y centrífuga),
     tensor de interacción $\mathbf{W}$ y factorización de Cholesky de cada $\bm{A}^{(k)}$.};
 \node[unavez, below = of geo] (ini) {\textbf{Estimación inicial}\\[1pt]
-    Diagonalizar el Hamiltoniano del núcleo desnudo sobre la base: orbitales hidrogenoides de
+    Diagonalizar el hamiltoniano del núcleo desnudo sobre la base: orbitales hidrogenoides de
     carga $Z$ y densidad $\bm{D}^{(0)}$.};
 
 % --- Cada iteración -----------------------------------------------------------
@@ -35,8 +35,8 @@
 \node[paso, below = of poi] (fock) {\textbf{Operadores de Fock por bloque} \hfill {\footnotesize\color{black!55}Ecs.~\eqref{eq:fock_cerrada}--\eqref{eq:fock_abierta}}\\[1pt]
     Uno por cada momento angular de las capas internas y uno para la subcapa abierta $np$.};
 \node[paso, below = of fock] (est) {\textbf{Estabilización} \hfill {\footnotesize\color{black!55}Secciones \ref{sec:level_shifting} y \ref{sec:cdiis_metodo}}\\[1pt]
-    En Ge y Sn, desplazamiento de nivel mientras el residual proyectado supera $10^{-2}$; después,
-    extrapolación C-DIIS hasta que el residual se estanca.};
+    En Ge y Sn, desplazamiento de nivel mientras el error proyectado supera $10^{-2}$; después,
+    extrapolación C-DIIS hasta que el error proyectado se estanca.};
 \node[paso, below = of est] (diag) {\textbf{Diagonalización}\\[1pt]
     $\bm{F}\bm{c} = \epsilon\,\bm{S}\bm{c}$ en cada bloque; se ocupan los eigenvectores de menor
     energía.};

@@ -1,10 +1,10 @@
-\chapter{Métodos Numéricos Auxiliares}
+\chapter{Métodos numéricos auxiliares}
 \label{ap:metodos-auxiliares}
 
 \section{Ortogonalización de Gram-Schmidt}
 \label{sec:gram-schmidt}
 
-En un Hartree-Fock de capa cerrada, los orbitales radiales con el mismo $l$ y distinto $n$ son eigenvectores de un mismo operador hermítico con eigenvalores distintos y resultan ortogonales de manera automática. En el esquema ROHF de este trabajo (Sección \ref{sec:rohf}) el orbital de valencia se obtiene de su propio operador de Fock, distinto del que produce los orbitales internos, y esa garantía se pierde: el orbital de valencia deja de ser exactamente ortogonal a los orbitales internos con su mismo momento angular. El motor restituye la ortogonalidad después de cada diagonalización proyectando el orbital de valencia fuera del espacio de los orbitales internos, en la métrica de la base,
+Como se vio en la Sección \ref{sec:rohf}, los orbitales de capa cerrada con el mismo $l$ son ortogonales por construcción. En el esquema ROHF de este trabajo, en cambio, el orbital de valencia se obtiene de su propio operador de Fock, distinto del que produce los orbitales internos, y esa garantía se pierde: el orbital de valencia deja de ser exactamente ortogonal a los orbitales internos con su mismo momento angular. El motor restituye la ortogonalidad después de cada diagonalización proyectando el orbital de valencia fuera del espacio de los orbitales internos, en la métrica de la base,
 \begin{equation}
     \mathbf{c}_v \leftarrow \mathbf{c}_v - \sum_{i \,\in\, \text{internos}} \left( \mathbf{c}_v^T \mathbf{S}\, \mathbf{c}_{c_i} \right) \mathbf{c}_{c_i},
     \qquad
@@ -16,26 +16,26 @@ La proyección impone la ortogonalidad pero no la incorpora al problema variacio
 \section{Cuadratura de Gauss-Legendre en B-splines}
 \label{sec:gauss-legendre}
 
-Los elementos matriciales de Galerkin $\int B_i(r)\,\mathcal{L}\,B_j(r)\,dr$ del Hamiltoniano y de la ecuación de Poisson se evalúan por cuadratura de Gauss-Legendre sobre cada intervalo de la malla \parencite{Bachau2001}. Una regla gaussiana de $N_q$ puntos integra exactamente cualquier polinomio de grado hasta $2N_q - 1$. Como los B-splines de orden $k$ son polinomios por partes de grado $k-1$, los integrandos de las matrices de solapamiento y cinética son polinomios de grado a lo sumo $2k-2$ en cada intervalo, y el motor emplea $N_q = k+6$ puntos, de modo que esas dos matrices se obtienen sin error de cuadratura.
+Los elementos matriciales de Galerkin $\int B_i(r)\,\mathcal{L}\,B_j(r) \dd{r}$ del hamiltoniano y de la ecuación de Poisson se evalúan por cuadratura de Gauss-Legendre sobre cada intervalo de la malla \parencite{Bachau2001}. Una regla gaussiana de $N_q$ puntos integra exactamente cualquier polinomio de grado hasta $2N_q - 1$. Como los B-splines de orden $k$ son polinomios por partes de grado $k-1$, los integrandos de las matrices de solapamiento y cinética son polinomios de grado a lo sumo $2k-2$ en cada intervalo, y el motor emplea $N_q = k+6$ puntos, de modo que esas dos matrices se obtienen sin error de cuadratura.
 
 Los demás integrandos contienen factores $1/r$, $1/r^2$ o $1/r^3$, o productos de tres funciones base con un factor $1/r$, y no son polinómicos. Para ellos la cuadratura no es exacta. Los seis puntos adicionales reducen su error, y la malla exponencial, que concentra intervalos cortos cerca del origen, donde esos factores varían más rápido, contribuye a mantenerlo pequeño.
 
 Las reglas de cuadratura están definidas sobre el intervalo estándar $[-1, 1]$:
 \begin{equation}
-    \int_{-1}^{1} f(x) dx \approx \sum_{q=1}^{N_q} w_q f(x_q),
+    \int_{-1}^{1} f(x) \dd{x} \approx \sum_{q=1}^{N_q} w_q f(x_q),
 \end{equation}
 donde las raíces $x_q$ son los ceros del polinomio de Legendre $P_{N_q}(x)$ y $w_q$ son los pesos asociados.
 
 Como los B-splines son polinomios en cada intervalo $[t_i, t_{i+1}]$ de la malla, la regla se traslada a cada uno con un cambio de variable afín del intervalo estándar $x \in [-1, 1]$ al intervalo físico $r \in [t_i, t_{i+1}]$:
 
 \begin{equation}
-    r(x) = \frac{t_{i+1} - t_i}{2} x + \frac{t_{i+1} + t_i}{2}, \quad \text{con diferencial } dr = \frac{t_{i+1} - t_i}{2} dx.
+    r(x) = \frac{t_{i+1} - t_i}{2} x + \frac{t_{i+1} + t_i}{2}, \quad \text{con diferencial } \dd{r} = \frac{t_{i+1} - t_i}{2} \dd{x}.
 \end{equation}
 
 Con el jacobiano $J_i = \frac{t_{i+1} - t_i}{2}$, la integral sobre cada intervalo se aproxima por
 
 \begin{equation}
-    \int_{t_i}^{t_{i+1}} f(r) dr \approx J_i \sum_{q=1}^{N_q} w_q f(r(x_q)),
+    \int_{t_i}^{t_{i+1}} f(r) \dd{r} \approx J_i \sum_{q=1}^{N_q} w_q f(r(x_q)),
 \end{equation}
 
 con igualdad exacta cuando $f$ es un polinomio de grado a lo sumo $2N_q - 1$. Los valores de la base y de sus derivadas en los puntos $r(x_q)$ forman los tensores de colocación de la Sección \ref{sec:tensores_geometria}.
@@ -43,20 +43,20 @@ con igualdad exacta cuando $f$ es un polinomio de grado a lo sumo $2N_q - 1$. Lo
 \section{Aceleración con C-DIIS}
 \label{sec:cdiis_resultados}
 
-Esta sección documenta el efecto de la extrapolación C-DIIS de la Sección \ref{sec:cdiis_metodo} sobre el ciclo autoconsistente. Las corridas comparadas parten del mismo punto inicial, en el estado $^3P$, y se detienen cuando el cambio de energía entre iteraciones cae por debajo de $10^{-10}$ Hartree. Sin C-DIIS, el germanio y el estaño mantienen el desplazamiento de nivel de $3$ Hartree durante todo el ciclo; con C-DIIS, el desplazamiento opera solo mientras el residuo permanece por encima del umbral de activación.
+Esta sección documenta el efecto de la extrapolación C-DIIS de la Sección \ref{sec:cdiis_metodo} sobre el ciclo autoconsistente. Las corridas comparadas parten del mismo punto inicial, en el estado $^3P$, y se detienen cuando el cambio de energía entre iteraciones cae por debajo de $10^{-10}\,E_h$. Sin C-DIIS, el germanio y el estaño mantienen el desplazamiento de nivel de $3\,E_h$ durante todo el ciclo; con C-DIIS, el desplazamiento opera solo mientras el error proyectado permanece por encima del umbral de activación.
 
 \begin{table}[htbp]
     \centering
     \input{tablas/cdiis}
-    \caption[Iteraciones del ciclo autoconsistente con y sin C-DIIS]{Iteraciones necesarias para alcanzar $|\Delta E| < 10^{-10}$ Hartree con y sin C-DIIS, desde el mismo punto inicial y en el estado $^3P$. La última columna es la diferencia entre las dos energías convergidas.}
+    \caption[Iteraciones del ciclo autoconsistente con y sin C-DIIS]{Iteraciones necesarias para alcanzar $|\Delta E| < 10^{-10}\,E_h$ con y sin C-DIIS, desde el mismo punto inicial y en el estado $^3P$. La última columna es la diferencia entre las dos energías convergidas.}
     \label{tab:cdiis}
 \end{table}
 
-La Tabla \ref{tab:cdiis} muestra que el efecto depende del elemento. En el germanio y el estaño, los dos elementos que requieren el desplazamiento de nivel, la aceleración reduce el número de iteraciones por factores de $2.8$ y $4.8$, de doscientas cuarenta y doscientas cincuenta a ochenta y cinco y cincuenta y dos. En el carbono, que converge sin desplazamiento, el factor es de $2.2$, y en el silicio el método no aporta ganancia: el ciclo simple converge en veintisiete iteraciones y la extrapolación necesita veintiocho, porque su error proyectado toca el piso en la iteración once y la extrapolación se desactiva poco después (Sección \ref{sec:cdiis_metodo}). En el germanio y el estaño el piso se alcanza hacia la iteración quince, de modo que también allí la mayor parte del recorrido la hace el ciclo simple, ya sin desplazamiento. La ganancia grande procede, por tanto, de soltar el desplazamiento de nivel en cuanto el ciclo entra en la cuenca de atracción (Figura \ref{fig:cdiis}), y no de una lentitud genérica del punto fijo.
+La Tabla \ref{tab:cdiis} muestra que el efecto depende del elemento. En el germanio y el estaño, los dos elementos que requieren el desplazamiento de nivel, la aceleración reduce el número de iteraciones por factores de $2.8$ y $4.8$, de 241 y 250 a 85 y 52. En el carbono, que converge sin desplazamiento, el factor es de $2.2$, y en el silicio el método no aporta ganancia: el ciclo simple converge en 27 iteraciones y la extrapolación necesita 28, porque su error proyectado toca el piso en la iteración 11 y la extrapolación se desactiva poco después (Sección \ref{sec:cdiis_metodo}). En el germanio y el estaño el piso se alcanza hacia la iteración 15, de modo que también allí la mayor parte del recorrido la hace el ciclo simple, ya sin desplazamiento. La ganancia grande procede, por tanto, de soltar el desplazamiento de nivel en cuanto el ciclo entra en la cuenca de atracción (Figura \ref{fig:cdiis}), y no de una lentitud genérica del punto fijo.
 
-El dato decisivo es la última columna. Las energías obtenidas con y sin aceleración coinciden dentro de $4\times10^{-12}$ Hartree en el carbono y por debajo de $10^{-8}$ Hartree en el germanio y el estaño, muy por debajo de cualquier escala física del problema. C-DIIS actúa, por tanto, sobre la trayectoria del ciclo y no sobre su punto fijo, y los resultados del Capítulo \ref{ch:resultados} describen la misma solución Hartree-Fock que produciría el ciclo sin acelerar.
+El dato decisivo es la última columna. Las energías obtenidas con y sin aceleración coinciden dentro de $4\times10^{-12}\,E_h$ en el carbono y por debajo de $10^{-8}\,E_h$ en el germanio y el estaño, muy por debajo de cualquier escala física del problema. C-DIIS actúa sobre la trayectoria del ciclo y no sobre su punto fijo, y los resultados del Capítulo \ref{ch:resultados} describen la misma solución Hartree-Fock que produciría el ciclo sin acelerar.
 
-\section{Convergencia y Costo del Cálculo CI}
+\section{Convergencia y costo del cálculo CI}
 \label{sec:costo_ci}
 
 Esta sección documenta cómo dependen los niveles del tamaño del espacio activo del cálculo de interacción de configuraciones, que la Sección \ref{sec:espectro} resume, y qué recurso limita ese barrido. El espacio activo se amplía de manera anidada, de modo que cada tamaño contiene al anterior y las curvas pueden extrapolarse. La convergencia y el costo se tratan por separado.
@@ -64,7 +64,7 @@ Esta sección documenta cómo dependen los niveles del tamaño del espacio activ
 \subsection{Convergencia con el tamaño del espacio activo}
 \label{sec:convergencia_ci}
 
-El espacio activo queda definido por el número $m$ de orbitales que se retienen en cada canal de momento angular, hasta $l_{\max}=3$, de modo que contiene $4m$ orbitales, y el número de configuraciones crece como $m^2$. La Tabla \ref{tab:convergencia_ci} recoge la energía de correlación para cada tamaño. El silicio, el germanio y el estaño alcanzan su energía de correlación asintótica con rapidez, ya que entre $m=16$ y $m=20$ cambia en menos de $0.1$ milihartree, lo que justifica $m=20$ como tamaño de producción. El carbono converge más despacio y se llevó hasta $m=40$, donde el último incremento es de $0.06$ milihartree.
+El espacio activo queda definido por el número $m$ de orbitales que se retienen en cada canal de momento angular, hasta $l_{\max}=3$, de modo que contiene $4m$ orbitales, y el número de configuraciones crece como $m^2$. La Tabla \ref{tab:convergencia_ci} recoge la energía de correlación para cada tamaño. El silicio, el germanio y el estaño alcanzan su energía de correlación asintótica con rapidez, ya que entre $m=16$ y $m=20$ cambia en menos de $0.1$~m$E_h$, lo que justifica $m=20$ como tamaño de producción. El carbono converge más despacio y se llevó hasta $m=40$, donde el último incremento es de $0.06$~m$E_h$.
 
 \begin{table}[htbp]
     \centering
@@ -73,7 +73,7 @@ El espacio activo queda definido por el número $m$ de orbitales que se retienen
     \label{tab:convergencia_ci}
 \end{table}
 
-La estabilidad de los intervalos del triplete es el resultado más nítido del análisis (Tabla \ref{tab:estabilidad_triplete}). A lo largo de toda la curva del carbono, entre $m=4$ y $m=40$, el intervalo $^3P_2$ se mueve $0.13\ \text{cm}^{-1}$ y el $^3P_1$ apenas $0.03$; en el silicio ambos se mantienen dentro de $0.2\ \text{cm}^{-1}$. En el germanio y el estaño el movimiento es mayor, de $8.9$ y $40.8\ \text{cm}^{-1}$ en el $^3P_1$, pero sigue siendo un orden de magnitud menor que la discrepancia con el experimento, que en el estaño supera los $300\ \text{cm}^{-1}$. Los errores del triplete no proceden, por tanto, del truncamiento del espacio activo.
+La estabilidad de los intervalos del triplete es el resultado más nítido del análisis (Tabla \ref{tab:estabilidad_triplete}). A lo largo de toda la curva del carbono, entre $m=4$ y $m=40$, el nivel $^3P_2$ se mueve $0.13$~cm$^{-1}$ y el $^3P_1$ apenas $0.03$; en el silicio ambos se mantienen dentro de $0.2$~cm$^{-1}$. En el germanio y el estaño el movimiento es mayor, de $8.9$ y $40.8$~cm$^{-1}$ en el $^3P_1$, pero sigue siendo un orden de magnitud menor que la discrepancia con el experimento, que en el estaño supera los $300$~cm$^{-1}$.
 
 \begin{table}[htbp]
     \centering
@@ -82,7 +82,7 @@ La estabilidad de los intervalos del triplete es el resultado más nítido del a
     \label{tab:estabilidad_triplete}
 \end{table}
 
-Los singletes sí dependen del tamaño del espacio (Tabla \ref{tab:convergencia_singletes} y Figura \ref{fig:convergencia_singletes}). Ambos descienden de manera monótona al ampliar la base, y en el carbono el $^1S_0$ baja de $\num{28259}$ a $\num{23894}\ \text{cm}^{-1}$ entre $m=4$ y $m=40$. Para estimar la cola restante extrapolamos los tres últimos tamaños de cada curva de dos maneras, suponiendo que los incrementos decrecen en razón geométrica constante y ajustando la forma $E(m) = E_\infty + A\,m^{-p}$. En el carbono, en el germanio, en el $^1D_2$ del silicio y en el $^1S_0$ del estaño las dos estimaciones coinciden y desplazan el error relativo frente al NIST en un punto porcentual o menos. El $^1S_0$ del silicio converge más despacio, ya que extrapola a un error de entre $-5.3\%$ y $-6.2\%$ según el método, frente al $-4.7\%$ de $m=20$, aunque el signo de la discrepancia no cambia. El caso difícil es el $^1D_2$ del estaño, que desciende con incrementos casi constantes entre $m=12$ y $m=20$ (razón $0.93$) y no admite una extrapolación fiable: la geométrica lo situaría un $2.6\%$ por debajo del valor medido, cuando en $m=20$ queda un $1.1\%$ por encima, de modo que el signo de su error queda indeterminado con el espacio de producción.
+Los singletes sí dependen del tamaño del espacio (Tabla \ref{tab:convergencia_singletes} y Figura \ref{fig:convergencia_singletes}). Ambos descienden de manera monótona al ampliar la base, y en el carbono el $^1S_0$ baja de \num{28259} a \num{23894}~cm$^{-1}$ entre $m=4$ y $m=40$. Para estimar la cola restante extrapolamos los tres últimos tamaños de cada curva de dos maneras, suponiendo que los incrementos decrecen en razón geométrica constante y ajustando la forma $E(m) = E_\infty + A\,m^{-p}$. En el carbono, en el germanio, en el $^1D_2$ del silicio y en el $^1S_0$ del estaño las dos estimaciones coinciden y desplazan el error relativo frente al NIST en un punto porcentual o menos. El $^1S_0$ del silicio converge más despacio, ya que extrapola a un error de entre $-5.3\%$ y $-6.2\%$ según el método, frente al $-4.7\%$ de $m=20$, aunque el signo de la discrepancia no cambia. El caso difícil es el $^1D_2$ del estaño, que desciende con incrementos casi constantes entre $m=12$ y $m=20$ (razón $0.93$) y no admite una extrapolación fiable: la geométrica lo situaría un $2.6\%$ por debajo del valor medido, cuando en $m=20$ queda un $1.1\%$ por encima, de modo que el signo de su error queda indeterminado con el espacio de producción.
 
 \begin{table}[htbp]
     \centering
@@ -99,11 +99,11 @@ Los singletes sí dependen del tamaño del espacio (Tabla \ref{tab:convergencia_
     \label{fig:convergencia_singletes}
 \end{figure}
 
-Esas estimaciones bastan para el argumento de la Sección \ref{sec:espectro}, que se apoya en el carbono. Allí el $^1S_0$ extrapolado queda un $10\%$ por encima del valor medido y el $^1D_2$ entre un $5.5\%$ y un $5.7\%$, discrepancias de unos dos mil doscientos y unos seiscientos cm$^{-1}$ frente a una cola de convergencia de unas decenas. La discrepancia de los singletes del carbono procede, por tanto, del modelo y no del truncamiento del espacio activo.
+Esas estimaciones bastan para el argumento de la Sección \ref{sec:espectro}, que se apoya en el carbono. Allí el $^1S_0$ extrapolado queda un $10\%$ por encima del valor medido y el $^1D_2$ entre un $5.5\%$ y un $5.7\%$, discrepancias de unos 2200 y unos 600~cm$^{-1}$ frente a una cola de convergencia de unas decenas. La discrepancia de los singletes del carbono procede, por tanto, del modelo y no del número de orbitales del espacio activo.
 
 \subsection{Costo del cálculo}
 
-Las curvas anteriores exigen repetir el cálculo de interacción de configuraciones para tamaños crecientes del espacio activo. El costo no lo domina la diagonalización, cuyo espacio es de unas pocas miles de configuraciones, sino el ensamblado previo de las integrales de Slater $R^k$ entre orbitales virtuales. Su número crece como la cuarta potencia del tamaño de la base de virtuales, de modo que es este ensamblado el que fija tanto el tiempo de ejecución, medido como tiempo real transcurrido, como la huella de memoria.
+Las curvas anteriores exigen repetir el cálculo de interacción de configuraciones para tamaños crecientes del espacio activo. El costo no lo domina la diagonalización, cuyo espacio es de unos pocos miles de configuraciones, sino el ensamblado previo de las integrales de Slater $R^k$ entre orbitales virtuales. Su número crece como la cuarta potencia del tamaño de la base de virtuales, de modo que es este ensamblado el que fija tanto el tiempo de ejecución, medido como tiempo real transcurrido, como la huella de memoria.
 
 \begin{table}[htbp]
     \centering
@@ -113,14 +113,14 @@ Las curvas anteriores exigen repetir el cálculo de interacción de configuracio
     \label{tab:convergencia_ci_costo}
 \end{table}
 
-La Tabla \ref{tab:convergencia_ci_costo} cuantifica ambos recursos. El conteo de integrales es prácticamente el mismo para los cuatro elementos, ya que depende del tamaño de la base y no de la carga nuclear, y pasa de unos cuatro mil quinientos valores en $m=4$ a treinta y ocho millones en $m=40$. Con un consumo medido de unos diecisiete bytes por casilla, el caso extremo del carbono requiere del orden de $1.1$ gigabytes de memoria residente, que llegan a $1.7$ durante los redimensionamientos de la tabla asociativa. El tiempo de ejecución del mismo punto es de unos quince minutos, y la curva completa del carbono hasta $m=40$ tomó cerca de cuarenta y un minutos.
+La Tabla \ref{tab:convergencia_ci_costo} cuantifica ambos recursos. El conteo de integrales es prácticamente el mismo para los cuatro elementos, ya que depende del tamaño de la base y no de la carga nuclear, y pasa de unos 4500 valores en $m=4$ a 38.8 millones en $m=40$. Cada casilla de la tabla asociativa ocupa 17 bytes, 8 de la clave, 8 del valor y uno de control, y la tabla reserva más casillas que integrales almacenadas. En el caso extremo del carbono termina con unos 67 millones de casillas, del orden de $1.1$~GB, y llega a $1.7$~GB durante su último redimensionamiento, cuando conviven la tabla vieja y la nueva. El tiempo de ejecución del mismo punto es de unos 15 minutos, y la curva completa del carbono hasta $m=40$ tomó cerca de 41 minutos.
 
-La comparación entre elementos muestra que el tiempo sí depende de $Z$, aunque el número de integrales no. A $m=20$ el silicio emplea sesenta y ocho segundos y el estaño quinientos noventa y ocho, casi nueve veces más, pese a evaluar una cantidad de integrales que difiere en menos del uno por ciento. La razón es el número de puntos de la malla radial, que debe crecer con $Z$ para resolver la contracción de las capas internas: cada integral $R^k$ se evalúa sobre esa malla, de modo que el costo por integral escala con la discretización y no con el espacio activo. Como el espacio activo de cada tamaño contiene al del anterior, las integrales ya calculadas se reutilizan, y eso es lo que hace viable el barrido completo.
+La comparación entre elementos muestra que el tiempo sí depende de $Z$, aunque el número de integrales no. A $m=20$ el silicio emplea 68~s y el estaño 598~s, casi nueve veces más, pese a evaluar una cantidad de integrales que difiere en menos de un $1\%$. La razón es el número de puntos de la malla radial, que debe crecer con $Z$ para resolver la contracción de las capas internas: cada integral $R^k$ se evalúa sobre esa malla, de modo que el costo por integral escala con la discretización y no con el espacio activo. Como el espacio activo de cada tamaño contiene al del anterior, las integrales ya calculadas se reutilizan, y eso es lo que hace viable el barrido completo.
 
-\section{Arquitectura Computacional y Repositorio de Código}
+\section{Arquitectura computacional y repositorio de código}
 \label{sec:repositorio}
 
-Los métodos descritos en esta tesis están implementados en una biblioteca propia, \textbf{AtomicSplines}, escrita en \textbf{Julia}, un lenguaje compilado de cómputo científico. Aunque el método de Galerkin con B-splines produce matrices de banda, el motor las almacena en arreglos densos: se exploró el almacenamiento especializado de \texttt{BandedMatrices.jl} y su sobrecosto resultó mayor que la ganancia para bases de unos cientos de funciones. Las diagonalizaciones del ciclo autoconsistente y del cálculo de interacción de configuraciones son completas y densas, mediante las rutinas de LAPACK que expone la biblioteca estándar de álgebra lineal de Julia, y su costo no domina el cálculo, que como muestra la Sección \ref{sec:costo_ci} lo fija el ensamblado de las integrales $R^k$.
+Los métodos descritos en esta tesis están implementados en una biblioteca propia, \textbf{AtomicSplines}, escrita en \textbf{Julia}, un lenguaje compilado de cómputo científico. Aunque el método de Galerkin con B-splines produce matrices de banda, el motor las almacena en arreglos densos: la matriz de Fock, con el intercambio, es densa de todos modos, y se exploró el almacenamiento especializado de \texttt{BandedMatrices.jl}, cuyo sobrecosto resultó mayor que la ganancia para bases de unos cientos de funciones. Las diagonalizaciones del ciclo autoconsistente y del cálculo de interacción de configuraciones son completas y densas, mediante las rutinas de LAPACK que expone la biblioteca estándar de álgebra lineal de Julia, y su costo no domina el cálculo, que como muestra la Sección \ref{sec:costo_ci} lo fija el ensamblado de las integrales $R^k$.
 
 Los símbolos $3j$ y $6j$ del cálculo de interacción de configuraciones se evalúan con la biblioteca \texttt{WignerSymbols.jl}. Los resultados que reporta el Capítulo \ref{ch:resultados} se regeneran desde los archivos de resultados registrados con un conjunto de programas que escribe directamente las tablas y las figuras del manuscrito. El código completo está disponible en el repositorio
 

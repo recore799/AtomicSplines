@@ -1,4 +1,4 @@
-\chapter{Implementación de la Base de B-splines}
+\chapter{Implementación de la base de B-splines}
 \label{ap:bsplines}
 
 Este apéndice documenta cómo el motor construye y emplea la base de B-splines introducida en el Capítulo \ref{ch:bsplines-galerkin}. Recoge la construcción del vector de nudos y las condiciones de frontera, la evaluación de la base y la separación entre la geometría de la base y el estado del átomo que reorganiza el ciclo autoconsistente. La definición de los B-splines por la recurrencia de Cox-de Boor y sus propiedades de soporte compacto y control local están en el Capítulo \ref{ch:bsplines-galerkin} y no se repiten aquí.
@@ -7,7 +7,7 @@ Este apéndice documenta cómo el motor construye y emplea la base de B-splines 
 
 Los nudos interiores se distribuyen sobre $[0, R_{\text{max}}]$ con la malla exponencial de la Ecuación \eqref{eq:exp-grid}, y el primero y el último se repiten hasta alcanzar multiplicidad $k$, el orden del spline. Con esa multiplicidad, en $r = 0$ el único spline no nulo es el primero y en $R_{\text{max}}$ el último; además, los primeros $j+1$ splines son los únicos cuyas derivadas hasta el orden $j$ no se anulan en el origen. Esa estructura permite imponer las condiciones de frontera sin añadir ecuaciones: en el canal de momento angular $l$, el ciclo autoconsistente elimina los primeros $l+1$ splines y el último, de modo que la función radial cumple $P(0) = P(R_{\text{max}}) = 0$ y se anula en el origen como $r^{l+1}$, el comportamiento que exige la barrera centrífuga. La ecuación de Poisson recibe el mismo tratamiento en el origen, con $k+1$ splines eliminados para el multipolo $k$ (Sección \ref{sec:estructura-algebraica}).
 
-Los parámetros de la base con que se obtuvieron los resultados del Capítulo \ref{ch:resultados} se recogen en la Tabla \ref{tab:parametros_base}. El radio de la caja es el mismo en los cuatro elementos, y al aumentar $Z$ crecen el número de intervalos y el parámetro $\gamma$, que concentra más nudos cerca del núcleo para resolver la contracción de las capas internas. Estos valores no son únicos: el motor los recibe como argumentos, y se eligieron de modo que los resultados fueran estables frente a un refinamiento de la malla, como comprueba para el silicio la prueba de la Sección \ref{sec:parametros_fina}.
+Los parámetros de la base con que se obtuvieron los resultados del Capítulo \ref{ch:resultados} se recogen en la Tabla \ref{tab:parametros_base}. El radio de la caja es el mismo en los cuatro elementos, y el carbono y el silicio comparten también la malla. En el germanio y el estaño crecen el número de intervalos y el parámetro $\gamma$, que concentra más nudos cerca del núcleo para resolver la contracción de las capas internas, y el orden del spline pasa de 7 a 8. Estos valores no son únicos: el motor los recibe como argumentos, y se eligieron de modo que los resultados fueran estables frente a un refinamiento de la malla, como comprueba para el silicio la prueba de la Sección \ref{sec:parametros_fina}.
 
 \begin{table}[htbp]
     \centering
@@ -29,7 +29,7 @@ En cualquier punto $r \in [t_\mu, t_{\mu+1})$ solo hay $k$ splines no nulos, y e
 \section{Separación entre geometría y estado}
 \label{sec:tensores_geometria}
 
-Cada iteración del ciclo autoconsistente reconstruye la matriz de Fock y resuelve las ecuaciones de Poisson, pero las funciones base y la cuadratura con que se integran permanecen fijas. Sea $\mathcal{Q} = \{(r_q, w_q)\}$ el conjunto de puntos y pesos de Gauss-Legendre de todos los intervalos. Definimos el \textbf{tensor de colocación} $\bm{E}$ y su análogo diferencial $\bm{E}'$ como las evaluaciones de la base en esos puntos,
+Como se adelantó en la Sección \ref{sec:estructura-algebraica}, las funciones base y la cuadratura permanecen fijas durante el ciclo autoconsistente. Sea $\mathcal{Q} = \{(r_q, w_q)\}$ el conjunto de puntos y pesos de Gauss-Legendre de todos los intervalos. Definimos el \textbf{tensor de colocación} $\bm{E}$ y su análogo diferencial $\bm{E}'$ como las evaluaciones de la base en esos puntos,
 \begin{equation}
 \label{eq:collocation-tensor}
   E_{iq} = B_i(r_q), \qquad E'_{iq} = \eval{\dv{B_i(r)}{r}}_{r=r_q}.
@@ -50,9 +50,9 @@ La suma sobre $q$ no depende del estado del átomo y define el \textbf{tensor de
 \label{eq:inter-tensor}
   W_{\mu\alpha\beta} = \sum_{q} w_q\, E_{\mu q} E_{\alpha q} E_{\beta q}\, r_q^{-1},
 \end{equation}
-con lo cual el término fuente se reduce a la contracción $b_\mu = \sum_{\alpha\beta} W_{\mu\alpha\beta} D_{\alpha\beta}$, sin reconstruir la densidad sobre la malla en cada iteración. No se trata de una aproximación adicional sino de un reordenamiento exacto de las mismas sumas.
+con lo cual el término fuente se reduce a la contracción $b_\mu = \sum_{\alpha\beta} W_{\mu\alpha\beta} D_{\alpha\beta}$, sin reconstruir la densidad sobre la malla en cada iteración. Es un reordenamiento exacto de las mismas sumas, sin aproximación adicional.
 
-El soporte compacto vuelve a $\mathbf{W}$ un tensor disperso, no nulo solo cuando las tres funciones son activas en un mismo intervalo. El motor no construye el tensor global: guarda un tensor local de dimensión $k^3$ por intervalo de la malla, con índices locales que se trasladan a los globales por un desplazamiento fijo, y lo ensambla en el mismo recorrido por intervalos que produce las matrices de un cuerpo. Con eso, el almacenamiento crece como $N k^3$ en lugar de $N^3$, y el ciclo autoconsistente queda reducido a contraer $\mathbf{W}$ con las matrices de densidad, resolver los sistemas de Poisson sobre factorizaciones precalculadas y diagonalizar.
+El soporte compacto vuelve a $\mathbf{W}$ un tensor disperso, no nulo solo cuando las tres funciones son activas en un mismo intervalo. El motor no construye el tensor global: guarda un tensor local de dimensión $k^3$ por intervalo de la malla, con índices locales que se trasladan a los globales por un desplazamiento fijo, y lo ensambla en el mismo recorrido por intervalos que produce las matrices de un cuerpo. Con eso, el almacenamiento crece como $N k^3$ en lugar de $N^3$.
 
 %%% Local Variables:
 %%% mode: LaTeX

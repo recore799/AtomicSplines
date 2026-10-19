@@ -1,4 +1,4 @@
-\chapter{El Potencial \texorpdfstring{$Y^k$}{Yk} y la Ecuación de Poisson Radial}
+\chapter{El potencial \texorpdfstring{$Y^k$}{Yk} y la ecuación de Poisson radial}
 \label{ap:galerkin-poisson}
 
 Este apéndice complementa los Capítulos \ref{ch:bsplines-galerkin} y \ref{ch:ciclo-scf} con una deducción que el texto principal emplea sin demostrar. La primera sección parte de la definición integral del potencial radial $Y^k$ y obtiene la ecuación diferencial local que satisface, la que discretiza la Sección \ref{subsec:poisson-metodo}. La segunda examina su comportamiento en los dos extremos del dominio, del que se deducen las condiciones de frontera que impone el ciclo autoconsistente (Sección \ref{sec:estructura-algebraica}).
@@ -15,7 +15,7 @@ donde
 \begin{equation}
  I_{\text{int}}(r) = \int_0^r s^k \rho_{ab}(s)\dd{s}, \qquad I_{\text{ext}}(r) = \int_r^\infty s^{-(k+1)} \rho_{ab}(s)\dd{s},
 \end{equation}
-con el cual las integrales de Slater son valores esperados radiales; por ejemplo, $F^k(a,b) = \int_0^\infty P_a^2(r)\, Y^k(b,b;r)/r \dd{r}$. Evaluar la Ecuación \eqref{eq:Yk-final} por cuadratura es costoso porque el operador es global: el valor en cada punto depende de la densidad en todo el dominio. La alternativa es la ecuación diferencial local que $Y^k$ satisface.
+con el cual las integrales de Slater son valores esperados radiales; por ejemplo, $F^k(a,b) = \int_0^\infty P_a^2(r)\, Y^k(b,b;r)/r \dd{r}$. Esa definición es global, y la alternativa es la ecuación diferencial local que $Y^k$ satisface (Sección \ref{subsec:poisson-metodo}).
 
 Como los integrandos de $I_{\text{int}}$ e $I_{\text{ext}}$ no dependen de $r$, sus derivadas se reducen a los términos de frontera, $I_{\text{int}}' = r^k \rho_{ab}$ e $I_{\text{ext}}' = -r^{-(k+1)} \rho_{ab}$. Derivando la Ecuación \eqref{eq:Yk-final}, los términos que contienen $\rho_{ab}$ se cancelan y queda
 \begin{equation}
@@ -26,23 +26,14 @@ y una segunda derivación, en la que esta vez los términos con $\rho_{ab}$ no s
 \begin{equation}
  \dv[2]{Y^k}{r} = k(k+1)\, r^{-2}\qty[ r^{-k} I_{\text{int}} + r^{k+1} I_{\text{ext}} ] - \frac{k}{r}\rho_{ab} - \frac{k+1}{r}\rho_{ab}.
 \end{equation}
-El corchete es de nuevo $Y^k$, y se obtiene la \textbf{ecuación de Poisson radial generalizada},
-\begin{equation}
-\label{eq:poisson-true}
- \qty( -\dv[2]{r} + \frac{k(k+1)}{r^2} ) Y^k(a,b;r) = \frac{2k+1}{r}\, P_a(r) P_b(r).
-\end{equation}
+El corchete es de nuevo $Y^k$, y se obtiene la \textbf{ecuación de Poisson radial generalizada}, la Ecuación \eqref{eq:poisson-metodo} del Capítulo \ref{ch:bsplines-galerkin}.
 
 \section{Comportamiento en los extremos y condiciones de frontera}
 \label{sec:condiciones-frontera}
 
 Cerca del origen $\rho_{ab} \sim r^{l_a + l_b + 2}$, de modo que el primer término de la Ecuación \eqref{eq:Yk-final} se anula como $r^{l_a+l_b+3}$ mientras que el segundo, con $I_{\text{ext}}(0)$ finito, lo hace como $r^{k+1}$. Como la regla del triángulo impone $k \le l_a + l_b$, domina el segundo y $Y^k \sim r^{k+1}$: el potencial y sus primeras $k$ derivadas se anulan en el origen. En la base de B-splines esa condición se impone eliminando los primeros $k+1$ splines del espacio de prueba (Sección \ref{sec:estructura-algebraica}).
 
-Lejos del átomo la densidad decae exponencialmente, $I_{\text{ext}} \to 0$ e $I_{\text{int}}$ tiende al momento multipolar $M_k = \int_0^\infty s^k \rho_{ab}(s)\dd{s}$, de modo que $Y^k \to M_k\, r^{-k}$. Imponer ese valor en $R_{\text{max}}$ como condición de Dirichlet exigiría conocer $M_k$, que depende de la densidad que se está calculando. Derivar la forma asintótica elimina la constante y deja una condición homogénea de Robin,
-\begin{equation}
-\label{eq:bc-robin}
- \left.\dv{Y^k}{r}\right|_{R_{\text{max}}} + \frac{k}{R_{\text{max}}}\, Y^k(R_{\text{max}}) = 0 .
-\end{equation}
-En la forma débil, la integración por partes deja en $R_{\text{max}}$ un término de borde que la Ecuación \eqref{eq:bc-robin} convierte en
+Lejos del átomo la densidad decae exponencialmente, $I_{\text{ext}} \to 0$ e $I_{\text{int}}$ tiende al momento multipolar $M_k = \int_0^\infty s^k \rho_{ab}(s)\dd{s}$, de modo que $Y^k \to M_k\, r^{-k}$. Imponer ese valor en $R_{\text{max}}$ como condición de Dirichlet exigiría conocer $M_k$, que depende de la densidad que se está calculando. Derivar la forma asintótica elimina la constante y deja la condición homogénea de Robin de la Ecuación \eqref{eq:robin}. En la forma débil, la integración por partes deja en $R_{\text{max}}$ un término de borde que esa condición convierte en
 \begin{equation}
  -B_i(R_{\text{max}})\, \dv{Y^k}{r}\bigg|_{R_{\text{max}}} = \frac{k}{R_{\text{max}}}\, B_i(R_{\text{max}})\, Y^k(R_{\text{max}}).
 \end{equation}

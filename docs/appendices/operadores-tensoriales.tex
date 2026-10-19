@@ -1,19 +1,19 @@
-\chapter{Operadores Tensoriales y Coeficientes Angulares}
+\chapter{Operadores tensoriales y coeficientes angulares}
 \label{ap:operadores-tensoriales}
 
-Este apéndice reúne los resultados del álgebra angular que el texto principal emplea, sin desarrollar el formalismo del que proceden. La teoría de los operadores tensoriales irreducibles y el álgebra de Racah ocupan varios capítulos del texto de \textcite{Cowan1981}, y reproducirlas excedería el alcance de este trabajo. Aquí se recogen únicamente las fórmulas con las que se construyó el motor, en el orden en que intervienen: la escritura de la repulsión coulombiana en términos de operadores tensoriales, el teorema de Wigner-Eckart con las reglas de selección que de él se siguen, el teorema de Unsöld, los elementos de matriz del cálculo de interacción de configuraciones de parejas la evaluación explícita de los coeficientes angulares de la configuración $np^2$ y los elementos de matriz del espín-órbita en esa misma configuración. En todos los casos la parte angular se resuelve de forma analítica y la física del átomo queda contenida en integrales radiales.
+Este apéndice reúne los resultados del álgebra angular que el texto principal emplea, sin desarrollar el formalismo del que proceden. La teoría de los operadores tensoriales irreducibles y el álgebra de Racah ocupan varios capítulos del texto de \textcite{Cowan1981}, y reproducirlas excedería el alcance de este trabajo. Aquí se recogen únicamente las fórmulas con las que se construyó el motor, en el orden en que intervienen: la escritura de la repulsión coulombiana en términos de operadores tensoriales, el teorema de Wigner-Eckart con las reglas de selección que de él se siguen, el teorema de Unsöld, los elementos de matriz del cálculo de interacción de configuraciones de parejas, la evaluación explícita de los coeficientes angulares de la configuración $np^2$ y los elementos de matriz del espín-órbita en esa misma configuración. En todos los casos la parte angular se resuelve de forma analítica y la física del átomo queda contenida en integrales radiales.
 
 \section{Operadores tensoriales y expansión de Laplace}
 
 Los armónicos esféricos renormalizados
 \begin{equation}
-  C_q^{(k)}(\theta, \phi) = \sqrt{\frac{4\pi}{2k+1}}\, Y_k^q(\theta, \phi)
+  C_q^{(k)}(\theta, \varphi) = \sqrt{\frac{4\pi}{2k+1}}\, Y_k^q(\theta, \varphi)
 \end{equation}
 forman, para cada $k$, un operador tensorial irreducible de rango $k$ bajo rotaciones. Con ellos, la expansión de Laplace del operador de repulsión de la Sección \ref{sec:slater_integrals} se escribe como un producto escalar de tensores que actúan sobre electrones distintos,
 \begin{equation}
   \frac{1}{r_{12}} = \sum_{k=0}^{\infty} \frac{r_{<}^k}{r_{>}^{k+1}}\, \qty( C^{(k)}(1) \cdot C^{(k)}(2) ), \qquad \qty( C^{(k)}(1) \cdot C^{(k)}(2) ) = \sum_{q=-k}^k (-1)^q C_{-q}^{(k)}(1)\, C_q^{(k)}(2).
 \end{equation}
-Sobre orbitales de la forma $\frac{P(r)}{r} Y_{lm}(\Omega)$, cada término de la suma se factoriza en una integral radial de Slater $R^k$ (Ecuación \eqref{eq:slater_k}) por un coeficiente angular construido con los elementos de matriz de $C^{(k)}$ entre armónicos esféricos.
+Sobre orbitales de la forma $\frac{P(r)}{r} Y_l^m(\Omega)$, cada término de la suma se factoriza en una integral radial de Slater $R^k$ (Ecuación \eqref{eq:slater_k}) por un coeficiente angular construido con los elementos de matriz de $C^{(k)}$ entre armónicos esféricos.
 
 \section{El teorema de Wigner-Eckart y las reglas de selección}
 \label{sec:wigner_eckart}
@@ -29,29 +29,29 @@ En la Ecuación \eqref{eq:wigner_eckart}, $\ket{lm}$ denota el armónico esféri
 \end{equation}
 y se anula salvo que $m_1 + m_2 + m_3 = 0$ y que $j_1$, $j_2$ y $j_3$ satisfagan la desigualdad triangular.
 
-El símbolo $3j$ contiene toda la dependencia en las proyecciones magnéticas y el elemento de matriz reducido no depende de ellas, de modo que la orientación del sistema queda separada de su estructura dinámica. Las propiedades de los símbolos $3j$ imponen tres reglas de selección que truncan la suma sobre $k$: la de paridad, que exige $l + k + l'$ par; la triangular, $|l - l'| \le k \le l + l'$; y la conservación de la proyección, $m = q + m'$. Para la configuración $np^2$, con $l = l' = 1$ en todos los orbitales, la regla triangular permite $k \in \{0, 1, 2\}$ y la de paridad elimina el término dipolar. La repulsión dentro de la subcapa depende entonces exactamente de dos integrales radiales, el monopolo $F^0(np,np)$ y el cuadrupolo $F^2(np,np)$, y todos los multipolos con $k > 2$ se anulan por construcción.
+El símbolo $3j$ contiene toda la dependencia en las proyecciones magnéticas y el elemento de matriz reducido no depende de ellas, de modo que la orientación del sistema queda separada de su estructura dinámica. Las propiedades de los símbolos $3j$ imponen tres reglas de selección: la de paridad, que exige $l + k + l'$ par; la triangular, $|l - l'| \le k \le l + l'$; y la conservación de la proyección, $m = q + m'$. Las dos primeras truncan la suma sobre $k$. Para la configuración $np^2$, con $l = l' = 1$ en todos los orbitales, la regla triangular permite $k \in \{0, 1, 2\}$ y la de paridad elimina el término dipolar. La repulsión dentro de la subcapa depende entonces exactamente de dos integrales radiales, el monopolo $F^0(np,np)$ y el cuadrupolo $F^2(np,np)$, y todos los multipolos con $k > 2$ se anulan por construcción.
 
 \section{El teorema de Unsöld}
 \label{sec:unsold}
 
 La densidad angular de una subcapa llena es esféricamente simétrica:
 \begin{equation}
-    \sum_{m=-l}^{l} |Y_l^m(\theta, \phi)|^2 = \frac{2l+1}{4\pi}.
+    \sum_{m=-l}^{l} |Y_l^m(\theta, \varphi)|^2 = \frac{2l+1}{4\pi}.
 \end{equation}
 La demostración sigue del teorema de adición, $P_l(\cos \gamma) = \frac{4\pi}{2l+1} \sum_{m} Y_l^{m*}(\Omega_1) Y_l^m(\Omega_2)$, evaluado en direcciones coincidentes: con $\Omega_1 = \Omega_2$ el ángulo entre ellas es $\gamma = 0$, y como $P_l(1) = 1$ para todo $l$, la suma de los módulos al cuadrado es la constante indicada. Esta es la propiedad que hace exacta la aproximación de campo central para las capas cerradas (Sección \ref{sec:rohf}).
 
 \section{Elementos de matriz del cálculo de interacción de configuraciones}
 \label{sec:ci_racah}
 
-El cálculo de interacción de configuraciones de la Sección \ref{sec:ci_method} trabaja con funciones de dos electrones acopladas, $\ket{ab;LS}$, construidas con orbitales $a$ y $b$ del espacio activo, antisimetrizadas y normalizadas con $N_{ab} = 1/2$ si $a = b$ y $N_{ab} = 1/\sqrt{2}$ si $a \neq b$. El espacio contiene todas las parejas con la paridad de la configuración de referencia, que es par para $np^2$, y con $|l_a - l_b| \le L \le l_a + l_b$; para electrones equivalentes solo sobreviven los términos con $L + S$ par, que es la forma que toma el principio de exclusión en esta base. El elemento de matriz del Hamiltoniano entre dos de estas funciones es
+El cálculo de interacción de configuraciones de la Sección \ref{sec:ci_method} trabaja con funciones de dos electrones acopladas, $\ket{ab;LS}$, construidas con orbitales $a$ y $b$ del espacio activo, antisimetrizadas y normalizadas con $N_{ab} = 1/2$ si $a = b$ y $N_{ab} = 1/\sqrt{2}$ si $a \neq b$. El espacio contiene todas las parejas con la paridad de la configuración de referencia, que es par para $np^2$, y con $|l_a - l_b| \le L \le l_a + l_b$; para electrones equivalentes solo sobreviven los términos con $L + S$ par, que es la forma que toma el principio de exclusión en esta base. El elemento de matriz del hamiltoniano entre dos de estas funciones es
 \begin{equation}
     \mel{ab;LS}{\hat{H}}{cd;LS} = 2 N_{ab} N_{cd} \qty[ \mel{ab}{\hat{H}}{cd}_L + (-1)^{l_c + l_d + L + S} \mel{ab}{\hat{H}}{dc}_L ],
 \end{equation}
-donde el segundo término es el de intercambio. La parte de un cuerpo, con el Hamiltoniano de capas internas congeladas $\hat{h}$ que contiene la energía cinética, la atracción nuclear, la barrera centrífuga y los operadores de Coulomb e intercambio de las capas internas, es $\mel{ab}{\hat{h}_1 + \hat{h}_2}{cd} = \delta_{bd}\mel{a}{\hat{h}}{c} + \delta_{ac}\mel{b}{\hat{h}}{d}$ para orbitales ortonormales. La parte de dos cuerpos se reduce, por el álgebra de Racah, a una suma de integrales de Slater pesadas por un símbolo $6j$,
+donde el segundo término es el de intercambio. La parte de un cuerpo, con el hamiltoniano de capas internas congeladas $\hat{h}$ que contiene la energía cinética, la atracción nuclear, la barrera centrífuga y los operadores de Coulomb e intercambio de las capas internas, es $\mel{ab}{\hat{h}_1 + \hat{h}_2}{cd} = \delta_{bd}\mel{a}{\hat{h}}{c} + \delta_{ac}\mel{b}{\hat{h}}{d}$ para orbitales ortonormales. La parte de dos cuerpos se reduce, por el álgebra de Racah, a una suma de integrales de Slater pesadas por un símbolo $6j$,
 \begin{equation}
     \mel{ab}{\frac{1}{r_{12}}}{cd}_L = \sum_k (-1)^{l_b + l_c + L} \begin{Bmatrix} l_a & l_b & L \\ l_d & l_c & k \end{Bmatrix} \mel{l_a}{\|C^{(k)}\|}{l_c} \mel{l_b}{\|C^{(k)}\|}{l_d}\, R^k(ab,cd),
 \end{equation}
-con $k$ restringido por las reglas de selección de los dos elementos de matriz reducidos. El arreglo entre llaves es un símbolo $6j$ de Wigner, el coeficiente que relaciona las dos maneras de acoplar tres momentos angulares \parencite{Edmonds1957}. Aparece aquí porque el operador actúa sobre los momentos angulares de cada electrón por separado, mientras que los estados los acoplan entre sí al término $L$. Es por ello el único factor que distingue entre términos de una misma pareja de orbitales.
+con $k$ restringido por las reglas de selección de los dos elementos de matriz reducidos. El arreglo entre llaves es un símbolo $6j$ de Wigner, el coeficiente que relaciona las dos maneras de acoplar tres momentos angulares \parencite{Edmonds1957}. Aparece aquí porque el operador actúa sobre los momentos angulares de cada electrón por separado, mientras que los estados los acoplan entre sí al término $L$. Es por ello, junto con la fase de intercambio, el único factor que distingue entre términos de una misma pareja de orbitales.
 
 \section{Coeficientes angulares de la configuración \texorpdfstring{$np^2$}{np2}}
 \label{sec:coef_angulares_np2}
@@ -72,9 +72,7 @@ Para $p^2$ solo sobreviven $k = 0$ y $k = 2$. El monopolo tiene $c_0(L) = 1$ par
     ^1S\ (L=0):&\quad \begin{Bmatrix} 1 & 1 & 0 \\ 1 & 1 & 2 \end{Bmatrix} = \frac{1}{3}
     &&\Longrightarrow\quad c_2(^1S) = +\frac{10}{25}. \label{eq:c2_1S}
 \end{align}
-El término que mantiene a los dos electrones más separados paga menos repulsión cuadrupolar y recibe el coeficiente negativo; es el $^3P$, cuya parte espacial es antisimétrica porque la de espín es simétrica, en concordancia con la primera regla de Hund. Dentro del límite de Hartree-Fock, una sola integral radial, $F^2(np,np)$, es responsable de toda la separación entre los tres términos, y esa exclusividad se pierde en cuanto el cálculo de interacción de configuraciones mezcla otras parejas, que introducen integrales $R^k$ generales.
-
-El promedio de la configuración es la media de los $c_2(L)$ pesada por las degeneraciones $(2L+1)(2S+1)$, nueve, cinco y uno,
+El término que mantiene a los dos electrones más separados paga menos repulsión cuadrupolar y recibe el coeficiente negativo; es el $^3P$, cuya parte espacial es antisimétrica porque la de espín es simétrica, en concordancia con la primera regla de Hund. Dentro del límite de Hartree-Fock, una sola integral radial, $F^2(np,np)$, es responsable de toda la separación entre los tres términos, y esa exclusividad se pierde en cuanto el cálculo de interacción de configuraciones mezcla otras parejas, que introducen integrales $R^k$ generales. El promedio de la configuración es la media de los $c_2(L)$ pesada por las degeneraciones $(2L+1)(2S+1)$, nueve, cinco y uno,
 \begin{equation}
     \label{eq:c2_promedio}
     \overline{c_2} = \frac{9\left(-\frac{5}{25}\right) + 5\left(+\frac{1}{25}\right) + 1\left(+\frac{10}{25}\right)}{15} = -\frac{2}{25},

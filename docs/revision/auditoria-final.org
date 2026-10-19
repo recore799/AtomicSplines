@@ -1,0 +1,1088 @@
+#+TITLE: Auditoría final del manuscrito, en seco
+#+TODO: TODO PREGUNTA ESTUDIAR | HECHO DESCARTADO
+
+# Hecha el 2026-10-18 sobre el árbol de trabajo (incluye los cambios sin commitear de
+# resultados.tex, conclusiones.tex, ciclo-scf.tex, correlacion-estructura-fina.tex, resumen.tex y
+# metodos-auxiliares.tex). No se modificó ningún .tex, .jl, .toml, .bib ni .jld2; este es el único
+# archivo escrito.
+#
+# Gravedad: [A] error; [B] lo que un sinodal puede objetar; [C] redacción; [D] tipografía y formato.
+# Las rutas son relativas a docs/. Cada línea de un .tex es un párrafo, así que archivo:línea
+# señala el párrafo. Las propuestas son reescrituras mínimas: no cambian números, referencias,
+# ecuaciones ni afirmaciones físicas, salvo en los [A] y [B], donde el cambio es justo el hallazgo.
+
+* Veredicto
+
+El manuscrito está listo en lo numérico. Comparé contra =docs/tablas/= y =valores_texto.md= más de
+cien números de la prosa y todos coinciden con su respaldo generado, salvo un redondeo («doscientas
+cuarenta» por 241) y cinco números que no tienen respaldo generado (ver Observaciones globales). Lo que el texto afirma sobre el código de los Capítulos 4 y 5 y de los
+Apéndices C a E se sostiene al leer =src/= y =benchmarks/np2_sequence/=, con una sola inexactitud
+menor sobre el historial de C-DIIS. El documento compila en 75 páginas sin cajas desbordadas ni
+referencias indefinidas. Lo que falta corregir son contradicciones internas, casi todas del
+Capítulo 6, cuyos párrafos se escribieron en revisiones distintas: el signo del ¹D₂ del estaño,
+«intervalos» usado para errores de niveles y el comentario sobre Koopmans. A eso se suman dos
+deslices de física en los Capítulos 2 y 3 y algunas afirmaciones con más alcance del que dan los
+números, sobre todo a quién se atribuye la aceleración de C-DIIS y si todas las discrepancias
+tienen causa identificada. El tic de redacción dominante es «de modo que» (62 veces). Corregiría
+estos diez puntos antes de mandarlo a Adrián y dejaría el resto para la ronda final.
+
+1. [A] §6.3: el ¹D₂ «queda por encima del valor medido en los cuatro elementos», pero dos párrafos
+   después el signo del error del estaño es indeterminado (=chapters/resultados.tex:91=).
+2. [A] §6.3: «carencias del modelo y no del truncamiento», cuando el truncamiento en l_max no se
+   estudió y el ¹D₂ del estaño no convergió (=chapters/resultados.tex:93=, =:95=).
+3. [A] Resumen y §6.3: los porcentajes que el texto llama «intervalos» son errores de niveles
+   referidos al ³P₀ (=chapters/resumen.tex:10=, =chapters/resultados.tex:89=).
+4. [A] §6.5: «solo en el estaño, donde el eigenvalor se quedaba corto», aunque se queda corto en
+   tres elementos (=chapters/resultados.tex:154=).
+5. [A] §3.2: la corrección de masa-velocidad, que no depende del espín, «contrae las capas s y
+   p_{1/2}» (=chapters/correlacion-estructura-fina.tex:43=).
+6. [A] §6.1.2: el integrando de ⟨r⁻³⟩ «crece como r⁻³ cerca del núcleo», cuando para un orbital p
+   se anula (=chapters/resultados.tex:50=).
+7. [A] §2.4: el espín-órbita «se reintroduce como una perturbación», contra lo que insiste §3.3
+   (=chapters/particulas-independientes.tex:58=).
+8. [B] Resumen, §5.1.2, §6.1.1 y §7.1: los factores 2.8 y 4.8 se atribuyen a la extrapolación,
+   pero el Apéndice E concluye que vienen de retirar a tiempo el desplazamiento de nivel.
+9. [B] §6.2: la definición de ζ_NIST no dice por qué se excluye el ³P₁ (en el carbono eso mueve la
+   razón de 1.46 a 1.29), y la Sección 6.4 no «identifica de manera independiente» el exceso de ζ
+   (=chapters/resultados.tex:55=, =:64=).
+10. [B] Resumen, Introducción y Conclusiones: «las discrepancias restantes se asocian a
+    aproximaciones concretas del modelo», cuando §6.6.2 y §6.6.4 dejan los singletes de los
+    elementos pesados sin causa identificada.
+
+* Observaciones globales
+
+** Conteo de tics de redacción
+
+Contado sobre los catorce archivos que incluye =main.tex=, fuera del modo matemático.
+
+| Tic                                        | Veces | Dónde se concentra                                         |
+|--------------------------------------------+-------+------------------------------------------------------------|
+| «de modo que»                              |    62 | resultados 16, correlación 11, ciclo-scf 8, apéndice E 7   |
+| «de manera» (adverbial)                    |    30 | partículas 7, resultados 5, conclusiones 5                 |
+| «entonces»                                 |    22 | partículas 6, correlación 6                                |
+| «además»                                   |    20 | repartido                                                  |
+| «así» / «Así,»                             |    13 | resultados 4, bsplines-galerkin 4                          |
+| «por tanto»                                |    13 | resultados 4, apéndice E 4; casi siempre en frase de cierre |
+| «de forma»                                 |    12 | repartido                                                  |
+| «en cambio»                                |    10 | partículas 3, resultados 3                                 |
+| «por eso» / «por ello»                     |    10 | correlación 3, partículas 2                                |
+| «precisamente»                             |     5 | correlación 2, ciclo-scf 2, resultados 1                   |
+| «es decir»                                 |     4 | introducción 1, partículas 1, correlación 2                |
+| «no X sino Y» / «no solo… sino»            |    10 | ver abajo                                                  |
+| variante «X y no Y»                        |   ≈18 | ciclo-scf 3, resultados 4, apéndice E 4, conclusiones 2    |
+| arranques demostrativos (Esta/Este/Esa/Ese/Esto/Estas…) | 50 | Esta 15, Este 11, Esa 7, Ese 5; en serie solo prólogo:10 y conclusiones:4 |
+| punto y coma                               |    60 | párrafos con dos o más: correlación:63, ciclo-scf:58, resultados:140, operadores:32 |
+| dos puntos                                 |   108 | párrafos con dos o más: resumen:6 y :8, intro:7 y :34, conclusiones:10 y :35 |
+| frases finales que resumen el párrafo      |    ≈9 | bsplines-galerkin:186, ciclo-scf:130, bsplines:55, metodos-aux:57, :76, :102, resultados:95 |
+| vocabulario inflado                        |     0 | limpio                                                     |
+
+«No X sino Y» donde de verdad estorba: =particulas-independientes.tex:163= (repite :148),
+=correlacion-estructura-fina.tex:74= (y otra vez :115), =ciclo-scf.tex:74=, =bsplines.tex:53=
+y =metodos-auxiliares.tex:106=. Las de =particulas-independientes.tex:78=, =:248=,
+=bsplines-galerkin.tex:119=, =:168= y =ciclo-scf.tex:121= son naturales y pueden quedarse.
+
+«De modo que» es el tic que más se nota. En el Capítulo 6 aparece 16 veces, y en
+=correlacion-estructura-fina.tex:136-141= dos veces en la misma oración. Propuesta general:
+sustituir la mitad por un punto, por «y» o por «con lo que», sin tocar el contenido.
+
+Las tríadas son, en su mayoría, enumeraciones legítimas. Solo estorban dos: la de las ventajas de
+los B-splines, copiada entre =introduccion.tex:7= y =bsplines-galerkin.tex:6=, y la de cierre
+«contraer…, resolver…, diagonalizar», repetida en =ciclo-scf.tex:130= y =bsplines.tex:55=.
+
+Párrafos de menos de tres oraciones, sin contar las frases que introducen una ecuación:
+=particulas-independientes.tex:56=, =:222=; =correlacion-estructura-fina.tex:22=, =:70=, =:72=;
+=bsplines-galerkin.tex:104=, =:137=, =:186=; =resultados.tex:66=; =conclusiones.tex:19=;
+=unidades-atomicas.tex:6=; =operadores-tensoriales.tex:75=; =galerkin-poisson.tex:49=. Los que
+merecen corrección van, con propuesta, en su capítulo.
+
+El largo de los párrafos no es uniforme: hay párrafos de 30 a 180 palabras. Los que pesan son los
+de =resultados.tex:140= y =:174=, densos de cifras, pero se sostienen.
+
+** Contenido duplicado y ecuaciones definidas dos veces
+
+Contra «cada ecuación se define en un solo lugar»:
+- La ecuación de Poisson radial está en =bsplines-galerkin.tex:165= (4.15) y en
+  =galerkin-poisson.tex:32= (D.5); el Capítulo 4 cita (D.5) justo antes de volver a escribirla.
+- A^{(k)} = 2T + k(k+1)V^{(2)} está en =bsplines-galerkin.tex:181= y en =ciclo-scf.tex:110=.
+- La condición de Robin está en =ciclo-scf.tex:127= (5.8) y en =galerkin-poisson.tex:43= (D.6),
+  con la misma explicación del término k/R_max en los dos lugares.
+- Propuesta: dejar Poisson y Robin en el Apéndice D (con la deducción) y A^{(k)} en §4.2.3, y
+  citarlas con =\eqref= desde el otro sitio.
+
+Contra «nada de contenido duplicado» (en cada caso conviene dejar la versión que pide el registro:
+el capítulo muestra y el apéndice da los pasos):
+- Las limitaciones de STO y GTO: =prologo.tex:8= y =bsplines-galerkin.tex:4=.
+- Las ventajas de los B-splines, Bachau 2001 y Garza 2012: =introduccion.tex:7= y
+  =bsplines-galerkin.tex:4=, =:6=, casi literales.
+- «El campo central es exacto para capa cerrada»: =particulas-independientes.tex:148=, =:163=,
+  =correlacion-estructura-fina.tex:11= y =operadores-tensoriales.tex:41=.
+- La ortogonalidad automática de orbitales de un mismo operador: =particulas-independientes.tex:192=
+  y =metodos-auxiliares.tex:7=.
+- El carbono sin p internos y Gram-Schmidt como causa: =ciclo-scf.tex:74=, =resultados.tex:32=,
+  =resultados.tex:192= y =metodos-auxiliares.tex:14=.
+- La cuadratura con N_q = k+6 y su exactitud: =ciclo-scf.tex:101= y =metodos-auxiliares.tex:19-21=.
+- «Cada iteración del ciclo reconstruye la matriz de Fock…»: primera oración de =ciclo-scf.tex:103=
+  y de =bsplines.tex:32=.
+- «Evaluar … por cuadratura es costoso … operador global»: =bsplines-galerkin.tex:161= y
+  =galerkin-poisson.tex:18=.
+- El +15.7 % del ¹D₂ del silicio: =resultados.tex:91= y =:178=.
+- «Un motor distinto y no una corrección añadida»: =resultados.tex:174= y =conclusiones.tex:25=.
+
+** Terminología, unidades y notación
+
+- *Mayúsculas en los títulos.* Capítulos y secciones van en mayúscula de palabra («Planteamiento
+  del Problema», «El Teorema de Koopmans»), pero las subsecciones mezclan los dos estilos: §4.1.1
+  dice «Definición y Recurrencia de Cox-de Boor» y §4.2.1 «Del problema continuo al problema
+  matricial». El título del Capítulo 4 los mezcla en sí mismo («Método Numérico: B-splines y el
+  método de Galerkin»). La norma del español es mayúscula solo inicial. Propuesta: pasar todo a
+  mayúscula inicial o, si se conserva el estilo actual, unificar al menos las subsecciones y el
+  título del Capítulo 4. Lo mismo vale para las mayúsculas en mitad de oración: «Expansión de
+  Laplace», «Integrales Radiales de Slater», «Matrices Banda», «Control Local», «Región de
+  Influencia Local», «Matriz de Fock» y «Triplete P».
+- *«Hamiltoniano» y «Laplaciano» con mayúscula* (41 y 1 apariciones, ninguna en minúscula). En
+  español son nombres comunes. Es coherente en todo el texto, así que basta con decidirlo una vez.
+- *Unidad de energía.* El texto usa «Hartree» (=resumen.tex:8=, =resultados.tex:18=, =:34=, =:36=,
+  =:192=, =ciclo-scf.tex:58=, Apéndice E), «milihartree» (=resultados.tex:18=,
+  =metodos-auxiliares.tex:67=), $E_h$ (Tablas 6.1, 6.2 y A.1) y «Ha» (Tabla E.1, Figura 5.2). El
+  Apéndice A dice «el Hartree» y el caption de la Tabla 6.1 «el hartree». Propuesta: $E_h$ en todo,
+  ya que está definido en el Apéndice A y en la Tabla 6.1, o en su defecto «hartree» en minúscula
+  como nombre de unidad.
+- *cm⁻¹* aparece en tres formas: =cm$^{-1}$= en texto, =$0.2\ \text{cm}^{-1}$= en matemáticas, y
+  =\num{}= solo en algunos números. siunitx está cargado, pero avisa que =physics= le redefine
+  =\qty=. Propuesta: una sola forma, por ejemplo =\unit{\per\centi\metre}= o la macro propia.
+- *Porcentajes.* Todos van en modo matemático y sin espacio («$46\%$»); en las tablas, «$+28.8$\%».
+  La norma (RAE, ISO) pide espacio («46 %»). Además se mezclan con porcentajes escritos en palabras:
+  «dieciocho por ciento» (=resumen.tex:10=, =conclusiones.tex:21=), «un 11 y un 19 por ciento»
+  (=resumen.tex:10=), «dos por ciento» (=conclusiones.tex:27=), «diez por ciento»
+  (=conclusiones.tex:12=, =resultados.tex:138=), «uno por ciento» (=metodos-auxiliares.tex:118=).
+  Propuesta: cifras y una sola forma.
+- *Números en palabras.* El Apéndice E y §6.3 escriben en palabras cantidades medidas, y la lectura
+  se traba: «de doscientas cuarenta y doscientas cincuenta a ochenta y cinco y cincuenta y dos»
+  (=metodos-auxiliares.tex:55=); «cuatro mil quinientos … treinta y ocho millones … diecisiete
+  bytes … quince minutos … cuarenta y un minutos» (=:116=); «sesenta y ocho segundos … quinientos
+  noventa y ocho» (=:118=); «unos dos mil doscientos … unos seiscientos» (=resultados.tex:93=,
+  =metodos-auxiliares.tex:102=); «doscientas cincuenta» (=ciclo-scf.tex:63=, =conclusiones.tex:10=).
+  Propuesta: cifras para toda cantidad medida.
+- *Notación entre capítulos.* ζ_np, F^k y ⟨r⁻³⟩ son coherentes. No lo son:
+  - los armónicos esféricos: $Y_l^{m_l}$ (=particulas-independientes.tex:70=), $Y_{kq}$ (=:124=),
+    $Y_k^q$, $Y_l^m$ y $Y_{lm}$ (=operadores-tensoriales.tex:10=, =:16=, =:39=);
+  - el ángulo azimutal: $\varphi$ (=particulas-independientes.tex:70=) frente a $\phi$ (=:124= y
+    Apéndice B);
+  - $\xi$, que es a la vez la función de espín-órbita (=correlacion-estructura-fina.tex:54=) y la
+    variable de la malla (=bsplines-galerkin.tex:58=);
+  - $k$, que es el orden del spline y el multipolo (y además índice en $c_k$,
+    =bsplines-galerkin.tex:41=), lo que vuelve ambigua =ciclo-scf.tex:121= («los primeros k+1
+    splines»);
+  - $N$, que es el número de electrones en el Capítulo 2 y la dimensión de la base en los
+    Capítulos 4 y 5;
+  - «dr» recto (=correlacion-estructura-fina.tex:54=, =:59=; =metodos-auxiliares.tex:19=, =:25=,
+    =:32=, =:38=) frente a =\dd{r}= en el resto;
+  - la Figura 4.1, que usa $x$ y $B_i^p(x)$ donde el texto usa $r$.
+- *Nombre del método.* «Hartree-Fock restringido de capa abierta» (=resumen.tex:6=,
+  =introduccion.tex:9=, título de §2.7) frente a «Hartree-Fock Restringido para Capas Abiertas»
+  (=particulas-independientes.tex:148=).
+- *Nombre de ζ.* «Parámetro de estructura fina ζ_nl» en la definición en negritas
+  (=correlacion-estructura-fina.tex:56=) frente a «parámetro de espín-órbita» en todo lo demás.
+- *Residuo.* «Residual», un calco (=ciclo-scf.tex:87= dos veces, =:96= dos veces; leyenda de la
+  Figura 5.2; recuadro de la Figura 5.1), convive con «residuo» (=bsplines-galerkin.tex:90=,
+  =metodos-auxiliares.tex:46=) y con «error proyectado» (=ciclo-scf.tex:83=, =:87=). Propuesta:
+  «error proyectado» cuando se habla de C-DIIS.
+- *Ionización.* «Potencial de ionización» (=particulas-independientes.tex:211-217=,
+  =resultados.tex:154=) frente a «energía de ionización» (título de §6.5 y tablas). Basta unificar
+  o decir una vez que son sinónimos.
+- *«Integro-diferencial»* (6 veces): la RAE escribe estos compuestos sin guion, «integrodiferencial».
+- *«Peso de ¹D₂»* (=correlacion-estructura-fina.tex:74=, =resultados.tex:129=, =:134=, =:140=) y
+  *«fracción de ¹D₂»* (=resultados.tex:129=) conviven con «componente ¹D₂». Es compatible con lo
+  decidido, pero «peso de la componente ¹D₂» sería más uniforme.
+- *Sin errores en:* «solo» y los demostrativos (ninguno con tilde), comillas (ninguna recta; ``NIST''
+  e ``I''/``II'' están bien), «core» (solo en la definición de =introduccion.tex:16=), «tripleto»
+  (ninguno), «núcleo» (solo para el núcleo atómico) y vocabulario inflado (ninguno).
+
+** Procedencia de números de la prosa sin respaldo en docs/tablas
+
+La regla 2 de =CLAUDE.md= pide que cada número tenga registro de procedencia. Estos números no
+están en =valores_texto.md=:
+- =resultados.tex:34=: la prueba de malla del silicio (1.7×10⁻⁶ Ha entre 100 y 200 intervalos;
+  2×10⁻⁵ en ⟨r⁻³⟩). Sale de =benchmarks/np2_sequence/tesis/diagnostico_malla_silicio.jl=, cuyo
+  resultado solo está en su cabecera y en =docs/claude/REVISION-RESULTADOS-2026-09-13.md= §8.
+- =resultados.tex:192=: autovalor frente a Rayleigh (−1.7×10⁻⁶ Ha en Si, menos de 6×10⁻⁷ en Ge y
+  Sn). Sale de =diagnostico_rayleigh.jl=.
+- =metodos-auxiliares.tex:116=: los 17 bytes por casilla y los 1.1 y 1.7 GB. Su única procedencia
+  es un comentario de =config.jl=; ya estaba señalado en =REVISION-2026-10-09.md= §3.7.
+- =metodos-auxiliares.tex:123=: el sobrecosto de =BandedMatrices.jl=. No hay medición registrada;
+  también estaba en §3.7 de esa revisión.
+- =introduccion.tex:7=: que Garza 2012 y Shi 2001 «sirvieron de referencia para verificar la
+  implementación». No hay valores de esos artículos en el repositorio; mismo origen.
+
+Propuesta: agregar a =valores_texto.md= la salida de los dos diagnósticos, algo que =CLAUDE.md=
+permite sin preguntar, y decidir qué hacer con los otros tres.
+
+** Decisiones ya tomadas
+
+Ninguna de las decisiones de la lista me parece un error. Las menciones de V_pol en §6.2, §6.6.3 y
+§7.2 son coherentes entre sí y con =valores_texto.md=. «De la de la», en el paso 4 del ciclo, quedó
+intacto.
+
+* Hallazgos: Resumen
+
+** TODO [A] Resumen — Los porcentajes de los «intervalos» son errores de niveles
+- =chapters/resumen.tex:10=
+- «En el germanio y el estaño los intervalos del triplete quedan entre un 11 y un 19 por ciento
+  por debajo de los medidos»
+- Problema: 11-19 % es el rango de los niveles ³P₁ y ³P₂ referidos al ³P₀ (Tabla 6.4: −11.9,
+  −10.8, −19.2 y −14.8 %). Los intervalos como los define §1.2 (separaciones entre niveles
+  consecutivos) se desvían entre un 10 y un 19 %.
+- Propuesta: «En el germanio y el estaño los niveles ³P₁ y ³P₂ quedan entre un 11 y un 19 por
+  ciento por debajo de los medidos». El número no cambia. Ver también §6.3.
+
+** TODO [B] Resumen — «Se asocian a aproximaciones concretas del modelo» va más allá del Capítulo 6
+- =chapters/resumen.tex:10= (también =chapters/introduccion.tex:30= y =chapters/conclusiones.tex:8=)
+- «Las discrepancias restantes se asocian a aproximaciones concretas del modelo.»
+- Problema: §6.6.2 reconoce que el ¹S₀ bajo de Si, Ge y Sn y el ¹D₂ alto no tienen causa aislada, y
+  §6.6.4 pone sobre los singletes una reserva de implementación (virtuales s no ortogonales a las
+  capas internas). Conclusiones:8 lo afirma con todavía más fuerza: «permite atribuir las
+  discrepancias espectroscópicas posteriores a la física del modelo y no a su implementación
+  numérica».
+- Propuesta:
+  - Resumen: «La mayor parte de las discrepancias restantes se asocia a aproximaciones concretas del
+    modelo.» Al final del párrafo, una oración más: «El ¹S₀ de los tres elementos pesados, que el
+    modelo deja por debajo del medido, queda sin causa identificada.»
+  - =introduccion.tex:30=: «…y casi todas las desviaciones apuntan a una aproximación concreta del
+    modelo».
+  - =conclusiones.tex:8=: «…atribuir las discrepancias del triplete a la física del modelo y no a su
+    implementación numérica».
+
+** TODO [B] Resumen — El factor 2.8/4.8 se atribuye a la extrapolación
+- =chapters/resumen.tex:6= (también =chapters/resultados.tex:36=, =chapters/conclusiones.tex:10= y
+  §5.1.2)
+- «…el ciclo autoconsistente se acelera con una extrapolación de Pulay sobre el conmutador
+  proyectado, que en el germanio y el estaño reduce el número de iteraciones por factores de 2.8 y
+  4.8»
+- Problema: la Tabla E.1 compara «desplazamiento de nivel durante todo el ciclo» con
+  «desplazamiento, C-DIIS y luego ciclo simple sin desplazamiento». El propio Apéndice E concluye
+  que «la ganancia grande procede … de soltar el desplazamiento de nivel en cuanto el ciclo entra en
+  la cuenca de atracción» (=metodos-auxiliares.tex:55=), y que la extrapolación se desactiva hacia la
+  iteración quince. Un sinodal preguntará qué pasaría si solo se retirara el desplazamiento.
+- Propuesta:
+  - Resumen: «…y el ciclo autoconsistente se acelera retirando el desplazamiento de nivel en cuanto
+    el error del conmutador proyectado lo permite y extrapolando con Pulay sobre ese conmutador, lo
+    que en el germanio y el estaño reduce…».
+  - §6.1.1 y §7.1: «El esquema C-DIIS de la Sección 5.1.2 reduce…» en lugar de «La extrapolación…».
+
+* Hallazgos: Prólogo
+
+** TODO [C] Prólogo — Arranques demostrativos en serie y párrafo repetido en el Capítulo 4
+- =chapters/prologo.tex:8=, =:10=
+- «Tradicionalmente, esas ecuaciones…», «Estas bases son eficientes…», «Este trabajo nació…»,
+  «Esa perspectiva resultó…»
+- Problema: cuatro arranques demostrativos en dos párrafos. Además, la oración sobre las
+  limitaciones de STO y GTO vuelve casi literal en =bsplines-galerkin.tex:4=.
+- Propuesta: en :8, «Son bases eficientes, pero tienen limitaciones conocidas: …»; en :10,
+  «Construirlo resultó ser también lo más productivo para el análisis, porque…». Quitar la segunda
+  versión del Capítulo 4 (ver Capítulo 4).
+
+* Hallazgos: Capítulo 1 — Introducción
+
+** TODO [B] §1.1 — «Dirac-Hartree-Fock» atribuido a Johnson, Blundell y Sapirstein (1988)
+- =chapters/introduccion.tex:7= (y =chapters/conclusiones.tex:29=)
+- «La utilidad de los B-splines se extiende, por último, a la ecuación relativista de
+  Dirac-Hartree-Fock para elementos pesados \parencite{Johnson1988}.»
+- Problema: según su título, el artículo construye bases finitas para la ecuación de Dirac de un
+  electrón en un potencial dado; no resuelve las ecuaciones de Dirac-Hartree-Fock. Conviene cotejarlo.
+- Propuesta: «…se extiende, por último, a la ecuación de Dirac \parencite{Johnson1988}, punto de
+  partida de los cálculos relativistas en elementos pesados.»
+
+** TODO [B] §1.1 — «Ambos trabajos sirvieron de referencia para verificar la implementación»
+- =chapters/introduccion.tex:7=
+- Problema: en el repositorio no hay ningún valor de Garza 2012 ni de Shi 2001 (ya señalado en
+  =REVISION-2026-10-09.md= §3.7). Si un sinodal pregunta qué se comparó, no hay rastro.
+- Propuesta: si la verificación existió, registrar el número en =valores_texto.md= o en el
+  Apéndice E. Si no, «Ambos trabajos son la referencia del régimen confinado que el Capítulo 7
+  propone como continuación.»
+
+** TODO [B] §1.3 — La correlación no «determina la estructura fina»
+- =chapters/introduccion.tex:24=
+- «Los orbitales de este límite ignoran la correlación electrónica y los efectos relativistas, que
+  son los que determinan la estructura fina de los átomos pesados.»
+- Problema: la correlación separa los términos; la estructura fina la producen los efectos
+  relativistas (§3.2).
+- Propuesta: «…que son los que separan los términos y los desdoblan en niveles en los átomos
+  pesados.»
+
+** TODO [C] §1.1 — Tríada copiada en el Capítulo 4, con cambio de sujeto
+- =chapters/introduccion.tex:7= (y =chapters/bsplines-galerkin.tex:6=)
+- «la base no depende de la física del problema, su flexibilidad se controla con la malla de nudos,
+  y permite aproximar los orbitales hasta la precisión de la aritmética de máquina»
+- Problema: la misma enumeración, con la misma cita, aparece dos veces, y en el tercer miembro el
+  sujeto pasa de «su flexibilidad» a «la base» sin decirlo.
+- Propuesta: dejarla en el Capítulo 4 y reducir la introducción a «Una alternativa son los
+  B-splines, polinomios a trozos de soporte compacto que provienen de los métodos de elementos
+  finitos y cuya flexibilidad se controla con la malla de nudos \parencite{Bachau2001}.»
+
+** TODO [C] §1.1 — Zeugma al cerrar el tercer párrafo
+- =chapters/introduccion.tex:11=
+- «El análisis culmina documentando cómo el acoplamiento de Russell-Saunders (LS) pierde validez
+  entre el germanio y el estaño, y el tránsito hacia un régimen de acoplamiento intermedio.»
+- Problema: «el tránsito» queda colgado de un «cómo» que no le corresponde.
+- Propuesta: «…pierde validez entre el germanio y el estaño y da paso a un régimen de acoplamiento
+  intermedio.»
+
+* Hallazgos: Capítulo 2 — El modelo de partículas independientes
+
+** TODO [A] §2.4 — El espín-órbita «se reintroduce como una perturbación»
+- =chapters/particulas-independientes.tex:58=
+- «…donde el acoplamiento espín-órbita se reintroduce como una perturbación sobre los orbitales aquí
+  obtenidos»
+- Problema: §3.3 (=correlacion-estructura-fina.tex:74=, =:115=) insiste en que el espín-órbita no se
+  trata como perturbación sino que se diagonaliza en cada bloque J. Lo que esta frase quiere decir
+  es que se añade sin reoptimizar los orbitales.
+- Propuesta: «…donde el acoplamiento espín-órbita se reintroduce sobre los orbitales aquí obtenidos,
+  sin reoptimizarlos;».
+
+** TODO [A] §2.9 — El virial como identidad que «no depende de ningún detalle del método numérico»
+- =chapters/particulas-independientes.tex:222=
+- «La solución autoconsistente satisface una identidad exacta que no depende de ningún detalle del
+  método numérico empleado y que, por ello, sirve como diagnóstico de la calidad de una base.»
+- Problema: el mismo apartado (=:248=) explica que una base de B-splines no es cerrada bajo
+  escalamiento, de modo que la solución numérica no satisface la identidad por construcción. Si la
+  satisficiera siempre, no serviría de diagnóstico. Además es un párrafo de una sola oración.
+- Propuesta: «La solución exacta de Hartree-Fock satisface una identidad que no depende del método
+  numérico con que se aproxime. Cuánto se aparta de ella la solución numérica sirve, por ello, como
+  diagnóstico de la calidad de una base, y así se usa en la Sección \ref{sec:validacion_hf}.»
+
+** TODO [B] §2.9 — La lista de lo que mide el virial omite la causa dominante en Si, Ge y Sn
+- =chapters/particulas-independientes.tex:248=
+- «…mide de forma agregada tres deficiencias distintas: una malla demasiado gruesa…, una caja
+  demasiado pequeña…, y un ciclo autoconsistente detenido antes de la convergencia real.»
+- Problema: §6.1.1 atribuye la desviación del virial del silicio (1.5×10⁻⁵) a la ortogonalización
+  por Gram-Schmidt, que deja la solución fuera del punto estacionario. Esa causa no está en la
+  lista, y el lector de §6.1 la echa en falta.
+- Propuesta: «…mide de forma agregada varias deficiencias: una malla demasiado gruesa…, una caja
+  demasiado pequeña…, un ciclo autoconsistente detenido antes de la convergencia real y cualquier
+  restricción que deje la solución fuera del punto estacionario, como la ortogonalización de la
+  Sección \ref{sec:gram-schmidt}.»
+
+** TODO [B] §2.7.2 — Falta decir que la ortogonalidad entre los p internos y el de valencia no es automática
+- =chapters/particulas-independientes.tex:192=
+- «…al diagonalizarlo sobre una misma base radial queda garantizada de manera automática la
+  ortogonalidad entre orbitales de igual l y distinto n…»
+- Problema: es cierto para los orbitales que salen de f̂_c. Pero un físico preguntará enseguida por
+  el orbital de valencia, que sale de f̂_p con el mismo l que los p internos, y la respuesta
+  (Gram-Schmidt, Sección E.1) no aparece hasta el Capítulo 5.
+- Propuesta: cerrar la oración con «; el orbital de valencia sale de otro operador, y su
+  ortogonalidad con los p internos se impone aparte (Sección \ref{sec:gram-schmidt}).»
+
+** TODO [B] §2.4 — «Esta es la ecuación que resuelve el motor numérico»
+- =chapters/particulas-independientes.tex:78=
+- Problema: el motor resuelve la versión de Hartree-Fock, con intercambio no local (§2.6), no la
+  ecuación con un V(r) local. Un sinodal puede señalarlo.
+- Propuesta: «Esta ecuación, con el potencial local sustituido por el operador de Fock de la
+  Sección \ref{sec:fock_operator}, es la que resuelve el motor numérico de esta tesis, y…».
+
+** TODO [C] §2.7.2 — «No son escalares»
+- =chapters/particulas-independientes.tex:194=
+- «Las contribuciones intracapa Ĵ_np^intra y K̂_np^intra no son escalares.»
+- Problema: frase opaca. Ĵ^intra es justamente el monopolo; lo que se quiere decir es que dependen
+  del término.
+- Propuesta: «Las contribuciones intracapa dependen del término.»
+
+** TODO [C] §2.4 — Párrafo de dos oraciones
+- =chapters/particulas-independientes.tex:56=
+- Propuesta: unirlo con el siguiente (=:58=), que lo continúa con «Conviene precisar antes…».
+
+** TODO [C] §2.2 — La coordenada x = (r, σ) se define dos veces
+- =chapters/particulas-independientes.tex:13= y =:21=
+- Propuesta: en =:21=, «Si denotamos el estado de un sistema de N electrones mediante la función de
+  onda Ψ(x_1, …, x_i, …, x_j, …, x_N), la condición de antisimetría exige que:», sin el «donde x =
+  (r, σ) engloba…».
+
+** TODO [C] §2.5 — «El determinante se reduce a una matriz de 2×2»
+- =chapters/particulas-independientes.tex:95=
+- Propuesta: «El determinante se reduce a uno de 2×2:».
+
+** TODO [C] §2.7 — «No es una aproximación … sino una propiedad exacta», que repite §2.6
+- =chapters/particulas-independientes.tex:163= (con =:148=)
+- «El campo central no es entonces una aproximación para átomos de capa cerrada, sino una propiedad
+  exacta dentro del esquema de Hartree-Fock.»
+- Propuesta: «En los átomos de capa cerrada el campo central resulta exacto dentro del esquema de
+  Hartree-Fock (Sección \ref{sec:fock_operator}).»
+
+** TODO [C] §2.7.1 — Notación ambigua de la ocupación
+- =chapters/particulas-independientes.tex:180=: «$w/2(2l+1) = 1/3$»
+- Propuesta: «$w/[2(2l+1)] = 1/3$».
+
+** TODO [C] §2.9 — «Nodos» por «nudos»
+- =chapters/particulas-independientes.tex:248=: «ya que sus nodos están fijos sobre una malla
+  concreta»
+- Propuesta: «sus nudos». El mismo error está en la Figura 4.1 (ver Capítulo 4).
+
+** TODO [D] §2.5 — Mayúsculas y negritas en mitad de oración
+- =chapters/particulas-independientes.tex:122=, =:127=
+- «\textbf{Expansión de Laplace}», «\textbf{Integrales Radiales de Slater}», «(véase el
+  \textbf{Apéndice B})»
+- Propuesta: «expansión de Laplace», «integrales radiales de Slater», y la referencia al apéndice
+  sin negritas.
+
+** TODO [D] §2.6 — =\cite= en lugar de =\parencite=
+- =chapters/particulas-independientes.tex:156=: «(por ejemplo \cite[Capítulo 7]{Cowan1981})»
+- Propuesta: «En los textos de estructura atómica, como el de \textcite[Capítulo 7]{Cowan1981},…».
+
+* Hallazgos: Capítulo 3 — Correlación electrónica y estructura fina
+
+** TODO [A] §3.2 — Masa-velocidad «contrae las capas s y p_{1/2}»
+- =chapters/correlacion-estructura-fina.tex:43=
+- «…su efecto es la contracción relativista de las capas s y p_{1/2}.»
+- Problema: Ĥ_MV no depende del espín, como el mismo texto dice en =:52=, así que no distingue
+  p_{1/2} de p_{3/2}. La contracción propia del p_{1/2} es un efecto de la ecuación de Dirac en el
+  que interviene el espín-órbita.
+- Propuesta: «…su efecto es la contracción relativista de las capas s y, en menor medida, de las p.»
+
+** TODO [B] §3.2 — La inestabilidad del cálculo de Dirac, sin cita
+- =chapters/correlacion-estructura-fina.tex:31=
+- «Resolver un sistema interactuante de muchos cuerpos en ese formalismo es, sin embargo, costoso e
+  inestable, en buena medida por la incursión del continuo de energía negativa.»
+- Problema: afirmación técnica fuerte (colapso variacional) sin referencia.
+- Propuesta: citar \textcite{Johnson2007}, si el autor confirma que trata el punto, o suavizar a
+  «…es, sin embargo, más costoso y exige controlar el continuo de energía negativa.»
+
+** TODO [B] §3.3 — «Términos con el mismo J»: son niveles
+- =chapters/correlacion-estructura-fina.tex:74= (también =:80=, «solo mezcla términos con el mismo
+  momento angular total», y =:89=, «el término más alto ^1S_0»)
+- «…los términos con el mismo momento angular total J, como el ³P₂ y el ¹D₂, se mezclan.»
+- Problema: §1.2 define término (^{2S+1}L) y nivel (^{2S+1}L_J). ³P₂ y ¹D₂ son niveles, y un físico
+  lo marcará.
+- Propuesta: «…los niveles con el mismo J que proceden de términos distintos, como el ³P₂ y el ¹D₂,
+  se mezclan»; en =:89=, «el nivel más alto ¹S₀».
+
+** TODO [B] §3.2 — ζ con la densidad total incluye la del propio electrón de valencia
+- =chapters/correlacion-estructura-fina.tex:61=
+- «En este trabajo V(r) es el potencial central de campo medio, V(r) = [−Z + Y⁰(r)]/r, donde Y⁰ es
+  el potencial directo de la densidad electrónica total del átomo»
+- Problema: así lo hace el código (=compute_effective_central_potential=, todas las ocupaciones),
+  y el texto lo dice bien. Pero un sinodal de Hartree-Fock puede preguntar por qué el electrón de
+  valencia se apantalla a sí mismo. No es un error; conviene anticipar la respuesta.
+- Propuesta: añadir una oración: «La densidad incluye la del propio electrón de valencia, pero su
+  carga cerca del núcleo, donde se acumula el integrando, es despreciable, de modo que apenas altera
+  dV/dr en esa región.» Solo si el autor confirma el orden de magnitud.
+
+** TODO [C] §3.3 — «No se trata como una perturbación, sino que se diagonaliza» dicho dos veces
+- =chapters/correlacion-estructura-fina.tex:74= y =:115=
+- Propuesta: dejar la primera y cerrar =:115= con «Como la diagonalización es exacta en cada
+  bloque, el tratamiento vale en todo el rango intermedio, en el que caen el germanio y el estaño.»
+  Eso quita también un «precisamente».
+
+** TODO [C] §3.2 — Oración encadenada sin verbo claro
+- =chapters/correlacion-estructura-fina.tex:63=
+- «En un ion hidrogenoide de carga Z el potencial es exactamente ese, ⟨r⁻³⟩_nl = … crece como
+  Z³/n³, y ζ_nl = … crece como Z⁴/n³.»
+- Propuesta: «En un ion hidrogenoide de carga Z, donde el potencial es exactamente ese, ⟨r⁻³⟩_nl =
+  … crece como Z³/n³ y ζ_nl = … crece como Z⁴/n³.»
+
+** TODO [C] §3.3.2 — Dos «de modo que» en la misma oración
+- =chapters/correlacion-estructura-fina.tex:136-141=
+- «…de modo que el peso es (3.13) … de modo que la mezcla queda fijada por dos cantidades…»
+- Propuesta: «…y la separación de energía entre los dos estados, con lo que el peso es (3.13) y la
+  mezcla queda fijada por dos cantidades…».
+
+** TODO [C] §3.2 — El nombre de ζ en su definición
+- =chapters/correlacion-estructura-fina.tex:56=: «que define al \textbf{parámetro de estructura fina
+  ζ_nl}»
+- Propuesta: «que define el \textbf{parámetro de espín-órbita ζ_nl}», el nombre que usa el resto
+  del texto.
+
+** TODO [C] §3.1 y §3.3 — Párrafos de dos oraciones
+- =chapters/correlacion-estructura-fina.tex:22=, =:70=, =:72=
+- Propuesta: unir =:22= con =:24=, y =:70= con =:72=.
+
+** TODO [C] Capítulo 3, apertura — Los dos puntos hacen decir lo contrario
+- =chapters/correlacion-estructura-fina.tex:6=
+- «…suprime la respuesta de esas capas al campo del electrón de valencia: se deforman, y el dipolo
+  inducido actúa de vuelta sobre la valencia.»
+- Problema: leída de corrido, la frase tras los dos puntos afirma que las capas se deforman, que es
+  justo lo que la aproximación suprime.
+- Propuesta: «…suprime la respuesta de esas capas al campo del electrón de valencia, que las
+  deformaría y crearía un dipolo inducido que actuaría de vuelta sobre la valencia.»
+
+** TODO [C] §3.1 — La primera oración promete más que la última
+- =chapters/correlacion-estructura-fina.tex:20=
+- «El orden de los términos sigue las reglas de Hund…» frente a «Las reglas solo garantizan cuál es
+  el estado fundamental».
+- Propuesta: empezar con «El estado fundamental lo fijan las reglas de Hund \parencite[…]{Cowan1981},
+  tres reglas empíricas…».
+
+** TODO [D] §3.1 — Mayúscula tras los dos puntos en las viñetas
+- =chapters/correlacion-estructura-fina.tex:15-17=: «(Triplete P): El estado fundamental…»
+- Propuesta: «(triplete P): el estado fundamental…», y lo mismo en las otras dos viñetas.
+
+** TODO [D] §3.1 y §3.3 — Títulos con matemáticas
+- =chapters/correlacion-estructura-fina.tex:8= produce las tres advertencias de hyperref del log
+  («Token not allowed in a PDF string»). En =:65=, «LS» va sin matemáticas, a diferencia de §6.4.
+- Propuesta: =\texorpdfstring{$np^2$}{np2}=, como en =resultados.tex:70=, y =\texorpdfstring{$LS$}{LS}=.
+
+* Hallazgos: Capítulo 4 — B-splines y el método de Galerkin
+
+** TODO [B] §4.2.1 — «Tanto H como S son matrices de banda»
+- =chapters/bsplines-galerkin.tex:137= (y =:40=)
+- Problema: es cierto para el operador local de esta sección. Pero la matriz de Fock lleva el
+  intercambio no local, que el motor ensambla columna por columna y es densa
+  (=src/integrals.jl=, =assemble_K_matrix!=). Un sinodal lo preguntará al leer el Apéndice E.5, que
+  justifica el almacenamiento denso solo por el sobrecosto de =BandedMatrices.jl=.
+- Propuesta: añadir en =:137= «La matriz de Fock del Capítulo 5 deja de serlo, porque el
+  intercambio es un operador no local.» En =metodos-auxiliares.tex:123=: «…el motor las almacena en
+  arreglos densos: la matriz de Fock, con el intercambio, es densa de todos modos, y se exploró…».
+
+** TODO [B] §4.2.3 — La ecuación matricial de Poisson omite lo que el texto dice que añade
+- =chapters/bsplines-galerkin.tex:170-181=
+- «…obtenemos la forma débil, salvo el término de borde en R_max, que aporta la condición de
+  Robin,», seguida de (4.15) y (4.16) sin ese término.
+- Problema: (4.16) define A^{(k)} = 2T + k(k+1)V^{(2)}, pero el operador que el motor factoriza
+  lleva además k/R_max en el último elemento diagonal y excluye los primeros k+1 splines
+  (=src/poisson.jl:2-12=). El lector no sabe a qué matriz llama A^{(k)}.
+- Propuesta: «…obtenemos la forma débil; el término de borde en R_max lo fija la condición de Robin
+  del Capítulo 5, que suma k/R_max al último elemento diagonal de A^{(k)},». Las ecuaciones no se
+  tocan.
+
+** TODO [B] §4.2.2 — Definición imprecisa de «acotado inferiormente»
+- =chapters/bsplines-galerkin.tex:149=
+- «Un operador hermítico está acotado inferiormente cuando su espectro tiene un valor mínimo…»
+- Propuesta: «…cuando su espectro está acotado por abajo, como ocurre con el Hamiltoniano atómico…».
+
+** TODO [B] §4.2 — Galerkin no es «una formulación del Método de Elementos Finitos»
+- =chapters/bsplines-galerkin.tex:72=
+- Problema: es al revés: el método de elementos finitos es una aplicación del método de Galerkin con
+  funciones locales.
+- Propuesta: «…empleamos el \textbf{método de Galerkin}, en el que se basan los métodos de
+  elementos finitos (FEM), y que discretiza de manera unificada…».
+
+** TODO [C] Capítulo 4, apertura — Repite el prólogo y la introducción
+- =chapters/bsplines-galerkin.tex:4=, =:6=
+- Problema: las limitaciones de STO y GTO (=prologo.tex:8=), la frase sobre Garza 2012
+  (=introduccion.tex:7=) y la tríada de ventajas de los B-splines (=introduccion.tex:7=) se repiten
+  casi literales.
+- Propuesta: conservar la versión del Capítulo 4, que es la que trae el argumento técnico; quitar
+  de =:4= «El efecto del conjunto base … por \textcite{Garza2012}.» y aligerar la introducción como
+  se propone en §1.1.
+
+** TODO [C] §4.2.1 — Párrafo de dos oraciones con «y no»
+- =chapters/bsplines-galerkin.tex:104=
+- Propuesta: unirlo al párrafo anterior.
+
+** TODO [C] §4.2.3 — Cierre que resume
+- =chapters/bsplines-galerkin.tex:186=: «Así, un único formalismo variacional discretiza el operador
+  de Fock y los potenciales de interacción Y^k, unificando la arquitectura del solucionador.»
+- Propuesta: quitar esa oración y pasar «En el Capítulo 5 explotamos la invariancia…» al final de
+  =:184=.
+
+** TODO [C] §4.2.3 — «El segundo obstáculo», sin primero
+- =chapters/bsplines-galerkin.tex:154=
+- Propuesta: «La misma maquinaria resuelve otro paso costoso del método de Hartree-Fock: …».
+
+** TODO [D] §4.1.2 — Mayúsculas en las viñetas y en el caption; índice que choca con el orden
+- =chapters/bsplines-galerkin.tex:40-41= («Matrices Banda», «Control Local»), =:49= («Región de
+  Influencia Local»); en =:41=, el coeficiente se llama c_k y k es el orden del spline.
+- Propuesta: «Matrices de banda», «Control local», «región de influencia local», y c_j en lugar de
+  c_k.
+
+** TODO [D] Figura 4.1 — «Vector de Nodos (t)» y variable x
+- =figures/figura_evolucion_splines.pdf= (=chapters/bsplines-galerkin.tex:29=)
+- Problema: el eje dice «Nodos», cuando el texto usa «nudos», y las ordenadas «B_i^p(x)», cuando el
+  texto usa r.
+- Propuesta: regenerar la figura con «Vector de nudos t» y r. No cambia ningún número.
+
+* Hallazgos: Capítulo 5 — Implementación del ciclo SCF y correcciones
+
+** TODO [A] §5.1 — La Ecuación (4.10) no contiene la matriz de solapamiento
+- =chapters/ciclo-scf.tex:21=
+- «…y la matriz de solapamiento S es la ya definida en la Ec. (\ref{eq:matrix-elements})»
+- Problema: la etiqueta =eq:matrix-elements= cae en la primera línea del =align=, numerada (4.10),
+  con T_ij y V_ij; S_ij está en la segunda línea, numerada (4.11) y sin etiqueta. La referencia lleva
+  a la ecuación equivocada.
+- Propuesta: en =bsplines-galerkin.tex:125=, =\notag= en la primera línea y la etiqueta en la
+  segunda, para que el bloque tenga un solo número; o una etiqueta propia para S_ij.
+
+** TODO [A] §5.1.2 — Cómo se recorta el historial de C-DIIS
+- =chapters/ciclo-scf.tex:85=
+- «El historial se limita a seis iteraciones y se descarta cuando el condicionamiento del sistema o
+  la magnitud de los coeficientes indican que los vectores de error se han vuelto casi paralelos.»
+- Problema: =diis_extrapolate= (=benchmarks/np2_sequence/rohf_diis.jl:158-207=) no descarta el
+  historial entero: quita los vectores más antiguos uno a uno hasta que cond(B) < 10¹² y |c_i| ≤ 25.
+  Solo lo vacía si el sistema no se resuelve.
+- Propuesta: «El historial se limita a seis iteraciones y se recorta, descartando los vectores más
+  antiguos, cuando el condicionamiento del sistema o la magnitud de los coeficientes indican…».
+
+** TODO [B] §5.1 — Roothaan (1960) citado por las ecuaciones de Roothaan-Hall
+- =chapters/ciclo-scf.tex:6= y =:14=
+- «…se transforman en las ecuaciones matriciales de \textcite{Roothaan1960}» / «formulación
+  matricial de Roothaan-Hall»
+- Problema: FC = SCε es de Roothaan (1951) y Hall (1951). El artículo de 1960, el de la bibliografía,
+  es la extensión a capa abierta.
+- Propuesta: «…se transforman en las ecuaciones matriciales de Roothaan, en la forma de capa abierta
+  de \textcite{Roothaan1960}:». No hace falta añadir entradas.
+
+** TODO [B] §5.1.2 — «La técnica que resuelve el problema de fondo es la extrapolación de Pulay»
+- =chapters/ciclo-scf.tex:63=
+- Problema: el Apéndice E (=metodos-auxiliares.tex:55=) concluye que la ganancia viene de retirar
+  el desplazamiento en cuanto el error proyectado baja de 10⁻²; la extrapolación solo actúa unas
+  diez iteraciones. Es el mismo punto que en el Resumen.
+- Propuesta: «La técnica que permite retirarlo a tiempo es la extrapolación de Pulay…».
+
+** TODO [B] §5.3 — Un resultado (66-84 %) en el capítulo de implementación
+- =chapters/ciclo-scf.tex:137=, última oración
+- Problema: el registro pide los resultados en el Capítulo 6, y este porcentaje no reaparece allí,
+  donde haría falta para la objeción de §6.1.1 (ver Capítulo 6).
+- Propuesta: mover la oración a §6.3, después de «Un cálculo de interacción de configuraciones
+  correlaciona la pareja de valencia…» (=resultados.tex:73=).
+
+** TODO [C] §5.1.2 — «Residual» y «shift»
+- =chapters/ciclo-scf.tex:87=, =:96=: «el shift se apaga»; «residual», cuatro veces.
+- Propuesta: «el desplazamiento se apaga»; «error proyectado» en lugar de «residual».
+
+** TODO [C] §5.1 — Dice dos veces que el problema es no lineal
+- =chapters/ciclo-scf.tex:6= y =:21= (ya dicho en =particulas-independientes.tex:158=)
+- Propuesta: en =:21=, «La diferencia esencial respecto al problema de un cuerpo de la Ecuación
+  (4.12) es que f̂ depende de los orbitales que buscamos.», sin la cláusula final.
+
+** TODO [C] §5.2 — Repite el Apéndice E.2 y el §4.2.3
+- =chapters/ciclo-scf.tex:101= (cuadratura) y =:107-113= (A^{(k)}, invariancia y Cholesky)
+- Problema: el primer párrafo de §5.2 reproduce =metodos-auxiliares.tex:19-21= (N_q = k+6, grado
+  2N_q − 1, integrandos de grado 2k − 2), y =:113= repite =bsplines-galerkin.tex:184= y vuelve a
+  escribir la ecuación de A^{(k)}.
+- Propuesta: dejar en =:101= dos oraciones: «Todas las integrales se evalúan por cuadratura de
+  Gauss-Legendre con k+6 puntos por intervalo, exacta para las matrices de solapamiento y cinética
+  (Sección \ref{sec:gauss-legendre}). Para los integrandos con potencias de 1/r, el acuerdo con la
+  referencia (Tablas 6.1 y 6.2) acota el error.» En =:107-113=, citar (4.16) en lugar de reescribirla.
+
+** TODO [C] §5.2.1 — Cierre que resume, repetido en el Apéndice C
+- =chapters/ciclo-scf.tex:130=, última oración, y =appendices/bsplines.tex:55=, última oración
+- Propuesta: quitar la del Apéndice C.
+
+** TODO [C] §5.3 — Dos aperturas que dicen lo mismo
+- =chapters/ciclo-scf.tex:135= y la primera oración de =:137=
+- «Ambas se aplican después del ciclo, sobre orbitales fijos…» / «El procedimiento trata por
+  separado la correlación de valencia y el acoplamiento espín-órbita, en dos etapas sucesivas, y en
+  ambas las capas internas permanecen congeladas.»
+- Propuesta: en =:135=, «Ambas se aplican después del ciclo, sobre orbitales fijos y con las capas
+  internas congeladas, y no exigen repetirlo.» Quitar «Esta sección describe su implementación.» y
+  empezar =:137= en «En la primera se corrige…».
+
+** TODO [C] §5.3 — Calcos
+- =chapters/ciclo-scf.tex:143=: «el espectro multiplete que se contrasta contra el NIST»
+- Propuesta: «los niveles del multiplete que se comparan con los del NIST».
+
+** TODO [D] §5.1 — «Matriz de Fock» y «Ec.»
+- =chapters/ciclo-scf.tex:12= («la Matriz de Fock»), =:21= y =:107= («Ec. (…)»; el resto del texto
+  escribe «Ecuación»).
+- Propuesta: «la matriz de Fock»; «la Ecuación \eqref{…}».
+
+* Hallazgos: Capítulo 6 — Resultados y discusión
+
+** TODO [A] §6.3 — El ¹D₂ «queda por encima del valor medido en los cuatro elementos»
+- =chapters/resultados.tex:91=
+- Problema: dos párrafos después (=:93=) y en §6.6.2 (=:178=), el signo del error del ¹D₂ del
+  estaño se declara indeterminado; las Conclusiones (=:14=) dicen «alto en tres de los cuatro».
+- Propuesta: «El ¹D₂ queda por encima del valor medido en el carbono, el silicio y el germanio, con
+  el error mayor en el silicio (+15.7 %), y el ¹S₀ queda alto en el carbono y bajo en los otros
+  tres.» El estaño queda tratado en =:93=.
+
+** TODO [A] §6.3 — «Carencias del modelo y no del truncamiento»
+- =chapters/resultados.tex:95= (también =:93=, «descarta ese artefacto», y
+  =metodos-auxiliares.tex:102=)
+- Problema: el apéndice solo estudia el número m de orbitales por canal. §6.6.5 (=:194=) reconoce
+  que el truncamiento en l_max = 3 no se estudió, y =:93= acaba de decir que el ¹D₂ del estaño no
+  convergió.
+- Propuesta:
+  - =:93=: «…y descarta ese artefacto en lo que toca al número de orbitales por canal.»
+  - =:95=: «Las discrepancias de los singletes no proceden, por tanto, del número de orbitales por
+    canal.»
+  - =metodos-auxiliares.tex:102=: «…procede del modelo y no del número de orbitales del espacio
+    activo.»
+
+** TODO [A] §6.3 — Las «desviaciones … sobre intervalos» son errores de niveles
+- =chapters/resultados.tex:89=
+- «En el carbono el modelo abre el triplete de más, con desviaciones de +28.8% y +45.3% sobre
+  intervalos de apenas decenas de cm⁻¹.»
+- Problema: los porcentajes son los de los niveles ³P₁ y ³P₂ referidos al ³P₀ (Tabla 6.4). El
+  segundo intervalo del carbono (³P₂ − ³P₁), en el sentido de §1.2, se desvía cerca de +55 %.
+- Propuesta: «…con desviaciones de +28.8 % y +45.3 % en los niveles ³P₁ y ³P₂, separados del
+  fundamental por apenas decenas de cm⁻¹.» El resto del párrafo («del −6 % en el silicio al
+  −19.2 % y −14.8 % en el estaño») ya habla de niveles y queda bien si se lee así.
+
+** TODO [A] §6.1.2 — «Cuyo integrando crece como r⁻³ cerca del núcleo»
+- =chapters/resultados.tex:50=
+- Problema: para un orbital p, P² ~ r⁴ cerca del origen y el integrando P²/r³ se anula como r. Lo
+  que crece es el peso r⁻³.
+- Propuesta: «…pero dominan el momento ⟨r⁻³⟩, cuyo peso r⁻³ amplifica la región nuclear, y es a
+  través de ellos como el electrón de valencia percibe…». De paso corrige el galicismo «es … que».
+
+** TODO [A] §6.5 — «Solo en el estaño, donde el eigenvalor se quedaba corto»
+- =chapters/resultados.tex:154=
+- Problema: según la Tabla 6.7, el eigenvalor se queda corto en el silicio, el germanio y el estaño
+  (−0.8, −1.0 y −1.8 %). Lo que distingue al estaño es que el déficit es el mayor y que la corrección
+  lo acerca, aunque también lo deja por encima (+0.5 %).
+- Propuesta: «…y solo en el estaño, donde el eigenvalor se quedaba más corto, la acerca hasta un
+  +0.5 %.»
+
+** TODO [A] §6.4.1 — «El silicio queda fuera»
+- =chapters/resultados.tex:129=
+- Problema: la Tabla 6.6 sí incluye el silicio, con su valor calculado (1.50106, 0.02 %), y =:138=
+  lo comenta.
+- Propuesta: «…a un peso de ¹D₂; del silicio solo hay valor calculado, porque el ASD no tabula su
+  factor g.»
+
+** TODO [B] §6.2 — La definición de ζ_NIST no dice por qué se excluye el ³P₁
+- =chapters/resultados.tex:55=
+- Problema: con E(³P), E(¹D), E(¹S) y ζ libres hay cuatro incógnitas para los cuatro niveles medidos
+  sobre el ³P₀, y la definición usa solo ³P₂, ¹D₂ y ¹S₀. Si se excluye el ³P₂ en vez del ³P₁, el
+  ζ_NIST del carbono pasa de 28.9 a 32.6 cm⁻¹ y la razón de 1.46 a 1.29 (=valores_texto.md=, «zeta
+  que pide el NIST»). En el germanio y el estaño la conclusión de la cota no cambia: 910.4 y
+  2207.5 cm⁻¹ siguen por encima de ζ_desnudo. Un sinodal preguntará por la elección.
+- Propuesta: añadir una oración con el motivo de la elección, que debe dar el autor, y la
+  robustez: «Excluir el ³P₂ en lugar del ³P₁ da 32.6 cm⁻¹ en el carbono y deja a los dos elementos
+  pesados por encima de la cota de núcleo desnudo.» Hoy el caption solo dice «sin 3P_1» en el
+  comentario del =.tex= generado.
+
+** TODO [B] §6.2 — «Que la Sección 6.4 identifica de manera independiente»
+- =chapters/resultados.tex:64=
+- Problema: el exceso de escala de ζ en el carbono correspondería al término espín-otra-órbita, que
+  tiene la forma A L·S y no altera la razón R. La razón R de §6.4 señala al espín-espín (=:120=).
+  Son dos términos de dos cuerpos distintos, así que §6.4 no confirma de manera independiente el
+  exceso de escala.
+- Propuesta: «…un exceso coherente con la ausencia de los términos de dos cuerpos del Hamiltoniano
+  de Breit-Pauli, cuya huella en la forma del multiplete examina la Sección 6.4.» Opcional:
+  =config.jl= guarda ζ(2p) = 31.946 cm⁻¹ de Froese Fischer para el carbono. Si se confirma que es el
+  de Blume-Watson, que incluye esos términos, sería un respaldo directo del argumento.
+
+** TODO [B] §6.1.1 y §6.3 — «La parte electrostática del campo medio no puede explicar…»
+- =chapters/resultados.tex:23= (y =:91=: «la explicación no puede estar en la parte radial del campo
+  medio»)
+- Problema: lo que la Tabla 6.2 descarta es un error numérico en F^k. El F² de Hartree-Fock sí es
+  parte de la explicación de los singletes: el CI de pareja comprime las separaciones a un 66-84 %
+  (=ciclo-scf.tex:137=).
+- Propuesta: en =:23=, «…de modo que un error numérico en la parte electrostática del campo medio no
+  puede explicar…»; en =:91=, «…la explicación no puede estar en un error numérico de la parte radial
+  del campo medio.»
+
+** TODO [B] §6.1.1 — Números sin respaldo en valores_texto.md y una unidad que falta
+- =chapters/resultados.tex:34=
+- «…mueve la energía en 1.7×10⁻⁶ Hartree entre los dos primeros … mientras que ⟨r⁻³⟩ se desplaza
+  2×10⁻⁵ en dirección contraria a la referencia.»
+- Problema: los dos números salen de =diagnostico_malla_silicio.jl= (anotados en su cabecera), no de
+  =valores_texto.md=. A ⟨r⁻³⟩ le falta la unidad.
+- Propuesta: agregar la salida del diagnóstico a =valores_texto.md= y escribir «2×10⁻⁵ a₀⁻³».
+
+** TODO [B] §6.6.5 — Autovalor frente a Rayleigh, sin respaldo generado
+- =chapters/resultados.tex:192=
+- Problema: −1.7×10⁻⁶ Ha y «menor que 6×10⁻⁷» salen de =diagnostico_rayleigh.jl=; no están en
+  =valores_texto.md=.
+- Propuesta: agregarlos a =valores_texto.md= junto con los de la prueba de malla.
+
+** TODO [B] §6.6.2 — «21595 frente a 21648» compara una separación con un nivel
+- =chapters/resultados.tex:174=
+- Problema: 21595 = 32039 − 10444 es la separación ¹S − ³P sin espín-órbita (=valores_texto.md=,
+  «Compresión del espectro»). 21648 es el nivel ¹S₀ referido al ³P₀, y la diferencia entre ambas
+  referencias (el desplazamiento del ³P₀, del orden de ζ, 42 cm⁻¹ en el carbono) es del mismo
+  tamaño que la diferencia comentada.
+- Propuesta: «…y casi reproduce el valor medido (21595 cm⁻¹ en la separación entre términos, frente
+  a 21648 cm⁻¹ del nivel ¹S₀).»
+
+** TODO [B] §6.6.2 y §7.2 — «Una sobrecorrección cercana a cuatro veces», ¿de qué?
+- =chapters/resultados.tex:174= (y =chapters/conclusiones.tex:25=: «por un factor cercano a cuatro»)
+- Problema: 8198/2246 ≈ 3.7 es la sobrecorrección medida contra la discrepancia que deja el CI de
+  pareja. Leído como factor de corrección (corrección aplicada entre corrección necesaria) sería
+  10444/2246 ≈ 4.6.
+- Propuesta:
+  - =:174=: «…8198 cm⁻¹ por debajo del valor medido, casi cuatro veces la discrepancia que dejaba el
+    CI de pareja.»
+  - =conclusiones.tex:25=: «…sumarlos deja el término ¹S del carbono por debajo del valor medido casi
+    cuatro veces más de lo que el CI de pareja lo dejaba por encima.»
+
+** TODO [B] §6.3 — La tabla de niveles no dice qué m usa cada elemento
+- =chapters/resultados.tex:78= (Tabla 6.4)
+- Problema: el carbono está en m = 40 y los demás en m = 20 (=valores_texto.md=). El Apéndice E lo
+  dice, pero la tabla principal no.
+- Propuesta: añadir al caption «Espacio activo de producción: m = 40 en el carbono y m = 20 en el
+  resto (Sección \ref{sec:convergencia_ci}).»
+
+** TODO [B] §6.4.1 — Una cifra de más en el peso del estaño
+- =chapters/resultados.tex:138=; Tabla 6.6
+- Problema: el g del estaño (1.452, de Moore 1958, según =config.jl=) tiene tres decimales; ±0.0005
+  en g son ±0.1 puntos en el peso, así que «9.81 %» lleva una cifra de más.
+- Propuesta: escribir «cerca del 9.8 %» en la prosa, o decirlo en el caption. La tabla no cambia.
+
+** TODO [B] §6.4 — «Aísla un solo fenómeno»
+- =chapters/resultados.tex:100=
+- Problema: al bajar por el grupo cambian también n, las capas internas (3d¹⁰, 4d¹⁰) y la escala
+  relativista, como el propio capítulo discute. La introducción lo dice con más cuidado: «aísla la
+  física radial».
+- Propuesta: «…de modo que el tránsito del carbono al estaño permite seguir, con el problema angular
+  fijo, el paso del acoplamiento de Russell-Saunders al intermedio.»
+
+** TODO [C] §6.4 — Un párrafo que junta dos temas
+- =chapters/resultados.tex:122=
+- Problema: abre con la razón del silicio y salta a la convención de orbitales sin transición.
+- Propuesta: pasar «En el silicio el modelo y el experimento coinciden (1.911 frente a 1.894).» al
+  final de =:120= y abrir =:122= con «La elección metodológica…».
+
+** TODO [C] §6.4 — «El intermedio no»
+- =chapters/resultados.tex:124=: «…de modo que los dos niveles acoplados se desplazan y el
+  intermedio no.»
+- Propuesta: «…y el ³P₁ no.» Así no se confunde con el acoplamiento intermedio.
+
+** TODO [C] §6.6.2 — «Desciende el ¹S de más»
+- =chapters/resultados.tex:176=
+- Propuesta: «…por qué allí el CI de pareja baja de más el ¹S.»
+
+** TODO [C] §6.5 — «De una manera distinta que ζ_np»
+- =chapters/resultados.tex:145=
+- Propuesta: «…de una manera distinta de la de ζ_np…».
+
+** TODO [C] §6.6.1 — «Más contraída de lo que el cálculo no relativista la produce»
+- =chapters/resultados.tex:165=
+- Propuesta: «…que debería estar más contraída que la que produce el cálculo no relativista.»
+
+** TODO [C] §6.1.1 — Repite la explicación del Capítulo 5
+- =chapters/resultados.tex:32= (con =ciclo-scf.tex:74= y =resultados.tex:192=)
+- Propuesta: en =:32=, sustituir la segunda y la tercera oración por «Como se vio en la Sección
+  5.1.2, el carbono es el único elemento cuyo orbital de valencia no se ortogonaliza contra
+  orbitales p internos.», y en =:192= dejar solo la referencia a §6.1.1.
+
+** TODO [C] §6.2 — Párrafo de dos oraciones
+- =chapters/resultados.tex:66=
+- Propuesta: unirlo con =:68=.
+
+** TODO [C] §6.1.1 — Párrafo de C-DIIS dentro de «Parámetros radiales de la valencia»
+- =chapters/resultados.tex:36=
+- Problema: no trata de parámetros radiales; interrumpe la subsección.
+- Propuesta: moverlo al final de §6.1, después de =:18=.
+
+** TODO [D] Figura 6.2 — Etiquetas ilegibles
+- =figures/np2_energy_levels.pdf= (=chapters/resultados.tex:84=)
+- Problema: los números de los ejes y las etiquetas de los niveles quedan en unos 4 pt al tamaño
+  impreso, y las etiquetas «³P₀,₁,₂» se enciman en el carbono y el silicio.
+- Propuesta: regenerarla en la etapa 4 con fuente mayor o con los paneles en dos filas.
+
+** TODO [D] Figura 6.3 — El caption no dice que el eje horizontal es Z
+- =chapters/resultados.tex:112=
+- «…frente a la separación electrostática 6/25 F² de Hartree-Fock, en escala doblemente
+  logarítmica.» Se lee como si la separación fuera la abscisa.
+- Propuesta: «Parámetro de espín-órbita calculado, el que reproduce los niveles del NIST
+  (Tabla 6.3) y la separación electrostática 6/25 F² de Hartree-Fock, en función de Z, en escala
+  doblemente logarítmica.»
+
+* Hallazgos: Capítulo 7 — Conclusiones
+
+** TODO [B] §7.2 — «La única que permitiría tratar de manera consistente el error de los singletes»
+- =chapters/conclusiones.tex:25=
+- Problema: §6.6.4 deja abierta una causa de implementación (virtuales s no ortogonales a las capas
+  internas) que afecta precisamente a los singletes, y §6.6.2 no identifica la causa del ¹S₀ bajo
+  de los pesados.
+- Propuesta: «La extensión de mayor alcance, y la necesaria para tratar de manera consistente la casi
+  degeneración del ¹S, es…».
+
+** TODO [B] §7.2 — Dirac-Hartree-Fock «cerraría el problema en su raíz»
+- =chapters/conclusiones.tex:29=
+- Problema: §6.2 deja sin separar la contracción relativista y la polarización de las capas internas
+  (=resultados.tex:68=). Atribuir el déficit solo a lo relativista («apunta a que la función de onda
+  debería estar más contraída de lo que un tratamiento de Schrödinger permite») va más allá.
+- Propuesta: «Finalmente, la ruta que atacaría la parte relativista del problema es…», y «…apunta a
+  que la función de onda debería estar más contraída que la que produce el cálculo actual.»
+
+** TODO [B] §7.2 — «Eliminaría la desviación»
+- =chapters/conclusiones.tex:23=
+- Problema: que la desviación de ⟨r⁻³⟩ venga de Gram-Schmidt es la explicación estructural de
+  §6.1.1, no algo verificado.
+- Propuesta: «Debería eliminar la desviación…».
+
+** TODO [C] §7.2 — El orden anunciado no es el que sigue
+- =chapters/conclusiones.tex:19= (párrafo de dos oraciones)
+- Problema: dice que las líneas se ordenan por esfuerzo frente a beneficio, pero la polarización
+  (=:27=), barata y ya implementada, aparece después del CI de cuatro electrones.
+- Propuesta: pasar el párrafo =:27= antes de =:25=, o escribir en =:19= «Las líneas que siguen van
+  de la más directa a la de mayor alcance.» y unir =:19= con =:21=.
+
+** TODO [C] §7.1 — «Dejan alto al término ¹S»
+- =chapters/conclusiones.tex:14=
+- Propuesta: «…dejan alto el término ¹S…».
+
+** TODO [C] §7.2 — Repite §6.6.2
+- =chapters/conclusiones.tex:25=: «Se trata, por tanto, de un motor distinto y no de una mejora
+  incremental, y esa es la razón por la que quedó fuera del alcance de esta tesis.»
+- Propuesta: «Por eso quedó fuera del alcance de esta tesis.»
+
+* Hallazgos: Apéndice A — Unidades atómicas
+
+** TODO [C] A — Párrafo de dos oraciones y «el Hartree»
+- =appendices/unidades-atomicas.tex:4=, =:6=
+- Problema: =:6= tiene dos oraciones, y =:4= escribe «la de energía es el Hartree» mientras el
+  caption de la Tabla 6.1 dice «el hartree».
+- Propuesta: unir =:6= a =:4= y escribir la unidad en minúscula, «el hartree».
+
+* Hallazgos: Apéndice B — Operadores tensoriales y coeficientes angulares
+
+** TODO [A] B.4 — El 6j como «el único factor que distingue entre términos»
+- =appendices/operadores-tensoriales.tex:54=
+- Problema: la fase de intercambio (−1)^{l_c+l_d+L+S} de la ecuación anterior también distingue
+  términos, y es lo único que separa un singlete de un triplete con el mismo L.
+- Propuesta: «Es por ello, junto con la fase de intercambio, el único factor que distingue entre
+  términos de una misma pareja de orbitales.»
+
+** TODO [B] B.2 — «Tres reglas de selección que truncan la suma sobre k»
+- =appendices/operadores-tensoriales.tex:32=
+- Problema: la conservación de la proyección restringe q, no k.
+- Propuesta: «…imponen tres reglas de selección: …; y la conservación de la proyección, m = q + m'.
+  Las dos primeras truncan la suma sobre k.»
+
+** TODO [C] B — Falta una coma en la enumeración
+- =appendices/operadores-tensoriales.tex:4=: «…de interacción de configuraciones de parejas la
+  evaluación explícita…»
+- Propuesta: «…de parejas, la evaluación explícita…».
+
+** TODO [C] B.5 — Párrafo de dos oraciones
+- =appendices/operadores-tensoriales.tex:75=
+- Propuesta: unirlo con =:77=.
+
+* Hallazgos: Apéndice C — Implementación de la base de B-splines
+
+** TODO [C] C.1 — «Al aumentar Z crecen el número de intervalos y el parámetro γ»
+- =appendices/bsplines.tex:10=
+- Problema: según la Tabla C.1, del carbono al silicio no cambian, y el orden del spline también
+  cambia (7 → 8), algo que las Conclusiones (=:8=) sí mencionan.
+- Propuesta: «…y del silicio en adelante crecen el número de intervalos y el parámetro γ, y el orden
+  del spline pasa de 7 a 8,…».
+
+** TODO [C] C.3 — Primera oración copiada de §5.2
+- =appendices/bsplines.tex:32= (frente a =chapters/ciclo-scf.tex:103=)
+- Propuesta: «Como se adelantó en la Sección \ref{sec:estructura-algebraica}, las funciones base y
+  la cuadratura permanecen fijas durante el ciclo.»
+
+** TODO [C] C.3 — «No se trata de … sino de …»
+- =appendices/bsplines.tex:53=
+- Propuesta: «Es un reordenamiento exacto de las mismas sumas, sin aproximación adicional.»
+
+* Hallazgos: Apéndice D — El potencial Y^k y la ecuación de Poisson radial
+
+** TODO [C] D.1 — Repite §4.2.3
+- =appendices/galerkin-poisson.tex:18=: «Evaluar la Ecuación (D.1) por cuadratura es costoso porque
+  el operador es global…», casi igual a =bsplines-galerkin.tex:161=.
+- Propuesta: dejar el argumento en el Capítulo 4 y aquí solo «Esa definición es global; la
+  alternativa es la ecuación diferencial local que Y^k satisface.»
+
+** TODO [C] D.2 — La condición de Robin y su término de borde, también en §5.2.1
+- =appendices/galerkin-poisson.tex:43-49= (frente a =chapters/ciclo-scf.tex:127-130=)
+- Problema: la misma ecuación, numerada dos veces, y la misma explicación de k/R_max. El párrafo
+  final (=:49=) tiene dos oraciones.
+- Propuesta: dejar la deducción aquí y, en el Capítulo 5, citar (D.6) en lugar de reescribirla (ver
+  Observaciones globales).
+
+* Hallazgos: Apéndice E — Métodos numéricos auxiliares
+
+** TODO [A] E.3 — «Doscientas cuarenta», cuando la tabla dice 241
+- =appendices/metodos-auxiliares.tex:55=
+- «…de doscientas cuarenta y doscientas cincuenta a ochenta y cinco y cincuenta y dos.»
+- Problema: la Tabla E.1 da 241 iteraciones para el germanio sin C-DIIS.
+- Propuesta: «…de 241 y 250 a 85 y 52.»
+
+** TODO [B] E.4.2 — Diecisiete bytes por casilla no dan 1.1 GB con 38.8 millones de integrales
+- =appendices/metodos-auxiliares.tex:116=
+- Problema: 38.8×10⁶ × 17 B ≈ 0.66 GB. El 1.1 GB solo sale si «casilla» es una casilla de la tabla
+  asociativa (2²⁶ ≈ 67 millones), que el texto no dice. La única procedencia del dato es un
+  comentario de =config.jl=.
+- Propuesta: «Con un consumo medido de unos 17 bytes por casilla de la tabla asociativa, que reserva
+  más casillas que integrales almacenadas,…», y registrar la medición en =valores_texto.md=.
+
+** TODO [B] E.5 — «Se exploró BandedMatrices.jl», sin registro
+- =appendices/metodos-auxiliares.tex:123=
+- Problema: no hay medición en el repositorio (ya señalado el 2026-10-09), y la razón de fondo para
+  el almacenamiento denso, que la matriz de Fock con intercambio es densa, no se menciona (ver
+  Capítulo 4).
+- Propuesta: la del hallazgo de §4.2.1. Si la medición no existe, quitar «y su sobrecosto resultó
+  mayor que la ganancia».
+
+** TODO [C] E.4.2 — «Unas pocas miles»
+- =appendices/metodos-auxiliares.tex:106=
+- Propuesta: «unos pocos miles» («miles» es masculino).
+
+** TODO [C] E.4.1 — «El intervalo ³P₂ se mueve»
+- =appendices/metodos-auxiliares.tex:76=
+- Problema: son niveles referidos al ³P₀ (Tabla E.3).
+- Propuesta: «…el nivel ³P₂ se mueve 0.13 cm⁻¹ y el ³P₁ apenas 0.03».
+
+** TODO [C] E.3 y E.4 — Tres cierres con «por tanto»
+- =appendices/metodos-auxiliares.tex:57=, =:76=, =:102=
+- Propuesta: quitar la última oración de =:76= (§6.3 ya lo dice) y, en =:57=, quitar «por tanto»:
+  «C-DIIS actúa sobre la trayectoria del ciclo y no sobre su punto fijo, y los resultados del
+  Capítulo 6 describen…».
+
+** TODO [C] E.1 — Repite §2.7.2
+- =appendices/metodos-auxiliares.tex:7=, primera oración (frente a
+  =particulas-independientes.tex:192=)
+- Propuesta: «Como se vio en la Sección \ref{sec:rohf}, los orbitales de capa cerrada con el mismo l
+  son ortogonales por construcción.»
+
+** TODO [D] E.4 — Página de flotantes medio vacía
+- Página 66 impresa (72 del PDF): la Figura E.1 y la Tabla E.5 quedan solas, con media página en
+  blanco.
+- Propuesta: =[tbp]= en la Tabla E.5 para que entre con texto, o la Figura E.1 con =[t]= junto a la
+  Tabla E.4.
+
+* Citas con localizador que el autor debe cotejar
+
+No puedo comprobarlas sin los libros, así que no las doy por buenas ni por malas.
+
+| # | Archivo:línea                              | Cita                                   | Qué afirma el texto con ella                                                        |
+|---+--------------------------------------------+----------------------------------------+-------------------------------------------------------------------------------------|
+| 1 | particulas-independientes.tex:122          | Jackson 1999, Sección 3.6              | Expansión de Laplace de 1/r₁₂ en armónicos esféricos                                |
+| 2 | particulas-independientes.tex:156          | Cowan 1981, Capítulo 7                 | Deducción variacional de las ecuaciones de HF con multiplicadores de Lagrange       |
+| 3 | particulas-independientes.tex:217          | Szabo y Ostlund 1989, Sección 3.3      | Demostración del teorema de Koopmans                                                |
+| 4 | correlacion-estructura-fina.tex:20         | Cowan 1981, Sección 4-16               | Las tres reglas de Hund                                                             |
+| 5 | correlacion-estructura-fina.tex:36         | Cowan 1981, Sección 3-7                | Los tres términos de un cuerpo de Breit-Pauli (masa-velocidad, Darwin, espín-órbita) |
+| 6 | correlacion-estructura-fina.tex:115        | Cowan 1981, Sección 10-4               | Energías jj: −ζ por cada p_{1/2} y +ζ/2 por cada p_{3/2}                             |
+| 7 | correlacion-estructura-fina.tex:124        | Cohen-Tannoudji 1977, Complemento D_X  | Wigner-Eckart aplicado a la proyección de L + g_s S sobre J (factor g de Landé)      |
+| 8 | operadores-tensoriales.tex:21              | Cohen-Tannoudji 1977, Complemento D_X  | «Demuestra» el teorema de Wigner-Eckart para operadores vectoriales                 |
+| 9 | bsplines-galerkin.tex:44                   | de Boor 1978, Capítulo II              | El fenómeno de Runge como motivación de los polinomios a trozos                     |
+| 10 | operadores-tensoriales.tex:64             | Cowan 1981, Sección 9-5                | La construcción para tres o más electrones equivalentes                             |
+| 11 | operadores-tensoriales.tex:92             | Edmonds 1957, Capítulo 7               | Producto escalar de tensores en la base acoplada; reducido de un operador de un electrón (B.15-B.16) |
+
+Atribuciones sin localizador que también conviene revisar:
+- =bsplines-galerkin.tex:55=: «Siguiendo a Bachau (2001)», la transformación exponencial de la malla.
+- =metodos-auxiliares.tex:19=: Bachau 2001, para la cuadratura de Gauss-Legendre por intervalo.
+- =galerkin-poisson.tex:9=: «Siguiendo a Froese Fischer (1977)», la convención de Y^k como potencial
+  multiplicado por r.
+- =correlacion-estructura-fina.tex:45=: Foldy y Wouthuysen 1950, para el término de Darwin.
+- =bsplines-galerkin.tex:149=: MacDonald 1933 (cotas superiores) y Finlayson y Scriven 1965
+  (colocación y mínimos cuadrados no son variacionales).
+- =particulas-independientes.tex:117=, =:169=: Cowan 1981, sin localizador, para E_ee como suma de
+  pares y para la forma cerrada de E_av.
+- =introduccion.tex:7= y =conclusiones.tex:29=: Johnson 1988 («Dirac-Hartree-Fock»; ver hallazgo
+  de §1.1).
+- =ciclo-scf.tex:6=: Roothaan 1960 para FC = SCε (ver hallazgo de §5.1).
+
+* Resultado de la compilación
+
+- Comando, desde =docs/=: =latexmk -pdf -interaction=nonstopmode -file-line-error -outdir=<scratch>/build main.tex=.
+  Los logs (=latexmk.log=, =main.log=, =main.blg=) quedaron en el directorio temporal de la sesión.
+  =git status docs/= salió idéntico antes y después: no quedaron artefactos en =docs/=.
+- *75 páginas* (1.65 MB).
+- *0* cajas desbordadas o subllenas (=Overfull=, =Underfull=).
+- *0* referencias o citas indefinidas; biber terminó sin advertencias.
+- Advertencias que quedan:
+  - 3 de hyperref, «Token not allowed in a PDF string», por el =$np^2$= del título de §3.1
+    (=correlacion-estructura-fina.tex:8=; ver el hallazgo de §3.1);
+  - biblatex: «'babel/polyglossia' detected but 'csquotes' missing»;
+  - siunitx: «Detected the "physics" package», por el choque de las dos definiciones de =\qty=.
+- Páginas que miré como imagen (número impreso, entre paréntesis el del PDF):
+  - 25-27 (31-33): Figuras 4.1, 4.2 y 4.3. La 4.1 dice «Vector de Nodos» en el eje; las otras dos
+    se ven bien.
+  - 28 (34): Ecuaciones (4.9)-(4.11). La alineación está bien, pero de ahí sale el hallazgo de la
+    etiqueta de S_ij.
+  - 30-32 (36-38): arranque del Capítulo 5. Quedó como se pidió: la página 30 llena, el diagrama de
+    la Figura 5.1 solo en la 31, y «El algoritmo procede…» abre la 32.
+  - 34 (40): Figura 5.2. Legible; la leyenda dice «residual proyectado».
+  - 39-46 (45-52): Tablas 6.1-6.7 y Figuras 6.1-6.3. Ninguna tabla se sale del margen. Las Tablas
+    6.1 y 6.2 comparten una página de flotantes inmediatamente después de su primera mención, y el
+    resto cae en la página de su primera mención o en la siguiente. La Figura 6.2 tiene etiquetas
+    ilegibles, y el caption de la 6.3 no dice que la abscisa es Z.
+  - 52 (58), 56-57 (62-63): Tablas A.1, B.1 y C.1. Bien.
+  - 63-66 (69-72): Tablas E.1-E.5 y Figura E.1. La página 66 queda medio vacía.
+  - Vistas pequeñas de 14, 21 y 48 (20, 27 y 54), finales de los Capítulos 2, 3 y 6. Son finales de
+    capítulo normales.

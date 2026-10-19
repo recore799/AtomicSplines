@@ -152,7 +152,10 @@ $[l_{1a}, l_{1b}] = i\epsilon_{abc}\,l_{1c}$ (en unidades de $\hbar$),
 que no es el operador nulo. La forma más rápida de verlo, sin embargo, es con la
 Tabla~\ref{tab:so_racah}: si $\hat{H}_{SO}$ conmutara con $\hat{L}^2$, sus elementos entre estados
 de distinto $L$ serían cero, porque
-$\mel{L}{[\hat{H}_{SO},\hat{L}^2]}{L'} = [L'(L'+1) - L(L+1)]\mel{L}{\hat{H}_{SO}}{L'}$. Pero
+\begin{equation*}
+  \mel{L}{[\hat{H}_{SO},\hat{L}^2]}{L'} = [L'(L'+1) - L(L+1)]\mel{L}{\hat{H}_{SO}}{L'} .
+\end{equation*}
+Pero
 $\mel{^3P_0}{\hat{H}_{SO}}{^1S_0} = \mp\sqrt{2}\,\zeta \neq 0$ conecta $L=1$ con $L=0$ (y $S=1$
 con $S=0$), así que no conmuta ni con $\hat{L}^2$ ni con $\hat{S}^2$. En la identidad~\eqref{eq:so_identidad}
 el responsable es el segundo sumando, $(\mathbf{l}_1-\mathbf{l}_2)\cdot(\mathbf{s}_1-\mathbf{s}_2)$.
@@ -298,6 +301,157 @@ $R$ porque esa caída es la mezcla del punto~1. Lo que no reproduce es el 1.64 d
 exige el punto~3.
 
 %======================================================================
+\section{Cómo se obtiene \texorpdfstring{$\zeta_{\text{NIST}}$}{zeta NIST}}
+\label{det:zeta_nist}
+
+La Sección~\ref{sec:zeta_diagnostico} define $\zeta_{\text{NIST}}$ en una oración: el valor que,
+con las energías de los términos libres, reproduce los niveles $^3P_2$, $^1D_2$ y $^1S_0$ del ASD
+en el Hamiltoniano de Breit-Pauli de $p^2$ sin correlación. Aquí está el sistema completo, cómo se
+resuelve y por qué la conclusión sobre la cota de núcleo desnudo no depende de qué nivel se deje
+fuera. El cálculo vive en \texttt{analisis\_zeta.jl}, que usan la etapa~3 y la etapa~4.
+
+\subsection{El modelo y sus incógnitas}
+
+Se toma $E(^3P) = 0$ como origen y se llaman $\Delta_D = E(^1D) - E(^3P)$ y
+$\Delta_S = E(^1S) - E(^3P)$ a las separaciones de los términos. Con eso, las tres matrices de la
+Sección~\ref{sec:matrices_bp} contienen solo tres incógnitas, $\Delta_D$, $\Delta_S$ y $\zeta$. El
+bloque $J=1$ es directo, $E(^3P_1) = -\zeta/2$, y los dos bloques de $2\times2$ se diagonalizan en
+forma cerrada con $\tfrac{a+b}{2} \mp \sqrt{\qty(\tfrac{b-a}{2})^2 + x^2}$:
+\begin{align}
+  J=2:&\quad \lambda_\mp = \tfrac{1}{2}\qty[\qty(\Delta_D + \tfrac{\zeta}{2})
+        \mp \sqrt{\qty(\Delta_D - \tfrac{\zeta}{2})^2 + 2\zeta^2}\,], \\
+  J=0:&\quad \mu_\mp = \tfrac{1}{2}\qty[\qty(\Delta_S - \zeta)
+        \mp \sqrt{\qty(\Delta_S + \zeta)^2 + 8\zeta^2}\,].
+\end{align}
+El nivel fundamental es $\mu_-$, y los cuatro niveles excitados referidos a él son
+\begin{equation}
+  E(^3P_1) = -\tfrac{\zeta}{2} - \mu_-, \quad
+  E(^3P_2) = \lambda_- - \mu_-, \quad
+  E(^1D_2) = \lambda_+ - \mu_-, \quad
+  E(^1S_0) = \mu_+ - \mu_- .
+  \label{det:niveles_nist}
+\end{equation}
+
+Hay cuatro niveles medidos y tres incógnitas. Si la estructura fina del átomo fuera exactamente la
+de un operador de un cuerpo en $p^2$, cualquier terna de niveles daría la misma $\zeta$ y el cuarto
+saldría bien; como no lo es, se ajustan tres de forma exacta y el cuarto queda como predicción, cuyo
+error mide lo que una sola $\zeta$ no puede describir. Que $\Delta_D$ y $\Delta_S$ sean libres es lo
+que permite prescindir del CI: la correlación de la pareja de valencia solo mueve los elementos
+diagonales, y aquí esos elementos se ajustan, de modo que $\zeta_{\text{NIST}}$ no hereda ningún
+error de la parte electrostática ni de la correlación.
+
+Hay una diferencia con el modelo de la tesis que conviene tener presente. El motor multiplica los
+elementos de espín-órbita por los coeficientes CI de la configuración $np^2$
+(Sección~\ref{sec:ci_method}; Tabla~\ref{tab:det_mezcla}), que son algo menores que uno, de modo
+que la $\zeta$ efectiva del modelo es un poco menor que $\zeta_{\text{calc}}$. La razón
+$\zeta_{\text{calc}}/\zeta_{\text{NIST}}$ de la Tabla~\ref{tab:zeta} no incluye ese factor, así
+que en el silicio, el germanio y el estaño subestima un poco el déficit del modelo, y en el
+carbono exagera un poco su exceso.
+
+\subsection{Cómo se resuelve}
+
+Las raíces cuadradas hacen el sistema no lineal, y el script lo resuelve por Newton con jacobiano
+numérico. El punto de partida es el límite $LS$: $\Delta_D \approx E(^1D_2)$,
+$\Delta_S \approx E(^1S_0)$ y $\zeta^{(0)} = \tfrac{2}{3}E(^3P_2)$, porque sin mezcla el
+$^3P_2$ queda a $\tfrac{3}{2}\zeta$ del $^3P_0$. Las iteraciones siguen hasta que el residuo de los
+tres niveles ajustados baja de $10^{-9}$~cm$^{-1}$.
+
+Desarrollar los niveles a segundo orden en $\zeta$ muestra qué mide cada uno (con los
+desplazamientos $x^2/\delta$ de la Sección~\ref{det:perturbaciones}):
+\begin{align}
+  E(^3P_1) - E(^3P_0) &\simeq \frac{\zeta}{2} + \frac{2\zeta^2}{\Delta_S + \zeta}, \\
+  E(^3P_2) - E(^3P_0) &\simeq \frac{3\zeta}{2} + \frac{2\zeta^2}{\Delta_S + \zeta}
+                        - \frac{\zeta^2}{2\,(\Delta_D - \zeta/2)} .
+\end{align}
+El intervalo del $^3P_1$ lleva solo el empuje hacia abajo del $^3P_0$ por el $^1S_0$; el del
+$^3P_2$ lleva además el del $^3P_2$ por el $^1D_2$, con signo contrario, y las dos correcciones se
+compensan en buena parte. Por eso $\tfrac{2}{3}E(^3P_2)$ es una buena primera estimación incluso
+en el estaño, mientras que $2E(^3P_1)$, la estimación equivalente con el otro nivel, se aleja
+mucho (columna $\zeta^{(0)}$ de la Tabla~\ref{tab:det_zeta_ajuste}). Es la misma asimetría que baja
+la razón $R$ en los elementos pesados (Sección~\ref{det:lande}).
+
+\subsection{Qué nivel se deja fuera}
+
+La tesis excluye el $^3P_1$ porque es el único nivel que ningún elemento fuera de la diagonal toca:
+en el modelo de un cuerpo vale exactamente $E(^3P) - \zeta/2$, y su predicción es la prueba más
+limpia de esa forma. La Tabla~\ref{tab:det_zeta_ajuste} muestra las dos elecciones. En el silicio,
+el germanio y el estaño la $\zeta$ cambia poco al excluir el $^3P_2$ en lugar del $^3P_1$, y el
+nivel predicho queda a pocos por ciento del medido. En el carbono, en cambio, la $\zeta$ cambia en
+más de un diez por ciento y el $^3P_1$ predicho se queda corto: es la ruptura de la regla de Landé
+de la Sección~\ref{det:lande}, que ninguna $\zeta$ de un cuerpo reproduce. $\Delta_D$ y $\Delta_S$,
+en cambio, se mueven menos de un dos por ciento entre las dos elecciones.
+
+\begin{table}[htbp]
+  \centering\small
+  \input{chapters/_borradores/calculos/zeta_nist_ajuste}
+  \caption{El ajuste que define $\zeta_{\text{NIST}}$ (cm$^{-1}$), con cada uno de los dos
+  niveles del triplete excluido. $\zeta^{(0)}$ es la estimación $LS$ de partida con el nivel del
+  triplete que sí entra al ajuste; $\Delta_D$, $\Delta_S$ y $\zeta$ son la solución, y las dos
+  últimas columnas comparan el nivel excluido predicho con el medido. La primera fila de cada
+  elemento es la $\zeta_{\text{NIST}}$ de la tesis.}
+  \label{tab:det_zeta_ajuste}
+\end{table}
+
+Hay una tercera opción, que usa los cuatro niveles: añadir dentro del $^3P$ un término de rango 2
+con la dependencia en $J$ del espín-espín, que desplaza los niveles $J = 0, 1, 2$ en $5D$,
+$-\tfrac{5}{2}D$ y $\tfrac{1}{2}D$ (traza nula con pesos $2J+1$). Con cuatro incógnitas el
+ajuste es exacto. En el carbono $D$ mide el espín-espín; en el germanio y el estaño absorbe además
+todo lo que una $\zeta$ de un cuerpo no describe, y no conviene leerlo como espín-espín.
+
+\subsection{La comparación con la cota}
+
+La Tabla~\ref{tab:det_zeta_cotas} reúne las tres versiones de $\zeta_{\text{NIST}}$ junto a
+$\zeta_{\text{calc}}$ y a la cota $\zeta_{\text{desnudo}} = (\alpha^2/2)\,Z\,\langle r^{-3}\rangle$
+del orbital calculado (Sección~\ref{sec:spin_orbita}). En el germanio y el estaño las tres superan
+la cota, de modo que la conclusión de la Sección~\ref{sec:zeta_diagnostico}, que lo que falta es
+contraer el orbital y no cambiar el apantallamiento, no depende de qué nivel se excluya ni de
+añadir el término tensorial. En el silicio las tres quedan por debajo de la cota y por encima de
+$\zeta_{\text{calc}}$, y en el carbono las tres quedan por debajo de $\zeta_{\text{calc}}$.
+
+\begin{table}[htbp]
+  \centering\small
+  \input{chapters/_borradores/calculos/zeta_nist_cotas}
+  \caption{Las tres versiones de $\zeta_{\text{NIST}}$ frente al valor calculado y a la cota de
+  núcleo desnudo (cm$^{-1}$). $D$ es el coeficiente del término tensorial.}
+  \label{tab:det_zeta_cotas}
+\end{table}
+
+%======================================================================
+\section{La energía de ionización y la pareja de valencia}
+\label{det:ionizacion}
+
+La Sección~\ref{sec:ionizacion} dice que la corrección de correlación estabiliza solo al átomo
+neutro porque el ion $np^1$ no tiene pareja que correlacionar. El argumento es este. La energía de
+ionización es la diferencia
+\begin{equation}
+  I = E(ns^2np^1) - E(ns^2np^2),
+\end{equation}
+porque el electrón que sale es uno de los dos de valencia: el carbono neutro es $2s^22p^2$ y el
+ion C$^+$ (C II) es $2s^22p$, con término $^2P$. El teorema de Koopmans aproxima $I$ con los
+orbitales congelados del neutro y da $I \approx -\epsilon_{np}$
+(Sección~\ref{sec:koopmans_theorem}).
+
+El modelo añade correlación de una sola clase: la de los dos electrones $np$ entre sí, con las capas
+internas congeladas. En el neutro eso produce una energía $E_{\text{corr}} < 0$, la que recupera el
+CI de la pareja. En el ion queda un solo electrón fuera de las capas internas congeladas, y un solo
+electrón en un campo fijo no tiene correlación: su mejor función de onda es un orbital, y lo que el
+CI podría mezclar ahí sería solo un cambio de ese orbital, es decir, relajación y no correlación.
+Dentro del modelo, entonces, $E_{\text{corr}}(\text{ion}) = 0$ y
+\begin{equation}
+  I_{\text{HF+CI}} = E_{\text{HF}}(\text{ion}) - \qty[E_{\text{HF}}(\text{neutro}) + E_{\text{corr}}]
+  \approx -\epsilon_{np} - E_{\text{corr}},
+\end{equation}
+donde la diferencia de las energías de Hartree-Fock con los orbitales congelados es la de
+Koopmans. El resultado es la segunda columna de la Tabla~\ref{tab:ionizacion}. Como $E_{\text{corr}}$ es negativa, la
+corrección siempre aumenta $I$.
+
+En el átomo real el ion sí tiene correlación, la de su electrón $np$ con las capas internas y la de
+las propias capas internas, pero esa es justamente la que el modelo no contiene en ninguno de los
+dos sistemas. Lo que importa para $I$ es la diferencia entre la correlación del neutro y la del
+ion, y la parte de esa diferencia que el modelo ve es la de la pareja de valencia, que el ion ha
+perdido al ionizarse.
+
+%======================================================================
 \section{Extrapolación de las curvas de convergencia del CI}
 \label{det:extrapolacion}
 
@@ -405,8 +559,7 @@ de $\zeta_{\text{desnudo}}$ es exactamente uno más que el de $\langle r^{-3}\ra
 0.690.
 \item \textbf{El reparto del crecimiento.} De ese exponente 1.69, una unidad viene del factor $Z$
 explícito y 0.69 del momento inverso. Es decir, $1/1.69 \approx 0.59$: el 59\,\% del crecimiento logarítmico
-procede de la carga nuclear y el 41\,\% restante de $\langle r^{-3}\rangle$. Esa es la frase
-\emph{algo más de la mitad} de la Sección~\ref{sec:regimen_acoplamiento}.
+procede de la carga nuclear y el 41\,\% restante de $\langle r^{-3}\rangle$. Es lo que la Sección~\ref{sec:regimen_acoplamiento} resume como \emph{la mayor parte del aumento}.
 \item \textbf{El ajuste es descriptivo.} Son cuatro puntos y dos parámetros. Los exponentes locales
 varían bastante (1.42, 2.14 y 1.86 para $\zeta_{\text{calc}}$), y el $R^2$ de
 $\langle r^{-3}\rangle$ es solo 0.93. El exponente global resume la tendencia; no es una ley que

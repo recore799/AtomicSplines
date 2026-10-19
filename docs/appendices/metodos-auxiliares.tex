@@ -59,7 +59,51 @@ El dato decisivo es la última columna. Las energías obtenidas con y sin aceler
 \section{Convergencia y Costo del Cálculo CI}
 \label{sec:costo_ci}
 
-Las curvas de convergencia de la Sección \ref{sec:convergencia_ci} (Tablas \ref{tab:convergencia_ci} a \ref{tab:convergencia_singletes}) exigen repetir el cálculo de interacción de configuraciones para tamaños crecientes del espacio activo, y esta sección documenta qué recurso limita ese barrido. El costo no lo domina la diagonalización, cuyo espacio es de unas pocas miles de configuraciones, sino el ensamblado previo de las integrales de Slater $R^k$ entre orbitales virtuales. Su número crece como la cuarta potencia del tamaño de la base de virtuales, de modo que es este ensamblado el que fija tanto el tiempo de ejecución, medido como tiempo real transcurrido, como la huella de memoria.
+Esta sección documenta cómo dependen los niveles del tamaño del espacio activo del cálculo de interacción de configuraciones, que la Sección \ref{sec:espectro} resume, y qué recurso limita ese barrido. El espacio activo se amplía de manera anidada, de modo que cada tamaño contiene al anterior y las curvas pueden extrapolarse. La convergencia y el costo se tratan por separado.
+
+\subsection{Convergencia con el tamaño del espacio activo}
+\label{sec:convergencia_ci}
+
+El espacio activo queda definido por el número $m$ de orbitales que se retienen en cada canal de momento angular, hasta $l_{\max}=3$, de modo que contiene $4m$ orbitales, y el número de configuraciones crece como $m^2$. La Tabla \ref{tab:convergencia_ci} recoge la energía de correlación para cada tamaño. El silicio, el germanio y el estaño alcanzan su energía de correlación asintótica con rapidez, ya que entre $m=16$ y $m=20$ cambia en menos de $0.1$ milihartree, lo que justifica $m=20$ como tamaño de producción. El carbono converge más despacio y se llevó hasta $m=40$, donde el último incremento es de $0.06$ milihartree.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/convergencia_ci}
+    \caption[Energía de correlación de valencia frente al tamaño del espacio activo]{Energía de correlación de valencia en función del número $m$ de orbitales por canal, con $l_{\max}=3$, y número de configuraciones del término $^3P$, común a los cuatro elementos.}
+    \label{tab:convergencia_ci}
+\end{table}
+
+La estabilidad de los intervalos del triplete es el resultado más nítido del análisis (Tabla \ref{tab:estabilidad_triplete}). A lo largo de toda la curva del carbono, entre $m=4$ y $m=40$, el intervalo $^3P_2$ se mueve $0.13\ \text{cm}^{-1}$ y el $^3P_1$ apenas $0.03$; en el silicio ambos se mantienen dentro de $0.2\ \text{cm}^{-1}$. En el germanio y el estaño el movimiento es mayor, de $8.9$ y $40.8\ \text{cm}^{-1}$ en el $^3P_1$, pero sigue siendo un orden de magnitud menor que la discrepancia con el experimento, que en el estaño supera los $300\ \text{cm}^{-1}$. Los errores del triplete no proceden, por tanto, del truncamiento del espacio activo.
+
+\begin{table}[htbp]
+    \centering
+    \input{tablas/estabilidad_triplete}
+    \caption[Estabilidad del triplete frente al tamaño del espacio activo]{Niveles $^3P_1$ y $^3P_2$ (cm$^{-1}$, referidos al $^3P_0$) en el primer y el último tamaño de cada curva de convergencia, frente al NIST.}
+    \label{tab:estabilidad_triplete}
+\end{table}
+
+Los singletes sí dependen del tamaño del espacio (Tabla \ref{tab:convergencia_singletes} y Figura \ref{fig:convergencia_singletes}). Ambos descienden de manera monótona al ampliar la base, y en el carbono el $^1S_0$ baja de $\num{28259}$ a $\num{23894}\ \text{cm}^{-1}$ entre $m=4$ y $m=40$. Para estimar la cola restante extrapolamos los tres últimos tamaños de cada curva de dos maneras, suponiendo que los incrementos decrecen en razón geométrica constante y ajustando la forma $E(m) = E_\infty + A\,m^{-p}$. En el carbono, en el germanio, en el $^1D_2$ del silicio y en el $^1S_0$ del estaño las dos estimaciones coinciden y desplazan el error relativo frente al NIST en un punto porcentual o menos. El $^1S_0$ del silicio converge más despacio, ya que extrapola a un error de entre $-5.3\%$ y $-6.2\%$ según el método, frente al $-4.7\%$ de $m=20$, aunque el signo de la discrepancia no cambia. El caso difícil es el $^1D_2$ del estaño, que desciende con incrementos casi constantes entre $m=12$ y $m=20$ (razón $0.93$) y no admite una extrapolación fiable: la geométrica lo situaría un $2.6\%$ por debajo del valor medido, cuando en $m=20$ queda un $1.1\%$ por encima, de modo que el signo de su error queda indeterminado con el espacio de producción.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \input{tablas/convergencia_singletes}
+    \caption[Términos singlete frente al tamaño del espacio activo]{Términos singlete (cm$^{-1}$, referidos al $^3P_0$) en función del número $m$ de orbitales por canal. La última fila reproduce los valores del NIST.}
+    \label{tab:convergencia_singletes}
+\end{table}
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/convergencia_singletes.pdf}
+    \caption[Convergencia de los singletes con el espacio activo]{Error de los términos $^1D_2$ y $^1S_0$ frente al NIST en función del número $m$ de orbitales por canal.}
+    \label{fig:convergencia_singletes}
+\end{figure}
+
+Esas estimaciones bastan para el argumento de la Sección \ref{sec:espectro}, que se apoya en el carbono. Allí el $^1S_0$ extrapolado queda un $10\%$ por encima del valor medido y el $^1D_2$ entre un $5.5\%$ y un $5.7\%$, discrepancias de unos dos mil doscientos y unos seiscientos cm$^{-1}$ frente a una cola de convergencia de unas decenas. La discrepancia de los singletes del carbono procede, por tanto, del modelo y no del truncamiento del espacio activo.
+
+\subsection{Costo del cálculo}
+
+Las curvas anteriores exigen repetir el cálculo de interacción de configuraciones para tamaños crecientes del espacio activo. El costo no lo domina la diagonalización, cuyo espacio es de unas pocas miles de configuraciones, sino el ensamblado previo de las integrales de Slater $R^k$ entre orbitales virtuales. Su número crece como la cuarta potencia del tamaño de la base de virtuales, de modo que es este ensamblado el que fija tanto el tiempo de ejecución, medido como tiempo real transcurrido, como la huella de memoria.
 
 \begin{table}[htbp]
     \centering

@@ -420,6 +420,91 @@ Se podria decir que es evidente que H_SO conmuta con J^2, pero no con L^2 y S^2?
 
 + Creo que aunque dificil de seguir, la explicacion ya quedo bien, pero la tengo que estudiar; es seguro que me preguntaran de eso en el examen. Por ahora vamos a dejarlo tentativo; ensename como es el calculo directo con simbolos 6j que da los mismos valores, tal vez vale mas la pena hacerlo de manera directa. Si se puede "sacar" de manera directa, seria mucho mejor dejar la forma directa en la tesis y hacer la deduccion a partir del cowan como ejercicio
 
+
+* Cuarta revision
+
+** Resultados
+
+*** El espectro de la configuracion np2
+
+**** TODO quitar convergencia del espacio de configuraciones
+
++ Creo que si vale la pena mandar la seccion 6.2.1 al apendice; incrementa mucho el costo de leer el capitulo (aunque solo son 2 paginas, son muchos datos ya) y no anade mucho valor fisico. Originalmente esta seccion era solo un parrafo explicando la tabla 6.4 y decidi traer las tablas para que el lector no tuviera que irse al apendice para ver de que tablas hablaba, pero la decision correcta era al reves. Aunque es necesario ese analisis para explicar los errores de la tabla 6.3, hay que encontrar una manera de balancearlo y remitir la explicacion del tamano de la base y eso en funcion de las preguntas de los sinodales; es decir, si me llegan a preguntar, obviamente estare preparado para responder, pero creo que es mejor evitar esta seccion en el cuerpo principal.
+
+
+*** TODO Del acoplamiento LS al intermedio
+
+Hay que trabajar un poco el parrafo:
+
+#+begin_quote
+El crecimiento de ζnp es, sin embargo, mucho más lento que la ley hidrogenoide Z4/n3 de
+la Sección 3.2. Un ajuste de ley de potencias sobre los cuatro elementos le asigna un exponente
+de 1.82 frente a la carga nuclear, y el mismo ajuste da 0.69 para ⟨r−3⟩y 1.69 para la cota
+de núcleo desnudo (α2/2) Z⟨r−3⟩. La diferencia de una unidad entre estos dos últimos es el
+factor Z explícito de la cota: algo más de la mitad del crecimiento procede de la carga nuclear
+que el electrón percibe al penetrar las capas internas, y el resto del momento inverso, que el
+apantallamiento y el aumento de n hacen crecer más despacio que Z.
+#+end_quote
+
++ Tal vez no lo estoy leyendo bien, pero no me gusta este parrafo, no suena bien lo de "un ajuste... le asigna el valor de" y no encuentro que llegue a una conclusion relevante. Preferiria simplificar esta parte porque el parrafo siguiente sobre de donde sale la desviacion de la regla de lande se me hace mas importante y ya esta muy grueso.
+
+
+*** TODO Factor de lande y grado de mezcla
+
++ Reescribir la primera oracion, algo como:
+
+  "Como el factor g del nivel 3P2 no depende de la escala de las energias, podemos usarlo como una prueba independiente (Seccion 3.3.2) de la afirmacion en la seccion anterior"
+
+  
+
+** TODO Potencial de polarizacion
+
+Aun sigo pensando sobre la decision de quitar el potencial de polarizacion. Me gustaba mucho la derivacion y la figura 6.2 quedaba muy bien ajustada a los valores del NIST, aunque se encontraba en los resultados que no era una polarizacion fisica, el trabajo matematico era muy bueno.
+
+Se me ocurren cosas como, al dejarlo documentado en el repositorio, poder aplicar una referencia estrategica y mostrar, tal vez en trabajo futuro, como se pueden ajustar mejor los datos, mostrando la figura 6.2 antigua que mostraba la comparacion con V_pol.
+
+A Adrian, como no es mucho de leer lo que le mando, solo le escribire en el preambulo del correo (cuando le mande el borrador terminado), una lista de los cambios que hice
+  
+
+
+
+* Quinta revision
+
+
+** Factor g de lande (§3.3.2)
+
+Al final de la sección dice
+
+#+begin_quote
+al invertir esta relación cualquier factor g, calculado o medido, se traduce a un peso del carácter 1D2. A primer orden en el bloque (3.8), cuyo elemento fuera de la diagonal es..., ese peso es ...
+#+end_quote
+
++ Creo que decir carácter es una mala traducción de term, osea lo deberia de cambiar a término 1D2.
++ Me puedes explicar como haces a primer orden ese coeficiente (|c_|^2)
++ Tambien creo, aunque se dice que cerca del nucleo, el potencial es esencialmente el coulombiano desnudo, nunca se dijo explicitamente qué es un nucleo desnudo y por que nos importaria usar ese \xi(r), pero no se si ponerlo de una vez en esta seccion
+
+** Estructura fina y el hamiltoniano de breit-pauli
+
++ En el capitulo 6 dice que de la seccion 3.2, se menciona que \zeta_nl deberia crecer como Z^4/n^3, y en la seccion 3.2 solo lo da como dato para un ion hidrogenoide. Sera un dato trivial? es porque el nucleo desnudo es cuando no hay apantallamiento? osea que V(0) = -Z/r? Por eso <r^-3> crece como Z^3/n^3 y \zeta con Z^4/n^3? Si es asi, entonces creo que no hay problema, solo que me confundi un poco de donde venian los resultados
+
++ Que tal anadir un comentario al final de la seccion, cuando mencionamos al potencial de polarizacion y Muller, algo como que en este trabajo no se reporta para mantener en analisis ab initio, pero la libreria cuenta con una implementacion y documentacion que si ajusta mejor a los valores experimentales.
+
+
+** ESTUDIAR La energia de ionizacion
+
++ Repasar que significa que no haya una pareja que correlacionar y por que sale el ion np¹ aqui.
+
+
+
+** TODO El parametro de espin-orbita
+
++ Tiene sentido poner esta seccion aqui? que tal ponerla antes de (§6.2)?
+
+
+*** ESTUDIAR hacer la derivacion explicita de zeta NIST
+
+
+
 * Cosas extra
 
 

@@ -5,10 +5,12 @@
 #  Reutiliza las funciones de la etapa 3 y escribe fragmentos tabular en
 #  docs/chapters/_borradores/calculos/ con los pasos que el manuscrito solo cita como resultado:
 #
-#    extrapolaciones_datos.tex / _resultados.tex   seccion 6.2.1 (geometrica y de potencia)
-#    ley_potencias_datos.tex / _ajuste.tex         seccion 6.3 (exponentes frente a Z)
-#    mezcla_perturbativa.tex                       seccion 3.3 (serie perturbativa frente a la
+#    extrapolaciones_datos.tex / _resultados.tex   sec:convergencia_ci (geometrica y de potencia)
+#    ley_potencias_datos.tex / _ajuste.tex         sec:regimen_acoplamiento (exponentes frente a Z)
+#    mezcla_perturbativa.tex                       sec:matrices_bp (serie perturbativa frente a la
 #                                                  diagonalizacion exacta de cada bloque J)
+#    zeta_nist_ajuste.tex / _cotas.tex             sec:zeta_diagnostico (el ajuste que define
+#                                                  zeta_NIST, con todas sus incognitas)
 #
 #  Uso: julia --project=. benchmarks/np2_sequence/tesis/detalles_calculos.jl   (un minuto)
 # =============================================================================
@@ -150,11 +152,71 @@ function fragmento_mezcla(HF)
     escribir_fragmento("mezcla_perturbativa.tex", String(take!(io)), proc)
 end
 
+# -----------------------------------------------------------------------------
+#  El ajuste que define zeta_NIST (analisis_zeta.jl), con todas sus incognitas
+# -----------------------------------------------------------------------------
+"""
+    ajuste_nist(el, excluir) -> [dD, dS, zeta]
+
+El mismo sistema que `zeta_nist` (analisis_zeta.jl), pero devuelve las tres incognitas y no
+solo zeta. Se comprueba contra `zeta_nist` para que los dos no puedan separarse.
+"""
+function ajuste_nist(el, excluir)
+    n = NIST_NIVELES[el]
+    usar = excluir == 2 ? [3, 4, 5] : [2, 4, 5]
+    x = newton(x -> niveles_bp(x...)[usar] .- n[usar],
+               [n[4], n[5], excluir == 2 ? 2n[3] / 3 : 2n[2]])
+    @assert isapprox(x[3], zeta_nist(el; excluir = excluir).zeta; rtol = 1e-10)
+    return x
+end
+
+function fragmentos_zeta_nist(HF)
+    io1, io2, proc = IOBuffer(), IOBuffer(), String[]
+    nombre = Dict(2 => raw"$^3P_1$", 3 => raw"$^3P_2$")
+    println(io1, raw"\begin{tabular}{llrrrrrr}", "\n", raw"    \toprule")
+    linea(io1, "Elemento", "Excluido", raw"$\zeta^{(0)}$", raw"$\Delta_D$", raw"$\Delta_S$", raw"$\zeta$",
+          "Predicho", "NIST")
+    for el in ELEMENTOS
+        n = NIST_NIVELES[el]
+        println(io1, raw"    \midrule")
+        for (k, excl) in enumerate((2, 3))
+            dD, dS, ζ = ajuste_nist(el, excl)
+            # Estimacion LS de orden cero con el nivel del triplete que entra al ajuste:
+            # 3P_2 - 3P_0 = 3 zeta / 2 si se excluye el 3P_1; 3P_1 - 3P_0 = zeta / 2 si se excluye el 3P_2.
+            ζ0 = excl == 2 ? 2n[3] / 3 : 2n[2]
+            pred = niveles_bp(dD, dS, ζ)[excl]
+            linea(io1, k == 1 ? INFO[el].etiqueta : "", nombre[excl], fmt(ζ0, 1), fmt(dD, 1), fmt(dS, 1),
+                  fmt(ζ, 1), fmt(pred, 1), fmt(n[excl], 1))
+        end
+    end
+    println(io1, raw"    \bottomrule", "\n", raw"\end{tabular}")
+
+    println(io2, raw"\begin{tabular}{lrrrrrr}", "\n", raw"    \toprule")
+    linea(io2, "Elemento", raw"$\zeta_{\text{desnudo}}$", raw"$\zeta_{\text{calc}}$",
+          raw"$\zeta$ sin $^3P_1$", raw"$\zeta$ sin $^3P_2$", raw"$\zeta$ tensorial", raw"$D$")
+    println(io2, raw"    \midrule")
+    for el in ELEMENTOS
+        h, Z = HF[el], INFO[el].Z
+        t = zeta_nist_tensorial(el)
+        linea(io2, INFO[el].etiqueta, fmt(ALFA^2 / 2 * Z * h.r3 * HA2CM, 1), fmt(h.zeta * HA2CM, 1),
+              fmt(zeta_nist(el; excluir = 2).zeta, 1), fmt(zeta_nist(el; excluir = 3).zeta, 1),
+              fmt(t.zeta, 1), fmt(t.D, 2))
+        push!(proc, proc_scf(h.archivo))
+    end
+    println(io2, raw"    \bottomrule", "\n", raw"\end{tabular}")
+    push!(proc, "cm^-1. Niveles del NIST desde config.jl (NIST_NIVELES). Ajuste de analisis_zeta.jl: " *
+                "Breit-Pauli de p^2 sin CI, E(3P) = 0, incognitas dD = E(1D) - E(3P), dS = E(1S) - E(3P) " *
+                "y zeta; tres niveles exactos y el cuarto predicho. zeta_desnudo = (alpha^2/2) Z <r^-3>.")
+    escribir_fragmento("zeta_nist_ajuste.tex", String(take!(io1)), proc)
+    escribir_fragmento("zeta_nist_cotas.tex", String(take!(io2)), proc)
+end
+
 function main_detalles()
     HF = Dict(el => propiedades_hf(el) for el in ELEMENTOS)
     fragmentos_extrapolacion()
     fragmentos_potencias(HF)
     fragmento_mezcla(HF)
+    fragmentos_zeta_nist(HF)
     isempty(FALTAS) || println("Faltan: ", join(sort(collect(FALTAS)), "; "))
 end
 
